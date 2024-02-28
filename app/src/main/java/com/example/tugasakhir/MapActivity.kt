@@ -37,7 +37,7 @@ class MapActivity : AppCompatActivity(){
     private lateinit var mapController: IMapController
     private lateinit var locationOverlay: MyLocationNewOverlay
     private lateinit var mapView: MapView
-    private lateinit var bundle : Bundle
+    private var bundle: Bundle? = null
     private lateinit var binding: ActivityMapBinding
     private lateinit var save : ExtendedFloatingActionButton
     private lateinit var myLocationMarker: Marker
@@ -48,7 +48,7 @@ class MapActivity : AppCompatActivity(){
     private lateinit var defaultMarker: Marker
     private var latitude : Double = 0.0
     private var longitude : Double = 0.0
-    private lateinit var namaPerusahaan : String
+    private var namaPerusahaan : String? = null
     private lateinit var address : String
     lateinit var tvPerusahaan : TextView
     private lateinit var cardview : CardView
@@ -117,11 +117,12 @@ class MapActivity : AppCompatActivity(){
         save.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             val Bundle = Bundle()
+            Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
             Bundle.putString("latitude", namaPerusahaan)
-            Bundle.putDouble("latitude", latitude) // Serialize the user object to a Bundle
+            Bundle.putDouble("latitude", latitude)
             Bundle.putDouble("longitude", longitude)
             Bundle.putString("address", address)
-            intent.putExtra("data", bundle)
+            intent.putExtra("data", Bundle)
             startActivity(intent)
 //            finish()
 //            // Handle save button click
@@ -196,8 +197,10 @@ class MapActivity : AppCompatActivity(){
                 val Address: AndroidLocationAddress = addresses[0]
                 address = Address.getAddressLine(0)
                 tvLatitudeLongitude.text = "Latitude: $latitude, Longitude: $longitude"
-                tvAddress.text = "Address: $Address"
-                tvPerusahaan.text = namaPerusahaan
+                tvAddress.text = formatAddress(Address)
+                if(namaPerusahaan != null){
+                    tvPerusahaan.text = namaPerusahaan
+                }
             } else {
                 tvAddress.text = "Address: Not Available"
             }
@@ -206,10 +209,44 @@ class MapActivity : AppCompatActivity(){
             tvAddress.text = "Address: Not Available"
         }
     }
+    private fun formatAddress(address: AndroidLocationAddress?): String {
+        address ?: return ""
+        val formattedAddress = StringBuilder()
+
+        // Loop through address lines
+        for (i in 0 until address.maxAddressLineIndex + 1) {
+            formattedAddress.append(address.getAddressLine(i))
+            if (i < address.maxAddressLineIndex) {
+                formattedAddress.append(", ")
+            }
+        }
+
+        // Additional components if available
+        val locality = address.locality
+        val postalCode = address.postalCode
+        val countryName = address.countryName
+
+        if (!locality.isNullOrBlank()) {
+            formattedAddress.append(", ").append(locality)
+        }
+        if (!postalCode.isNullOrBlank()) {
+            formattedAddress.append(", ").append(postalCode)
+        }
+        if (!countryName.isNullOrBlank()) {
+            formattedAddress.append(", ").append(countryName)
+        }
+
+        return formattedAddress.toString()
+    }
+
     private fun getBundle() {
-        bundle = intent?.getBundleExtra("data")!!
-        bundle.let {
-            namaPerusahaan = it.getString("namaperusahaan").toString()
+        bundle = intent?.getBundleExtra("data")
+        if (bundle != null) {
+            bundle?.let {
+                namaPerusahaan = it.getString("namaperusahaan").toString()
+            }
+        } else {
+            // Handle the case when bundle is null
         }
     }
 }

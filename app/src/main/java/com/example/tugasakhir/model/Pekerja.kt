@@ -2,10 +2,9 @@ package com.example.tugasakhir.model
 
 import android.os.Parcel
 import android.os.Parcelable
-import java.io.File
 import java.util.Date
 
-data class Admin(
+class Pekerja (
     val id_perusahaan:Int,
     val email: String,
     val password: String,
@@ -35,12 +34,12 @@ data class Admin(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<Admin> {
-        override fun createFromParcel(parcel: Parcel): Admin {
-            return Admin(parcel)
+    companion object CREATOR : Parcelable.Creator<Pekerja> {
+        override fun createFromParcel(parcel: Parcel): Pekerja {
+            return Pekerja(parcel)
         }
 
-        override fun newArray(size: Int): Array<Admin?> {
+        override fun newArray(size: Int): Array<Pekerja?> {
             return arrayOfNulls(size)
         }
     }
