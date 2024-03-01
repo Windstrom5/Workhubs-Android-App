@@ -2,12 +2,15 @@ package com.example.tugasakhir.model
 
 import android.os.Parcel
 import android.os.Parcelable
+import java.sql.Time
 import java.util.Date
 
 data class Perusahaan(
     val nama: String,
     val latitude: Double,
     val longitude: Double,
+    val jam_masuk: Time,
+    val jam_keluar: Time,
     val batasAktif: String,
     val logo: ByteArray,
     val secret_key: String,
@@ -16,6 +19,8 @@ data class Perusahaan(
         parcel.readString() ?: "",
         parcel.readDouble(),
         parcel.readDouble(),
+        Time.valueOf(parcel.readString() ?: "00:00:00"),
+        Time.valueOf(parcel.readString() ?: "00:00:00"),
         parcel.readString() ?: "",
         parcel.createByteArray() ?: byteArrayOf(),
         parcel.readString() ?: ""
@@ -25,6 +30,8 @@ data class Perusahaan(
         parcel.writeString(nama)
         parcel.writeDouble(latitude)
         parcel.writeDouble(longitude)
+        parcel.writeString(jam_masuk.toString())
+        parcel.writeString(jam_keluar.toString())
         parcel.writeString(batasAktif)
         parcel.writeByteArray(logo)
         parcel.writeString(secret_key)

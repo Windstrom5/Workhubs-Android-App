@@ -1,15 +1,24 @@
 package com.example.tugasakhir
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.text.InputType
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
 import com.example.tugasakhir.connection.ApiService
@@ -30,13 +39,16 @@ import retrofit2.Callback
 import retrofit2.Response
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var TINama: TextInputLayout
     private lateinit var edNama: EditText
+    private lateinit var alertDialog: AlertDialog
     private lateinit var TIEmail: TextInputLayout
     private lateinit var edEmail: EditText
     private lateinit var TIPassword: TextInputLayout
@@ -51,6 +63,9 @@ class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var selectedImage: ByteArray
     var selectedDateSqlFormat: String? = null
     private lateinit var selectImage: ImageView
+    private val CAMERA_PERMISSION_REQUEST = 124
+    private val CAMERA_CAPTURE_REQUEST = 126
+    private var tempImageFile: File? = null
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 1
     }
@@ -67,6 +82,9 @@ class RegisterAdminActivity : AppCompatActivity() {
             inputType = InputType.TYPE_NULL
             isFocusable = false
             isClickable = true
+        }
+        selectImage.setOnClickListener{
+            showImagePickerDialog()
         }
         TITanggal.setOnClickListener{
             val calendar = Calendar.getInstance()
@@ -147,12 +165,47 @@ class RegisterAdminActivity : AppCompatActivity() {
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PICK_IMAGE_REQUEST_CODE && resultCode == RESULT_OK) {
-            data?.data?.let { imageUri: Uri ->
-                val inputStream = contentResolver.openInputStream(imageUri)
-                selectedImage = inputStream?.readBytes() ?: ByteArray(0)
-                circleImageView.setImageURI(imageUri)
+        when (requestCode) {
+            CAMERA_CAPTURE_REQUEST -> {
+                if (resultCode == RESULT_OK) {
+                    val imageBitmap = data?.extras?.get("data") as? Bitmap
+                    imageBitmap?.let {
+                        // Set the captured image to the CircleImageView
+                        circleImageView.setImageBitmap(it)
+                    }
+                }
             }
+            PICK_IMAGE_REQUEST_CODE -> {
+                if (resultCode == RESULT_OK) {
+                    data?.data?.let { imageUri: Uri ->
+                        val inputStream = contentResolver.openInputStream(imageUri)
+                        selectedImage = inputStream?.readBytes() ?: ByteArray(0)
+                        circleImageView.setImageURI(imageUri)
+                    }
+                }
+            }
+        }
+    }
+    private fun showImagePickerDialog() {
+        val options = arrayOf("Capture from Camera", "Select from File")
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Choose an option")
+        builder.setItems(options) { _, which ->
+            when (which) {
+                0 -> openCamera()
+                1 -> openFilePicker()
+            }
+        }
+        alertDialog = builder.create()
+        alertDialog.show()
+    }
+    private fun openCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivityForResult(intent, CAMERA_CAPTURE_REQUEST)
+        } else {
+            // Handle the case where the camera app is not available
+            Toast.makeText(this, "Camera app not found", Toast.LENGTH_SHORT).show()
         }
     }
 }

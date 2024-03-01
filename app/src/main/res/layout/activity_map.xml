@@ -42,6 +42,24 @@
 
                 <!-- Add TextViews or other elements to display information -->
                 <TextView
+                    android:id="@+id/tvNamaPerusahaan"
+                    android:layout_width="wrap_content"
+                    android:textSize="18sp"
+                    android:layout_gravity="center"
+                    android:textStyle="bold"
+                    android:layout_height="wrap_content"
+                    android:foregroundGravity="center"
+                    android:text="Nama Perusahaan"/>
+                <TextView
+                    android:id="@+id/tvOpenHour"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:layout_gravity="center"
+                    android:textStyle="bold"
+                    android:text="Open Hour : xxxxxxx - xxxxxxx"/>
+
+                <TextView
                     android:id="@+id/tvLatitudeLongitude"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -52,12 +70,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Address: Sample Address"/>
-
-                <TextView
-                    android:id="@+id/tvNamaPerusahaan"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Nama Perusahaan"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>

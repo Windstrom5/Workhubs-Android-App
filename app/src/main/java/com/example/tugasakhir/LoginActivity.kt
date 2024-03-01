@@ -1,5 +1,6 @@
 package com.example.tugasakhir
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -25,10 +26,12 @@ import com.example.tugasakhir.model.Pekerja
 import com.example.tugasakhir.model.Perusahaan
 import com.example.tugasakhir.model.login_session
 import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.FirebaseApp
 import org.json.JSONException
 import org.json.JSONObject
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
+import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,6 +54,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        FirebaseApp.initializeApp(this)
         textInputPerusahaan = binding.textInputperusahaan
         editTextPerusahaan = binding.ACperusahaan
         textInputEmail = binding.textInputEmail
@@ -84,10 +88,14 @@ class LoginActivity : AppCompatActivity() {
                     val nama = perusahaanObject.getString("nama")
                     val latitude = perusahaanObject.getDouble("latitude")
                     val longitude = perusahaanObject.getDouble("longitude")
+                    val jam_masukStr = perusahaanObject.getString("jam_masuk")
+                    val jam_keluarStr = perusahaanObject.getString("jam_keluar")
+                    val jam_masuk = convertStringToTime(jam_masukStr)
+                    val jam_keluar = convertStringToTime(jam_keluarStr)
                     val batasAktif = perusahaanObject.getString("batasAktif")
                     val logo = perusahaanObject.getString("logo").toByteArray()
                     val secretKey = perusahaanObject.getString("secret_key")
-                    val perusahaan = Perusahaan(nama, latitude, longitude, batasAktif, logo, secretKey)
+                    val perusahaan = Perusahaan(nama, latitude, longitude, jam_masuk,jam_keluar,batasAktif, logo, secretKey)
                     newPerusahaanList.add(perusahaan)
                 }
                 perusahaanList = newPerusahaanList
@@ -99,7 +107,12 @@ class LoginActivity : AppCompatActivity() {
 
         Volley.newRequestQueue(this).add(jsonArrayRequest)
     }
-
+    @SuppressLint("SimpleDateFormat")
+    fun convertStringToTime(timeStr: String): Time {
+        val sdf = SimpleDateFormat("HH:mm:ss")
+        val date: Date = sdf.parse(timeStr)
+        return Time(date.time)
+    }
     private fun setUpAutoCompleteTextView(perusahaanList: List<Perusahaan>) {
         val autoCompleteTextView: AutoCompleteTextView = findViewById(R.id.ACperusahaan)
         val adapter = ArrayAdapter(

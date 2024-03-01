@@ -10,7 +10,6 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.tugasakhir.databinding.ActivityAbsensiBinding
 
 class Absensi : AppCompatActivity() {
-
     private lateinit var binding: ActivityAbsensiBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {

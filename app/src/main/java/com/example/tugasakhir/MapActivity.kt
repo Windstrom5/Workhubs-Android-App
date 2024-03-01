@@ -49,8 +49,11 @@ class MapActivity : AppCompatActivity(){
     private var latitude : Double = 0.0
     private var longitude : Double = 0.0
     private var namaPerusahaan : String? = null
+    private var openhour : String? = null
+    private var closehour : String? = null
     private lateinit var address : String
-    lateinit var tvPerusahaan : TextView
+    private lateinit var tvPerusahaan : TextView
+    private lateinit var openClose:TextView
     private lateinit var cardview : CardView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,8 +63,10 @@ class MapActivity : AppCompatActivity(){
         save = binding.saveButton
         tvLatitudeLongitude = binding.tvLatitudeLongitude
         tvAddress = binding.tvAddress
+        tvPerusahaan = binding.tvNamaPerusahaan
         save.visibility = View.INVISIBLE
         mapView = binding.mapView
+        openClose = binding.tvOpenHour
         getBundle()
         mapView.setTileSource(TileSourceFactory.MAPNIK)
         mapView.setBuiltInZoomControls(false)
@@ -118,7 +123,6 @@ class MapActivity : AppCompatActivity(){
             val intent = Intent(this, RegisterActivity::class.java)
             val Bundle = Bundle()
             Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
-            Bundle.putString("latitude", namaPerusahaan)
             Bundle.putDouble("latitude", latitude)
             Bundle.putDouble("longitude", longitude)
             Bundle.putString("address", address)
@@ -200,6 +204,17 @@ class MapActivity : AppCompatActivity(){
                 tvAddress.text = formatAddress(Address)
                 if(namaPerusahaan != null){
                     tvPerusahaan.text = namaPerusahaan
+                }else{
+                    tvPerusahaan.visibility = View.GONE
+                }
+                if (openhour != null && closehour != null) {
+                    openClose.text = "Open Hours = $openhour - $closehour"
+                } else if (openhour != null) {
+                    openClose.text = "Open Hours = $openhour"
+                } else if (closehour != null) {
+                    openClose.text = "Close Hours = $closehour"
+                } else {
+                    openClose.visibility = View.GONE
                 }
             } else {
                 tvAddress.text = "Address: Not Available"
@@ -243,7 +258,9 @@ class MapActivity : AppCompatActivity(){
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
-                namaPerusahaan = it.getString("namaperusahaan").toString()
+                namaPerusahaan = it.getString("namaPerusahaan") ?: ""
+                openhour = it.getString("openhour") ?: ""
+                closehour = it.getString("closehour") ?: ""
             }
         } else {
             // Handle the case when bundle is null
