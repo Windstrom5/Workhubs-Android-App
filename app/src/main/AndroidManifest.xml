@@ -24,22 +24,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TugasAkhir"
         tools:targetApi="31">
+        <service
+            android:name=".connection.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <activity
             android:name=".SplashActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/SplashTheme">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <service
-                android:name=".MyFirebaseMessagingService"
-                android:exported="false">
-                <intent-filter>
-                    <action android:name="com.google.firebase.MESSAGING_EVENT" />
-                </intent-filter>
-            </service>
+
         </activity>
         <activity
             android:name=".Absensi"

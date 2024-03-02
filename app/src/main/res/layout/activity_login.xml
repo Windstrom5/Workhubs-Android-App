@@ -114,7 +114,7 @@
                         android:textColor="@color/primaryTextColor"
                         android:textSize="@dimen/newsMoreTextSize" />
 
-                    <br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
+                    <Button
                         android:id="@+id/cirLoginButton"
                         style="@style/loginButton"
                         android:layout_gravity="center_horizontal"

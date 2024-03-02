@@ -29,6 +29,8 @@
             android:layout_marginEnd="40dp"
             android:layout_marginBottom="40dp"
             android:background="@color/whiteTextColor"
+            android:layout_gravity="center"
+            android:foregroundGravity="center"
             app:cardCornerRadius="8dp">
 
             <ScrollView
@@ -80,7 +82,7 @@
                             android:background="@color/whiteTextColor"/>
                     </FrameLayout>
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/textInputPerusahaan"
+                        android:id="@+id/textInputNama"
                         style="@style/parent"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 z
@@ -128,7 +130,7 @@ z
                             android:inputType="textEmailAddress"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
-                    <br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
+                    <Button
                         android:id="@+id/cirsaveButton"
                         style="@style/loginButton"
                         android:layout_gravity="center_horizontal"
@@ -136,6 +138,7 @@ z
                         android:text="Register Now"
                         android:textAlignment="center"
                         app:initialCornerAngle="27dp"
+                        android:layout_margin="13dp"
                         app:spinning_bar_color="#FFF"
                         app:spinning_bar_padding="6dp"
                         app:spinning_bar_width="4dp" />
