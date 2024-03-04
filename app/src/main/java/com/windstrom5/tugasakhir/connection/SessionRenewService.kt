@@ -7,9 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
-import com.windstrom5.tugasakhir.AdminActivity
-import com.windstrom5.tugasakhir.LoginActivity
-import com.windstrom5.tugasakhir.UserActivity
+import com.windstrom5.tugasakhir.activity.AdminActivity
+import com.windstrom5.tugasakhir.activity.LoginActivity
+import com.windstrom5.tugasakhir.activity.UserActivity
 import com.windstrom5.tugasakhir.model.login_session
 import com.google.gson.Gson
 import java.util.Date

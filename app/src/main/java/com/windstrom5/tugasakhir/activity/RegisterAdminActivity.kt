@@ -1,4 +1,4 @@
-package com.windstrom5.tugasakhir
+package com.windstrom5.tugasakhir.activity
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -11,22 +11,20 @@ import android.provider.MediaStore
 import android.text.InputType
 import org.json.JSONObject
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
-import br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.connection.ApiService
-import com.windstrom5.tugasakhir.connection.RetrofitClient
 import com.windstrom5.tugasakhir.databinding.ActivityRegisterAdminBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.google.android.material.textfield.TextInputLayout
+import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.model.Perusahaan
@@ -34,7 +32,6 @@ import de.hdodenhof.circleimageview.CircleImageView
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -72,6 +69,7 @@ class RegisterAdminActivity : AppCompatActivity() {
     private var idPerusahaan: Int? = null
     private var tempImageFile: File? = null
     private lateinit var namaPerusahaan: String
+    private var perusahaan : Perusahaan? = null
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 1
     }
@@ -127,7 +125,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         save = binding.cirsaveButton
         save.setOnClickListener{
             getPerusahaan(namaPerusahaan)
-            val url = "https://790e-36-80-222-40.ngrok-free.app/api/DaftarAdmin"
+            val url = "https://2349-36-80-222-40.ngrok-free.app/api/"
             val retrofit = Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -158,10 +156,12 @@ class RegisterAdminActivity : AppCompatActivity() {
                                 MotionToastStyle.SUCCESS,
                                 MotionToast.GRAVITY_BOTTOM,
                                 MotionToast.LONG_DURATION,
-                                ResourcesCompat.getFont(this@RegisterAdminActivity,R.font.ralewaybold))
-                            val intent = Intent(this@RegisterAdminActivity,AdminActivity::class.java)
+                                ResourcesCompat.getFont(this@RegisterAdminActivity,
+                                    R.font.ralewaybold
+                                ))
+                            val intent = Intent(this@RegisterAdminActivity, AdminActivity::class.java)
                             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val date = dateFormat.parse(TITanggal.editText?.text.toString())
+                            val date = dateFormat.parse(TITanggal.editText?.text.toString())!!
                             val admin = idPerusahaan?.let { it1 ->
                                 Admin(
                                     it1,
@@ -176,13 +176,20 @@ class RegisterAdminActivity : AppCompatActivity() {
                             if (admin != null) {
                                 sharedPreferencesManager.saveAdmin(admin)
                             }
+                            val userBundle = Bundle()
+                            userBundle.putParcelable("user", admin)
+                            userBundle.putParcelable("perusahaan", perusahaan)
+                            intent.putExtra("data", userBundle)
+                            startActivity(intent)
                         } else {
                             MotionToast.createToast(this@RegisterAdminActivity, "Error",
                                 "Kesalahan berpikir",
                                 MotionToastStyle.ERROR,
                                 MotionToast.GRAVITY_BOTTOM,
                                 MotionToast.LONG_DURATION,
-                                ResourcesCompat.getFont(this@RegisterAdminActivity,R.font.ralewaybold))
+                                ResourcesCompat.getFont(this@RegisterAdminActivity,
+                                    R.font.ralewaybold
+                                ))
                         }
 
                     } else {
@@ -191,7 +198,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                             MotionToastStyle.ERROR,
                             MotionToast.GRAVITY_BOTTOM,
                             MotionToast.LONG_DURATION,
-                            ResourcesCompat.getFont(this@RegisterAdminActivity,R.font.ralewaybold))
+                            ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
                     }
                 }
 
@@ -202,14 +209,14 @@ class RegisterAdminActivity : AppCompatActivity() {
                         MotionToastStyle.ERROR,
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
-                        ResourcesCompat.getFont(this@RegisterAdminActivity,R.font.ralewaybold))
+                        ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
                 }
             })
         }
     }
 
     private fun getPerusahaan(namaPerusahaan: String) {
-        val apiUrl = "https://790e-36-80-222-40.ngrok-free.app/api/namaPerusahaan/$namaPerusahaan"
+        val apiUrl = "https://2349-36-80-222-40.ngrok-free.app/api/namaPerusahaan/$namaPerusahaan"
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
@@ -243,7 +250,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         startActivityForResult(intent, PICK_IMAGE_REQUEST_CODE)
     }
     private fun uploadData(id_perusahaan: String) {
-        val url = "https://790e-36-80-222-40.ngrok-free.app/api/"
+        val url = "https://2349-36-80-222-40.ngrok-free.app/api/DaftarAdmin/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -302,6 +309,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                         val realPath = getRealPathFromUri(imageUri)
                         if (realPath != null) {
                             selectedFile = File(realPath)
+                            circleImageView.setImageURI(imageUri)
                         }
                     }
                 }
@@ -356,7 +364,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
-                namaPerusahaan = it.getString("namaPerusahaan") ?: ""
+                perusahaan = it.getParcelable("perusahaan")
             }
         } else {
             Log.d("Error","Bundle Not Found")

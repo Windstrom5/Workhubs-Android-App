@@ -1,14 +1,21 @@
 package com.windstrom5.tugasakhir.fragment
 
+import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.media.MediaScannerConnection
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -23,25 +30,30 @@ import java.util.Hashtable
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.windstrom5.tugasakhir.model.Admin
+import com.windstrom5.tugasakhir.model.Pekerja
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.security.MessageDigest
 
 class ShowQRCodeFragment : Fragment() {
     private lateinit var imageViewQRCode: ImageView
-    private lateinit var perusahaan: Perusahaan
-
+    private lateinit var download: Button
+    private var perusahaan : Perusahaan? = null
+    private var admin : Admin? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_show_q_r_code, container, false)
         imageViewQRCode = view.findViewById(R.id.imageViewQRCode)
-
-        // Get Perusahaan object from SharedPreferences
-        perusahaan = getPerusahaan() ?: return view
-
+        getBundle()
         // Generate QR code with logo
-        generateQRCodeWithLogo(perusahaan)
-
+        download = view.findViewById(R.id.downloadQr)
+        download.setOnClickListener{
+            saveBitmapToGallery((imageViewQRCode.drawable as BitmapDrawable).bitmap, "QRCode")
+        }
         return view
     }
 
@@ -60,7 +72,29 @@ class ShowQRCodeFragment : Fragment() {
             e.printStackTrace()
         }
     }
+    private fun saveBitmapToGallery(bitmap: Bitmap, fileName: String) {
+        val contextWrapper = ContextWrapper(requireContext().applicationContext)
+        val directory = contextWrapper.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val file = File(directory, "$fileName.png")
 
+        try {
+            val fileOutputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
+            fileOutputStream.flush()
+            fileOutputStream.close()
+
+            // Notify the gallery about the new file so that it can be scanned by the media scanner
+            MediaScannerConnection.scanFile(
+                requireContext(),
+                arrayOf(file.absolutePath),
+                null,
+                null
+            )
+            Toast.makeText(requireContext(), "QR code saved to gallery", Toast.LENGTH_SHORT).show()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
     @Throws(WriterException::class)
     private fun generateQRCode(content: String, width: Int, height: Int): Bitmap {
         val hints: Hashtable<EncodeHintType, Any> = Hashtable()
@@ -115,8 +149,18 @@ class ShowQRCodeFragment : Fragment() {
         return digest.joinToString("") { byte -> "%02x".format(byte) }
     }
 
-    private fun getPerusahaan(): Perusahaan? {
-        val sharedPreferencesManager = SharedPreferencesManager(requireContext())
-        return sharedPreferencesManager.getPerusahaan()
+//    private fun getPerusahaan(): Perusahaan? {
+//        val sharedPreferencesManager = SharedPreferencesManager(requireContext())
+//        return sharedPreferencesManager.getPerusahaan()
+//    }
+    private fun getBundle() {
+        val arguments = arguments
+        if (arguments != null) {
+            perusahaan = arguments.getParcelable("perusahaan")
+            admin = arguments.getParcelable("user")
+            perusahaan?.let { generateQRCodeWithLogo(it) }
+        } else {
+            Log.d("Error","Bundle Not Found")
+        }
     }
 }

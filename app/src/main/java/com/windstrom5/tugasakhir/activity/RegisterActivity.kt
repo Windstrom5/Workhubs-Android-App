@@ -1,9 +1,8 @@
-package com.windstrom5.tugasakhir
+package com.windstrom5.tugasakhir.activity
 
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -12,33 +11,34 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
+import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
+import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.databinding.ActivityRegisterBinding
 import com.windstrom5.tugasakhir.model.Perusahaan
-import com.google.android.material.textfield.TextInputLayout
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Retrofit
-import retrofit2.Response as RetrofitResponse
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.security.SecureRandom
 import java.sql.Time
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import retrofit2.Response as RetrofitResponse
 
 class RegisterActivity : AppCompatActivity() {
     private lateinit var location : Button
@@ -51,7 +51,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var Tvlatitude:TextView
     private lateinit var edNamaPerusahaan:EditText
     private lateinit var selectedFileName : TextView
-    private lateinit var perusahaan: Perusahaan
+    private var perusahaan : Perusahaan? = null
     private var bundle: Bundle? = null
     private lateinit var information:CardView
     private lateinit var binding: ActivityRegisterBinding
@@ -63,6 +63,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var textViewProgress: TextView
     private lateinit var textViewCustom:TextView
     private val boundary = "*****"
+    private lateinit var path : String
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 123
     }
@@ -112,11 +113,28 @@ class RegisterActivity : AppCompatActivity() {
         createnow.setOnClickListener {
             val secretKey = generateRandomString()
             makeApiRequest(secretKey)
-            val intent = Intent(this,RegisterAdminActivity::class.java)
-            val Bundle = Bundle()
-            Bundle.putString("namaPerusahaan", edNamaPerusahaan.toString()?: "")
-            startActivity(intent)
+//            val calendar = Calendar.getInstance()
+//            calendar.add(Calendar.YEAR, 1)
+//            val futureDate = calendar.time
+//            val sqlDate = java.sql.Date(futureDate.time)
+//            perusahaan = Perusahaan(TINamaPerusahaan.editText?.text.toString(),
+//                Tvlatitude.text.toString().toDouble(),
+//                Tvlongitude.text.toString().toDouble(),
+//                stringToSqlTime(TIJammasuk.editText?.text.toString()),
+//                stringToSqlTime(TIJamkeluar.editText?.text.toString()),
+//                sqlDate,
+//                secretKey,
+//                path
+//            )
+//            val intent = Intent(this,RegisterAdminActivity::class.java)
+//            val Bundle = Bundle()
+//            Bundle.putParcelable("perusahaan", perusahaan)
+//            intent.putExtra("data", Bundle)
+//            startActivity(intent)
         }
+    }
+    private fun savePerusahaan(perusahaan2: Perusahaan){
+        perusahaan = perusahaan2
     }
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -144,7 +162,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "https://790e-36-80-222-40.ngrok-free.app/api/getPerusahaan"
+        val apiUrl = "https://2349-36-80-222-40.ngrok-free.app/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -222,7 +240,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun makeApiRequest(secretKey: String) {
-        val url = "https://790e-36-80-222-40.ngrok-free.app/api/DaftarPerusahaan"
+        val url = "https://2349-36-80-222-40.ngrok-free.app/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -252,8 +270,33 @@ class RegisterActivity : AppCompatActivity() {
             override fun onResponse(call: Call<ApiResponse>, response: RetrofitResponse<ApiResponse>) {
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
-                    // Handle the API response
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
+                    Log.d("path", " ${apiResponse?.filepath}")
+                    // Assuming path is a global variable
+                    val path = apiResponse?.filepath ?: ""
+
+                    // Continue with other actions after API response
+                    val calendar = Calendar.getInstance()
+                    calendar.add(Calendar.YEAR, 1)
+                    val futureDate = calendar.time
+                    val sqlDate = java.sql.Date(futureDate.time)
+
+                    perusahaan = Perusahaan(
+                        TINamaPerusahaan.editText?.text.toString(),
+                        Tvlatitude.text.toString().toDouble(),
+                        Tvlongitude.text.toString().toDouble(),
+                        stringToSqlTime(TIJammasuk.editText?.text.toString()),
+                        stringToSqlTime(TIJamkeluar.editText?.text.toString()),
+                        sqlDate,
+                        secretKey,
+                        path
+                    )
+
+                    val intent = Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
+                    val bundle = Bundle()
+                    bundle.putParcelable("perusahaan", perusahaan)
+                    intent.putExtra("data", bundle)
+                    startActivity(intent)
                 } else {
                     Log.e("ApiResponse", "Error: ${response.code()}")
                 }

@@ -1,4 +1,4 @@
-package com.windstrom5.tugasakhir
+package com.windstrom5.tugasakhir.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -12,7 +12,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.PopupWindow
 import android.widget.TextView
-import br.com.simplepass.loading_button_lib.customViews.CircularProgressEditText
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
@@ -24,6 +23,7 @@ import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.FirebaseApp
+import com.windstrom5.tugasakhir.R
 import org.json.JSONException
 import org.json.JSONObject
 import java.sql.Time
@@ -50,6 +50,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         FirebaseApp.initializeApp(this)
+
         textInputPerusahaan = binding.textInputperusahaan
         editTextPerusahaan = binding.ACperusahaan
         textInputEmail = binding.textInputEmail
@@ -67,7 +68,7 @@ class LoginActivity : AppCompatActivity() {
             login(editTextPerusahaan.toString(),editTextEmail.toString(),editTextPassword.toString())
         }
         register.setOnClickListener{
-            val intent = Intent(this,RegisterActivity::class.java)
+            val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
     }
@@ -88,9 +89,14 @@ class LoginActivity : AppCompatActivity() {
                     val jam_masuk = convertStringToTime(jam_masukStr)
                     val jam_keluar = convertStringToTime(jam_keluarStr)
                     val batasAktif = perusahaanObject.getString("batasAktif")
+                    val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val javaUtilDate = dateParser.parse(batasAktif)
+
+                    // Convert java.util.Date to java.sql.Date
+                    val sqlDate = java.sql.Date(javaUtilDate.time)
                     val logo = perusahaanObject.getString("logo")
                     val secretKey = perusahaanObject.getString("secret_key")
-                    val perusahaan = Perusahaan(nama, latitude, longitude, jam_masuk,jam_keluar,batasAktif, logo, secretKey)
+                    val perusahaan = Perusahaan(nama, latitude, longitude, jam_masuk,jam_keluar,sqlDate, logo, secretKey)
                     newPerusahaanList.add(perusahaan)
                 }
                 perusahaanList = newPerusahaanList
@@ -193,10 +199,12 @@ class LoginActivity : AppCompatActivity() {
                                 user.getString("profile")
                             )
                             sharedPreferencesManager.saveAdmin(admin)
+                            sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
                             val intent = Intent(this, AdminActivity::class.java)
                             val userBundle = Bundle()
                             userBundle.putParcelable("user", admin)
-                            intent.putExtra("user_bundle", userBundle)
+                            userBundle.putParcelable("perusahaan", matchingPerusahaan)
+                            intent.putExtra("data", userBundle)
                             startActivity(intent)
                         } else {
                             val pekerja = Pekerja(
@@ -208,13 +216,15 @@ class LoginActivity : AppCompatActivity() {
                                 user.getString("profile").toByteArray()
                             )
                             sharedPreferencesManager.savePekerja(pekerja)
+                            sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
                             val intent = Intent(this, UserActivity::class.java)
                             val userBundle = Bundle()
                             userBundle.putParcelable("user", pekerja)
-                            intent.putExtra("user_bundle", userBundle)
+                            userBundle.putParcelable("perusahaan", matchingPerusahaan)
+                            intent.putExtra("data", userBundle)
                             startActivity(intent)
                         }
-                        sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
+
                     } catch (e: JSONException) {
                         e.printStackTrace()
                     }

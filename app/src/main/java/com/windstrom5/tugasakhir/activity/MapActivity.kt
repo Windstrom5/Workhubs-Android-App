@@ -1,4 +1,4 @@
-package com.windstrom5.tugasakhir
+package com.windstrom5.tugasakhir.activity
 
 import android.content.Context
 import android.content.Intent
@@ -19,6 +19,7 @@ import org.osmdroid.views.MapView
 import com.windstrom5.tugasakhir.databinding.ActivityMapBinding
 import com.windstrom5.tugasakhir.location.CustomInfoWindow
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.windstrom5.tugasakhir.R
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.GeoPoint
@@ -123,6 +124,8 @@ class MapActivity : AppCompatActivity(){
             Bundle.putDouble("latitude", latitude)
             Bundle.putDouble("longitude", longitude)
             Bundle.putString("address", address)
+            Bundle.putString("openhour", openhour)
+            Bundle.putString("closehour", closehour)
             intent.putExtra("data", Bundle)
             startActivity(intent)
 //            finish()

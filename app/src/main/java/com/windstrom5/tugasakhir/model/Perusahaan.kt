@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.model
 
 import android.os.Parcel
 import android.os.Parcelable
+import java.sql.Date
 import java.sql.Time
 
 data class Perusahaan(
@@ -10,7 +11,7 @@ data class Perusahaan(
     val longitude: Double,
     val jam_masuk: Time,
     val jam_keluar: Time,
-    val batasAktif: String,
+    val batasAktif: Date,
     val logo: String,
     val secret_key: String,
 ): Parcelable {
@@ -20,7 +21,7 @@ data class Perusahaan(
         parcel.readDouble(),
         Time.valueOf(parcel.readString() ?: "00:00:00"),
         Time.valueOf(parcel.readString() ?: "00:00:00"),
-        parcel.readString() ?: "",
+        parcel.readSerializable() as Date,
         parcel.readString() ?: "",
         parcel.readString() ?: ""
     )
@@ -31,7 +32,7 @@ data class Perusahaan(
         parcel.writeDouble(longitude)
         parcel.writeString(jam_masuk.toString())
         parcel.writeString(jam_keluar.toString())
-        parcel.writeString(batasAktif)
+        parcel.writeSerializable(batasAktif)
         parcel.writeString(logo)
         parcel.writeString(secret_key)
     }

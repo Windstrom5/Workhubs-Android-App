@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RegisterAdminActivity"
+    tools:context=".activity.RegisterAdminActivity"
     android:focusableInTouchMode="true"
     android:gravity="center"
     android:background="@drawable/background"

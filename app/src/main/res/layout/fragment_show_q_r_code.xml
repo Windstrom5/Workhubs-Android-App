@@ -15,8 +15,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Nama Perusahaanr"
+        android:text="Nama Perusahaan"
         android:textSize="18sp"
         android:textColor="@android:color/white" />
 
+    <Button
+        android:id="@+id/downloadQr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:text="Download QR"
+        android:textSize="18sp" />
 </FrameLayout>
