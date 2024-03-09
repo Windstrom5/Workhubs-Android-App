@@ -10,15 +10,6 @@ import retrofit2.http.Part
 
 interface ApiService {
     @Multipart
-    @POST("upload") // Replace with your actual endpoint
-    fun uploadData(
-        @Part("email") email: RequestBody,
-        @Part("password") password: RequestBody,
-        @Part("tanggal") tanggal: RequestBody,
-        @Part image: MultipartBody.Part
-    ): Call<ResponseBody>
-
-    @Multipart
     @POST("DaftarPerusahaan")
     fun uploadPerusahaan(
         @Part("nama") nama: RequestBody,
@@ -34,7 +25,18 @@ interface ApiService {
     @Multipart
     @POST("DaftarAdmin")
     fun uploadAdmin(
-        @Part("id_perusahaan") id_perusahaan: RequestBody,
+        @Part("nama_perusahaan") nama_perusahaan: RequestBody,
+        @Part("email") email: RequestBody,
+        @Part("password") password: RequestBody,
+        @Part("nama") nama: RequestBody,
+        @Part("tanggal_lahir") tanggal_lahir: RequestBody,
+        @Part profile: MultipartBody.Part
+    ): Call<ApiResponse>
+
+    @Multipart
+    @POST("DaftarPekerja")
+    fun uploadPekerja(
+        @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("email") email: RequestBody,
         @Part("password") password: RequestBody,
         @Part("nama") nama: RequestBody,

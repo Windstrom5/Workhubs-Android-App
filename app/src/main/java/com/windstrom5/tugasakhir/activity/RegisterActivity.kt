@@ -113,28 +113,7 @@ class RegisterActivity : AppCompatActivity() {
         createnow.setOnClickListener {
             val secretKey = generateRandomString()
             makeApiRequest(secretKey)
-//            val calendar = Calendar.getInstance()
-//            calendar.add(Calendar.YEAR, 1)
-//            val futureDate = calendar.time
-//            val sqlDate = java.sql.Date(futureDate.time)
-//            perusahaan = Perusahaan(TINamaPerusahaan.editText?.text.toString(),
-//                Tvlatitude.text.toString().toDouble(),
-//                Tvlongitude.text.toString().toDouble(),
-//                stringToSqlTime(TIJammasuk.editText?.text.toString()),
-//                stringToSqlTime(TIJamkeluar.editText?.text.toString()),
-//                sqlDate,
-//                secretKey,
-//                path
-//            )
-//            val intent = Intent(this,RegisterAdminActivity::class.java)
-//            val Bundle = Bundle()
-//            Bundle.putParcelable("perusahaan", perusahaan)
-//            intent.putExtra("data", Bundle)
-//            startActivity(intent)
         }
-    }
-    private fun savePerusahaan(perusahaan2: Perusahaan){
-        perusahaan = perusahaan2
     }
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -162,7 +141,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "https://2349-36-80-222-40.ngrok-free.app/api/GetPerusahaan"
+        val apiUrl = "https://67e3-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -240,7 +219,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun makeApiRequest(secretKey: String) {
-        val url = "https://2349-36-80-222-40.ngrok-free.app/api/"
+        val url = "https://67e3-125-163-245-254.ngrok-free.app/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -271,10 +250,10 @@ class RegisterActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
-                    Log.d("path", " ${apiResponse?.filepath}")
+                    Log.d("path", " ${apiResponse?.profile_path}")
                     // Assuming path is a global variable
-                    val path = apiResponse?.filepath ?: ""
-
+                    val path = apiResponse?.profile_path ?: ""
+                    val id_perusahaan = apiResponse?.id ?: 0
                     // Continue with other actions after API response
                     val calendar = Calendar.getInstance()
                     calendar.add(Calendar.YEAR, 1)
@@ -282,16 +261,17 @@ class RegisterActivity : AppCompatActivity() {
                     val sqlDate = java.sql.Date(futureDate.time)
 
                     perusahaan = Perusahaan(
+                        id_perusahaan,
                         TINamaPerusahaan.editText?.text.toString(),
                         Tvlatitude.text.toString().toDouble(),
                         Tvlongitude.text.toString().toDouble(),
                         stringToSqlTime(TIJammasuk.editText?.text.toString()),
                         stringToSqlTime(TIJamkeluar.editText?.text.toString()),
                         sqlDate,
-                        secretKey,
-                        path
+                        path,
+                        secretKey
                     )
-
+                    Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
                     val intent = Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
                     val bundle = Bundle()
                     bundle.putParcelable("perusahaan", perusahaan)
@@ -312,86 +292,6 @@ class RegisterActivity : AppCompatActivity() {
         return RequestBody.create(MediaType.parse("text/plain"), value)
     }
 
-//    private fun makeApiRequest(secretKey: String) {
-//        val url = "https://1469-36-73-58-191.ngrok-free.app/api/DaftarPerusahaan"
-//        val jsonObject = JSONObject()
-//        try {
-//            jsonObject.put("nama", edNamaPerusahaan.text.toString())
-//            jsonObject.put("latitude", Tvlatitude.text.toString().toDouble())
-//            jsonObject.put("longitude", Tvlongitude.text.toString().toDouble())
-//            val jam_masuk = stringToSqlTime(TIJammasuk.editText?.text.toString())
-//            val jam_keluar = stringToSqlTime(TIJamkeluar.editText?.text.toString())
-//            jsonObject.put("jam_masuk", jam_masuk)
-//            jsonObject.put("jam_keluar", jam_keluar)
-//            val currentDate = Calendar.getInstance()
-//            currentDate.add(Calendar.YEAR, 1)
-//            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//            val formattedDate = dateFormat.format(currentDate.time)
-//            jsonObject.put("batas_aktif", formattedDate)
-//            jsonObject.put("secret_key", secretKey)
-//
-//            val volleyMultipartRequest = object : VolleyMultipartRequest(
-//                Method.POST, url,
-//                Response.Listener { response ->
-//                    createnow.stopAnimation()
-//                    MotionToast.createToast(
-//                        this,
-//                        "Success",
-//                        "Pendaftaran Perusahaan Sukses",
-//                        MotionToastStyle.SUCCESS,
-//                        MotionToast.GRAVITY_BOTTOM,
-//                        MotionToast.LONG_DURATION,
-//                        ResourcesCompat.getFont(
-//                            this,
-//                            www.sanju.motiontoast.R.font.helvetica_regular
-//                        )
-//                    )
-//                },
-//                Response.ErrorListener { error ->
-//                    createnow.stopAnimation()
-//                    MotionToast.createToast(
-//                        this,
-//                        "Error",
-//                        " ${error.message}",
-//                        MotionToastStyle.ERROR,
-//                        MotionToast.GRAVITY_BOTTOM,
-//                        MotionToast.LONG_DURATION,
-//                        ResourcesCompat.getFont(
-//                            this,
-//                            www.sanju.motiontoast.R.font.helvetica_regular
-//                        )
-//                    )
-//                }
-//            ) {
-//                override fun getParams(): Map<String, String> {
-//                    val params = HashMap<String, String>()
-//                    params["nama"] = edNamaPerusahaan.text.toString()
-//                    params["latitude"] = Tvlatitude.text.toString()
-//                    params["longitude"] = Tvlongitude.text.toString()
-//                    params["jam_masuk"] = TIJammasuk.editText?.text.toString()
-//                    params["jam_keluar"] = TIJamkeluar.editText?.text.toString()
-//                    params["batas_aktif"] = formattedDate
-//                    params["secret_key"] = secretKey
-//                    return params
-//                }
-//
-//                override fun getByteData(): Map<String, DataPart>? {
-//                    val params = HashMap<String, DataPart>()
-//                    params["logo"] = DataPart(
-//                        selectedFile.name,
-//                        AppHelper.getFileDataFromDrawable(selectedFile),
-//                        "image/*"
-//                    )
-//                    return params
-//                }
-//            }
-//
-//            // Add the request to the RequestQueue
-//            requestQueue.add(volleyMultipartRequest)
-//        } catch (e: JSONException) {
-//            e.printStackTrace()
-//        }
-//    }
 
     private fun getBundle() {
         bundle = intent?.getBundleExtra("data")

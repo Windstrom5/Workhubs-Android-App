@@ -104,20 +104,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="ADD TASK"
+                android:text="EDIT PROFILE"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/editProfileB"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="EDIT PROFILE"
-                android:textColor="#50C878"
-                app:layout_constraintBottom_toBottomOf="@+id/todoB"
-                app:layout_constraintStart_toEndOf="@+id/todoB" />
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/profileB"
@@ -372,7 +361,6 @@
             android:layout_height="128dp"
             android:layout_margin="8dp"
             android:layout_marginStart="16dp"
-            android:backgroundTint="@color/green"
             android:clickable="true"
             android:elevation="12dp"
             android:focusable="true"

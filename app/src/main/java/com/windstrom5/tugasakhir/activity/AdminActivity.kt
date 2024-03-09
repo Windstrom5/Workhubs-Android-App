@@ -1,21 +1,25 @@
 package com.windstrom5.tugasakhir.activity
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityAdminBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Perusahaan
 import java.util.Calendar
 
+
 class AdminActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdminBinding
+    private lateinit var profile : ImageView
     private lateinit var tv : TextView
     private var bundle: Bundle? = null
     private var perusahaan : Perusahaan? = null
@@ -44,28 +48,19 @@ class AdminActivity : AppCompatActivity() {
         val nama = admin?.nama
         tvnamaAdmin = binding.textView2
         tvnamaPerusahaan = binding.textView3
-        val text = "© $currentYear $namaPerusahaan. /nAll rights reserved."
+        val text = "© $currentYear $namaPerusahaan. \nAll rights reserved."
         tv = binding.courtesyNoticeTextView
         tv.setText(text)
         tvnamaAdmin.setText(nama)
         tvnamaPerusahaan.setText(namaPerusahaan)
-        absen.setOnTouchListener { _, event -> handleCardTouch(absen, event) }
-        lembur.setOnTouchListener { _, event -> handleCardTouch(lembur, event) }
-        dinas.setOnTouchListener { _, event -> handleCardTouch(dinas, event) }
-        izin.setOnTouchListener { _, event -> handleCardTouch(izin, event) }
-        company.setOnTouchListener { _, event -> handleCardTouch(company, event) }
-        cs.setOnTouchListener { _, event -> handleCardTouch(cs, event) }
-        absen.setOnClickListener{
-            val intent = Intent(this, AbsensiActivity::class.java)
-            val userBundle = Bundle()
-            userBundle.putParcelable("user", admin)
-            userBundle.putParcelable("perusahaan", perusahaan)
-            userBundle.putString("role","Admin")
-            intent.putExtra("data", userBundle)
-            startActivity(intent)
-        }
+        absen.setOnTouchListener { _, event -> handleCardTouch(absen, event, "AbsensiActivity") }
+        lembur.setOnTouchListener { _, event -> handleCardTouch(lembur, event, "LemburActivity") }
+        dinas.setOnTouchListener { _, event -> handleCardTouch(dinas, event, "DinasActivity") }
+        izin.setOnTouchListener { _, event -> handleCardTouch(izin, event, "IzinActivity") }
+        company.setOnTouchListener { _, event -> handleCardTouch(company, event, "CompanyActivity") }
+        cs.setOnTouchListener { _, event -> handleCardTouch(cs, event, "CsActivity") }
     }
-    private fun handleCardTouch(cardView: CardView, event: MotionEvent): Boolean {
+    private fun handleCardTouch(cardView: CardView, event: MotionEvent, activityName: String): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 // User pressed down, change background tint to green
@@ -74,10 +69,45 @@ class AdminActivity : AppCompatActivity() {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 // User released the click or canceled the click, revert to default color
                 cardView.setCardBackgroundColor(ContextCompat.getColor(this, R.color.whiteTextColor))
+                when (activityName) {
+                    "AbsensiActivity" -> {
+                        val intent = Intent(this, AbsensiActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "LemburActivity" -> {
+                        val intent = Intent(this, LemburActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "DinasActivity"-> {
+                        val intent = Intent(this, DinasActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "IzinActivity"-> {
+                        val intent = Intent(this, IzinActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "CompanyActivity"-> {
+                        val intent = Intent(this, CompanyActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "CsActivity"-> {
+                        val intent = Intent(this, LemburActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    // Add more cases for other activities
+                }
             }
         }
         // Return true to consume the touch event
         return true
+    }
+    private fun startActivityWithExtras(intent: Intent) {
+        val userBundle = Bundle()
+        userBundle.putParcelable("user", admin)
+        userBundle.putParcelable("perusahaan", perusahaan)
+        userBundle.putString("role", "Admin")
+        intent.putExtra("data", userBundle)
+        startActivity(intent)
     }
     private fun getBundle() {
         bundle = intent?.getBundleExtra("data")
@@ -85,6 +115,13 @@ class AdminActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
+                val imageUrl =
+                    "https://3fad-125-163-245-254.ngrok-free.app/storage/${admin?.profile}" // Replace with your Laravel image URL
+                val profileImageView = binding.profileB
+
+                Glide.with(this)
+                    .load(imageUrl)
+                    .into(profileImageView)
             }
         } else {
             Log.d("Error","Bundle Not Found")

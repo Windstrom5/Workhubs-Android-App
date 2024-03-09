@@ -82,39 +82,39 @@ class SessionRenewService: IntentService("SessionRenewService")  {
             null
         }
     }
-    companion object {
-        fun setServiceAlarm(context: Context, intervalMillis: Long) {
-            val intent = Intent(context, SessionRenewService::class.java)
-            val pendingIntent = PendingIntent.getService(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT  // Add mutability flag
-            )
-
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            alarmManager.setInexactRepeating(
-                AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + intervalMillis,
-                intervalMillis,
-                pendingIntent
-            )
-        }
-
-        fun cancelServiceAlarm(context: Context) {
-            val intent = Intent(context, SessionRenewService::class.java)
-            val pendingIntent = PendingIntent.getService(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            pendingIntent?.let {
-                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                alarmManager.cancel(it)
-                it.cancel()
-            }
-        }
-    }
+//    companion object {
+//        fun setServiceAlarm(context: Context, intervalMillis: Long) {
+//            val intent = Intent(context, SessionRenewService::class.java)
+//            val pendingIntent = PendingIntent.getService(
+//                context,
+//                0,
+//                intent,
+//                PendingIntent.FLAG_UPDATE_CURRENT  // Add mutability flag
+//            )
+//
+//            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//            alarmManager.setInexactRepeating(
+//                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+//                SystemClock.elapsedRealtime() + intervalMillis,
+//                intervalMillis,
+//                pendingIntent
+//            )
+//        }
+//
+//        fun cancelServiceAlarm(context: Context) {
+//            val intent = Intent(context, SessionRenewService::class.java)
+//            val pendingIntent = PendingIntent.getService(
+//                context,
+//                0,
+//                intent,
+//                PendingIntent.FLAG_UPDATE_CURRENT
+//            )
+//
+//            pendingIntent?.let {
+//                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+//                alarmManager.cancel(it)
+//                it.cancel()
+//            }
+//        }
+//    }
 }

@@ -6,6 +6,7 @@ import java.sql.Date
 import java.sql.Time
 
 data class Perusahaan(
+    val id: Int? = null,
     val nama: String,
     val latitude: Double,
     val longitude: Double,
@@ -16,6 +17,7 @@ data class Perusahaan(
     val secret_key: String,
 ): Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readValue(Int::class.java.classLoader) as? Int,
         parcel.readString() ?: "",
         parcel.readDouble(),
         parcel.readDouble(),
@@ -27,6 +29,7 @@ data class Perusahaan(
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeValue(id)
         parcel.writeString(nama)
         parcel.writeDouble(latitude)
         parcel.writeDouble(longitude)

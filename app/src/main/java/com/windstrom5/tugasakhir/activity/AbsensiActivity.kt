@@ -29,34 +29,32 @@ class AbsensiActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAbsensiBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        getBundle()
         fragment = binding.content
         navigation = binding.navigation
+        getBundle()
+        if (isFirstLaunch) {
+            replaceFragment(ShowQRCodeFragment())
+            isFirstLaunch = false
+        }
         navigation.setOnNavigationItemSelectedListener { menuItem ->
-            if (!isFirstLaunch) {
-                when (menuItem.itemId) {
-                    R.id.qrabsen -> {
-                        replaceFragment(ShowQRCodeFragment())
-                        true
-                    }
-                    R.id.trackPegawai -> {
-                        replaceFragment(TrackingFragment())
-                        true
-                    }
-                    R.id.absenuser -> {
-                        replaceFragment(ScanAbsensiFragment())
-                        true
-                    }
-                    R.id.historyabsen -> {
-                        replaceFragment(HistoryAbsenFragment())
-                        true
-                    }
-                    else -> false
+            when (menuItem.itemId) {
+                R.id.qrabsen -> {
+                    replaceFragment(ShowQRCodeFragment())
+                    true
                 }
-            } else {
-                // It's the first launch, do nothing or perform any setup needed
-                isFirstLaunch = false
-                true
+                R.id.trackPegawai -> {
+                    replaceFragment(TrackingFragment())
+                    true
+                }
+                R.id.absenuser -> {
+                    replaceFragment(ScanAbsensiFragment())
+                    true
+                }
+                R.id.historyabsen -> {
+                    replaceFragment(HistoryAbsenFragment())
+                    true
+                }
+                else -> false
             }
         }
     }

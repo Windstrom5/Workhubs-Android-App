@@ -57,7 +57,7 @@
                             android:foregroundGravity="center"
                             android:gravity="center"
                             android:text="Register Your Data"
-                            android:textSize="20sp" />
+                            android:textSize="30dp" />
 
                     </RelativeLayout>
                     <FrameLayout
@@ -79,7 +79,8 @@
                             android:layout_height="50dp"
                             android:src="@drawable/baseline_camera_alt_24"
                             android:layout_gravity="bottom|end"
-                            android:background="@color/whiteTextColor"/>
+                            android:background="@color/whiteTextColor"
+                            android:alpha="0.5"/>
                     </FrameLayout>
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputNama"
@@ -90,7 +91,6 @@ z
                             android:id="@+id/editTextPerusahaan"
                             style="@style/modifiedEditText"
                             android:hint="Masukkan Nama"
-                            app:startIconDrawable="@drawable/profile"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
                     <com.google.android.material.textfield.TextInputLayout
@@ -121,13 +121,17 @@ z
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputTanggal"
                         style="@style/parent"
-                        android:layout_marginTop="@dimen/loginViewsMargin">
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/baseline_calendar_month_24"
+                        app:endIconTint="@color/black"
+                        android:layout_marginTop="@dimen/loginViewsMargin"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false">
 
                         <EditText
                             android:id="@+id/editTextTanggal"
                             style="@style/modifiedEditText"
                             android:hint="Masukkan Tanggal Lahir"
-                            android:inputType="textEmailAddress"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
                     <Button

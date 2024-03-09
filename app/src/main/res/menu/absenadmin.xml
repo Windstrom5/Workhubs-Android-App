@@ -7,6 +7,6 @@
 
     <item
         android:id="@+id/trackPegawai"
-        android:title="Absensi Pegawai"
+        android:title="Track Pegawai"
         android:icon="@drawable/location"/>
 </menu>

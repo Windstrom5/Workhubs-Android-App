@@ -6,14 +6,15 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
-import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
@@ -26,6 +27,8 @@ import com.google.firebase.FirebaseApp
 import com.windstrom5.tugasakhir.R
 import org.json.JSONException
 import org.json.JSONObject
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,7 +68,10 @@ class LoginActivity : AppCompatActivity() {
         editTextPassword.addTextChangedListener(textWatcher)
         editTextPerusahaan.addTextChangedListener(textWatcher)
         login.setOnClickListener{
-            login(editTextPerusahaan.toString(),editTextEmail.toString(),editTextPassword.toString())
+            Log.d("Ambatukam5","Ambatukam5")
+            login(textInputPerusahaan.editText?.text.toString(),
+                textInputEmail.editText?.text.toString(),
+                textInputPassword.editText?.text.toString())
         }
         register.setOnClickListener{
             val intent = Intent(this, RegisterActivity::class.java)
@@ -74,12 +80,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "YOUR_API_URL"
-        val jsonArrayRequest = JsonArrayRequest(Request.Method.GET, url, null,
+        val url = "https://3fad-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
+        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
             { response ->
+                val perusahaanArray = response.getJSONArray("perusahaan")
                 val newPerusahaanList = mutableListOf<Perusahaan>()
-                for (i in 0 until response.length()) {
-                    val perusahaanObject = response.getJSONObject(i)
+                for (i in 0 until perusahaanArray.length()) {
+                    val perusahaanObject = perusahaanArray.getJSONObject(i)
                     val id = perusahaanObject.getInt("id")
                     val nama = perusahaanObject.getString("nama")
                     val latitude = perusahaanObject.getDouble("latitude")
@@ -88,7 +95,7 @@ class LoginActivity : AppCompatActivity() {
                     val jam_keluarStr = perusahaanObject.getString("jam_keluar")
                     val jam_masuk = convertStringToTime(jam_masukStr)
                     val jam_keluar = convertStringToTime(jam_keluarStr)
-                    val batasAktif = perusahaanObject.getString("batasAktif")
+                    val batasAktif = perusahaanObject.getString("batas_aktif")
                     val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val javaUtilDate = dateParser.parse(batasAktif)
 
@@ -96,7 +103,7 @@ class LoginActivity : AppCompatActivity() {
                     val sqlDate = java.sql.Date(javaUtilDate.time)
                     val logo = perusahaanObject.getString("logo")
                     val secretKey = perusahaanObject.getString("secret_key")
-                    val perusahaan = Perusahaan(nama, latitude, longitude, jam_masuk,jam_keluar,sqlDate, logo, secretKey)
+                    val perusahaan = Perusahaan(id,nama, latitude, longitude, jam_masuk,jam_keluar,sqlDate, logo, secretKey)
                     newPerusahaanList.add(perusahaan)
                 }
                 perusahaanList = newPerusahaanList
@@ -106,7 +113,7 @@ class LoginActivity : AppCompatActivity() {
                 error.printStackTrace()
             })
 
-        Volley.newRequestQueue(this).add(jsonArrayRequest)
+        Volley.newRequestQueue(this).add(jsonObjectRequest)
     }
     @SuppressLint("SimpleDateFormat")
     fun convertStringToTime(timeStr: String): Time {
@@ -172,10 +179,13 @@ class LoginActivity : AppCompatActivity() {
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(namaPerusahaan: String, email: String, password: String) {
-        val url = "YOUR_BACKEND_LOGIN_URL"
+        val url = "https://3fad-125-163-245-254.ngrok-free.app/api/login"
         val sharedPreferencesManager = SharedPreferencesManager(this)
         val matchingPerusahaan = perusahaanList.find { it.nama == namaPerusahaan }
         if (matchingPerusahaan != null) {
+            Log.d("Ambatukam1",namaPerusahaan)
+            Log.d("Ambatukam1",email)
+            Log.d("Ambatukam1",password)
             val jsonParams = JSONObject()
             jsonParams.put("email", email)
             jsonParams.put("password", password)
@@ -190,7 +200,8 @@ class LoginActivity : AppCompatActivity() {
                         sharedPreferencesManager.clearUserData()
                         if (role == "Admin") {
                             val admin = Admin(
-                                user.getInt("id_Perusahaan"),
+                                user.getInt("id"),
+                                user.getInt("id_perusahaan"),
                                 user.getString("email"),
                                 user.getString("password"),
                                 user.getString("nama"),
@@ -208,12 +219,13 @@ class LoginActivity : AppCompatActivity() {
                             startActivity(intent)
                         } else {
                             val pekerja = Pekerja(
-                                user.getInt("id_Perusahaan"),
+                                user.getInt("id"),
+                                user.getInt("id_perusahaan"),
                                 user.getString("email"),
                                 user.getString("password"),
                                 user.getString("nama"),
                                 parseDate(user.getString("tanggal_lahir")),
-                                user.getString("profile").toByteArray()
+                                user.getString("profile")
                             )
                             sharedPreferencesManager.savePekerja(pekerja)
                             sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
@@ -227,12 +239,16 @@ class LoginActivity : AppCompatActivity() {
 
                     } catch (e: JSONException) {
                         e.printStackTrace()
+                        Log.d("Ambatukam","Ambatukam")
                     }
                 },
                 { error ->
-                    // Handle error
-                    error.printStackTrace()
-
+                    MotionToast.createToast(this@LoginActivity, "Error",
+                        "Email atau Password Anda Salah",
+                        MotionToastStyle.ERROR,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(this@LoginActivity, R.font.ralewaybold))
                 }
             )
             Volley.newRequestQueue(this).add(request)

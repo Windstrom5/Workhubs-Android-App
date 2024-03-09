@@ -37,7 +37,7 @@
         android:layout_marginTop="16dp"
         android:gravity="center_horizontal"
         android:letterSpacing="0.025"
-        android:text="WORKHUBS PEGAWAI"
+        android:text="WORKHUBS ADMIN"
         android:textColor="@color/whiteTextColor"
         android:textSize="28sp"
         android:textStyle="bold"
@@ -104,7 +104,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="TASK LIST"
+                android:text="ADD TASK"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
@@ -147,7 +147,7 @@
         app:layout_constraintTop_toBottomOf="@+id/cardView">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/contributeCard"
+            android:id="@+id/AbsensiCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"
@@ -186,7 +186,7 @@
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/practiceCard"
+            android:id="@+id/LemburCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"
@@ -238,7 +238,7 @@
         app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/learnCard"
+            android:id="@+id/DinasCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"
@@ -277,7 +277,7 @@
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/interestsCard"
+            android:id="@+id/IzinCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"
@@ -328,7 +328,7 @@
         app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/helpCard"
+            android:id="@+id/CompanyCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"
@@ -367,7 +367,7 @@
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/settingsCard"
+            android:id="@+id/CustomerServiceCard"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_margin="8dp"

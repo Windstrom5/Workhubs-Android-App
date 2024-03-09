@@ -38,6 +38,7 @@ import com.windstrom5.tugasakhir.model.SecretKeyInfo
 import org.json.JSONException
 import org.json.JSONObject
 import com.windstrom5.tugasakhir.connection.Tracking
+import com.windstrom5.tugasakhir.model.Absen
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
 import java.security.MessageDigest
@@ -189,7 +190,7 @@ class ScanAbsensiFragment : Fragment() {
     }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "https://790e-36-80-222-40.ngrok-free.app/api/getAllSecretKeys"
+        val apiUrl = "http://127.0.0.1:8000/api/getAllSecretKeys"
 
         val jsonArrayRequest = JsonArrayRequest(
             Request.Method.GET, apiUrl, null,
@@ -235,7 +236,7 @@ class ScanAbsensiFragment : Fragment() {
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
         checkLocationPermission()
-        val url = "https://2349-36-80-222-40.ngrok-free.app/absen"
+        val url = "http://127.0.0.1:8000/absen"
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
         val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(calendar.time)
@@ -326,5 +327,45 @@ class ScanAbsensiFragment : Fragment() {
         } else {
             Log.d("Error","Bundle Not Found")
         }
+    }
+    private fun getHtmlTemplate(absen: Absen, perusahaan: Perusahaan, pekerja: Pekerja): String {
+        // Define your HTML template with placeholders for data
+        val template = """
+            <!DOCTYPE html>
+            <html>
+            
+            <head>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                    }
+            
+                    .company-name {
+                        font-weight: bold;
+                        font-size: 1.2em;
+                    }
+            
+                    .company-logo {
+                        max-width: 100px; /* Set a maximum width for the logo */
+                        max-height: 100px; /* Set a maximum height for the logo */
+                    }
+                </style>
+            </head>
+            <body>
+                <h2 class="company-name">Struk Bukti Absensi</h2>
+                <img class="company-logo" src="path_to_your_logo_image" alt="Company Logo">
+                <p><b>Nama Perusahaan:</b> ${perusahaan.nama}</p>
+                <p><b>Nama Pekerja:</b> ${pekerja.nama}</p>
+                <p><b>Jam Masuk:</b> ${absen.jamMasuk}</p>
+                <p><b>Jam Keluar:</b> ${absen.jamKeluar}</p>
+                <!-- Add more data as needed -->
+
+                <p>Terima kasih telah melakukan absensi.</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+        // Replace placeholders with actual data
+        return template
     }
 }

@@ -41,6 +41,8 @@ import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Date
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -66,13 +68,10 @@ class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var selectImage: ImageView
     private val CAMERA_PERMISSION_REQUEST = 124
     private val CAMERA_CAPTURE_REQUEST = 126
-    private var idPerusahaan: Int? = null
     private var tempImageFile: File? = null
     private lateinit var namaPerusahaan: String
     private var perusahaan : Perusahaan? = null
-    companion object {
-        private const val PICK_IMAGE_REQUEST_CODE = 1
-    }
+    private val PICK_IMAGE_REQUEST_CODE = 1
     private lateinit var requestQueue: RequestQueue
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,10 +90,10 @@ class RegisterAdminActivity : AppCompatActivity() {
             isFocusable = false
             isClickable = true
         }
-        selectImage.setOnClickListener{
+        selectImage.setOnClickListener {
             showImagePickerDialog()
         }
-        TITanggal.setOnClickListener{
+        TITanggal.setEndIconOnClickListener {
             val calendar = Calendar.getInstance()
 
             val datePicker = DatePickerDialog(
@@ -123,121 +122,98 @@ class RegisterAdminActivity : AppCompatActivity() {
             datePicker.show()
         }
         save = binding.cirsaveButton
-        save.setOnClickListener{
-            getPerusahaan(namaPerusahaan)
-            val url = "https://2349-36-80-222-40.ngrok-free.app/api/"
-            val retrofit = Retrofit.Builder()
-                .baseUrl(url)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
+        save.setOnClickListener {
+            perusahaan?.let { it1 -> saveData(it1) }
+        }
 
-            val apiService = retrofit.create(ApiService::class.java)
-            val id_perusahaan = RequestBody.create(MediaType.parse("text/plain"), idPerusahaan.toString())
-            val emailRequestBody = RequestBody.create(MediaType.parse("text/plain"), TIEmail.editText?.text.toString())
-            val passwordRequestBody = RequestBody.create(MediaType.parse("text/plain"), TIPassword.editText?.text.toString())
-            val nama = RequestBody.create(MediaType.parse("text/plain"), TINama.editText?.text.toString())
-            val tanggalRequestBody = RequestBody.create(MediaType.parse("text/plain"), selectedDateSqlFormat)
-            val imageRequestBody = RequestBody.create(MediaType.parse("image/*"), selectedImage)
-            val imagePart = MultipartBody.Part.createFormData("image", "image.jpg", imageRequestBody)
-            val call = apiService.uploadAdmin(id_perusahaan, emailRequestBody, passwordRequestBody, nama,tanggalRequestBody,
-                imagePart)
-            call.enqueue(object : Callback<ApiResponse> {
-                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()
-                        val jsonString = responseBody.toString()
+    }
+    private fun saveData(perusahaan: Perusahaan){
+        val url = "https://67e3-125-163-245-254.ngrok-free.app/api/"
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val apiService = retrofit.create(ApiService::class.java)
+        val nama_perusahaan = createPartFromString(perusahaan.nama.toString())
+        val emailRequestBody = createPartFromString(TIEmail.editText?.text.toString())
+        val passwordRequestBody = createPartFromString(TIPassword.editText?.text.toString())
+        val nama = createPartFromString(TINama.editText?.text.toString())
+        val tanggalRequestBody = createPartFromString(selectedDateSqlFormat.toString())
+        val profilePath = selectedFile
+        val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
+        val profilepath = MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
+        val call = apiService.uploadAdmin(nama_perusahaan, emailRequestBody, passwordRequestBody, nama,tanggalRequestBody,
+            profilepath)
 
-                        // Parse the JSON response to get the file path
-                        val jsonObject = JSONObject(jsonString)
-                        if (jsonObject.has("file_path")) {
-                            val filePath = jsonObject.getString("file_path")
-                            MotionToast.createToast(this@RegisterAdminActivity, "Success",
-                                "Berhasil Menyimpan Data",
-                                MotionToastStyle.SUCCESS,
-                                MotionToast.GRAVITY_BOTTOM,
-                                MotionToast.LONG_DURATION,
-                                ResourcesCompat.getFont(this@RegisterAdminActivity,
-                                    R.font.ralewaybold
-                                ))
-                            val intent = Intent(this@RegisterAdminActivity, AdminActivity::class.java)
-                            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val date = dateFormat.parse(TITanggal.editText?.text.toString())!!
-                            val admin = idPerusahaan?.let { it1 ->
-                                Admin(
-                                    it1,
+        call.enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    val apiResponse = response.body()
+                    val path = apiResponse?.profile_path ?: ""
+                    val id_Admin = apiResponse?.id ?: 0
+                    MotionToast.createToast(this@RegisterAdminActivity,
+                        "Success",
+                        "Berhasil Menyimpan Data",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(this@RegisterAdminActivity,
+                                R.font.ralewaybold))
+                    val intent = Intent(this@RegisterAdminActivity, AdminActivity::class.java)
+                    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                    val formattedDate = TITanggal.editText?.text.toString()
+                    try {
+                        val parsedDate: Date? = dateFormat.parse(formattedDate)
+                        val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val formattedDateSql = dateFormatSql.format(parsedDate)
+                        val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
+                        perusahaan.id?.let {
+                            if (parsedDateSql != null) {
+                                admin = Admin(
+                                    id_Admin,
+                                    it,
                                     TIEmail.editText?.text.toString(),
                                     TIPassword.editText?.text.toString(),
                                     TINama.editText?.text.toString(),
-                                    date,
-                                    filePath
+                                    parsedDateSql,
+                                    path
                                 )
                             }
-                            val sharedPreferencesManager = SharedPreferencesManager(this@RegisterAdminActivity)
-                            if (admin != null) {
-                                sharedPreferencesManager.saveAdmin(admin)
-                            }
-                            val userBundle = Bundle()
-                            userBundle.putParcelable("user", admin)
-                            userBundle.putParcelable("perusahaan", perusahaan)
-                            intent.putExtra("data", userBundle)
-                            startActivity(intent)
-                        } else {
-                            MotionToast.createToast(this@RegisterAdminActivity, "Error",
-                                "Kesalahan berpikir",
-                                MotionToastStyle.ERROR,
-                                MotionToast.GRAVITY_BOTTOM,
-                                MotionToast.LONG_DURATION,
-                                ResourcesCompat.getFont(this@RegisterAdminActivity,
-                                    R.font.ralewaybold
-                                ))
                         }
-
-                    } else {
-                        MotionToast.createToast(this@RegisterAdminActivity, "Error",
-                            "Tidak Dapat Menyimpan Data",
-                            MotionToastStyle.ERROR,
-                            MotionToast.GRAVITY_BOTTOM,
-                            MotionToast.LONG_DURATION,
-                            ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
+                        val sharedPreferencesManager = SharedPreferencesManager(this@RegisterAdminActivity)
+                        sharedPreferencesManager.saveAdmin(admin)
+                        val userBundle = Bundle()
+                        userBundle.putParcelable("user", admin)
+                        userBundle.putParcelable("perusahaan", perusahaan)
+                        intent.putExtra("data", userBundle)
+                        startActivity(intent)
+                    } catch (e: ParseException) {
+                        e.printStackTrace()
+                        // Handle parsing exception
                     }
-                }
 
-                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                    MotionToast.createToast(this@RegisterAdminActivity,
-                        "Failure",
-                        "Something went wrong",
+                } else {
+                    MotionToast.createToast(this@RegisterAdminActivity, "Error",
+                        "Tidak Dapat Menyimpan Data",
                         MotionToastStyle.ERROR,
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
                 }
-            })
-        }
-    }
+            }
 
-    private fun getPerusahaan(namaPerusahaan: String) {
-        val apiUrl = "https://2349-36-80-222-40.ngrok-free.app/api/namaPerusahaan/$namaPerusahaan"
-
-        val jsonObjectRequest = JsonObjectRequest(
-            Request.Method.GET, apiUrl, null,
-            { response ->
-                // Handle the JSON response
-                val perusahaanObject = response.getJSONObject("perusahaan")
-
-                // Extract relevant information from the perusahaanObject
-                idPerusahaan = perusahaanObject.getInt("id")
-            },
-            { error ->
-                // Handle error cases
-                Toast.makeText(
-                    applicationContext,
-                    "Error getting Perusahaan: ${error.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            })
-
-        // Add the request to the RequestQueue
-        requestQueue.add(jsonObjectRequest)
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                MotionToast.createToast(
+                    this@RegisterAdminActivity,
+                    "Failure",
+                    "Something went wrong",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold)
+                )
+            }
+        })
     }
 
     private fun createPartFromString(value: String): RequestBody {
@@ -248,46 +224,6 @@ class RegisterAdminActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         startActivityForResult(intent, PICK_IMAGE_REQUEST_CODE)
-    }
-    private fun uploadData(id_perusahaan: String) {
-        val url = "https://2349-36-80-222-40.ngrok-free.app/api/DaftarAdmin/"
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val apiService = retrofit.create(ApiService::class.java)
-
-        // Convert values to RequestBody
-        val id_Perusahaan = createPartFromString(id_perusahaan)
-        val email = createPartFromString(TIEmail.editText?.text.toString())
-        val password = createPartFromString(TIPassword.editText?.text.toString())
-        val nama = createPartFromString(TINama.editText?.text.toString())
-        val tanggal_lahir = createPartFromString(TITanggal.editText?.text.toString())
-        val logoFile = selectedFile
-        val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
-        val logoPart = MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
-
-        // Make the API call
-        val call = apiService.uploadAdmin(id_Perusahaan,email,password,nama, tanggal_lahir,logoPart)
-
-        // Execute the call asynchronously
-        call.enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                if (response.isSuccessful) {
-                    val apiResponse = response.body()
-                    // Handle the API response
-                    Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
-                } else {
-                    Log.e("ApiResponse", "Error: ${response.code()}")
-                }
-            }
-
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                Log.e("ApiResponse", "Request failed: ${t.message}")
-            }
-        })
     }
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -326,6 +262,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
         return null
     }
+
     private fun convertBitmapToFile(bitmap: Bitmap): File {
         // Create a temporary file
         val tempFile = File.createTempFile("temp_image", ".jpg", cacheDir)

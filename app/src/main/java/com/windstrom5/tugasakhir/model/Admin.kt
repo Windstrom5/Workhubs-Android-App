@@ -5,6 +5,7 @@ import android.os.Parcelable
 import java.util.Date
 
 data class Admin(
+    val id: Int? = null,
     val id_perusahaan:Int,
     val email: String,
     val password: String,
@@ -13,6 +14,7 @@ data class Admin(
     val profile: String
 ): Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readValue(Int::class.java.classLoader) as? Int,
         parcel.readInt(),
         parcel.readString() ?: "",
         parcel.readString() ?: "",
@@ -22,6 +24,7 @@ data class Admin(
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeValue(id)
         parcel.writeInt(id_perusahaan)
         parcel.writeString(email)
         parcel.writeString(password)
