@@ -57,7 +57,6 @@ class MapActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        Configuration.getInstance().userAgentValue = packageName
         save = binding.saveButton
         tvLatitudeLongitude = binding.tvLatitudeLongitude
         tvAddress = binding.tvAddress

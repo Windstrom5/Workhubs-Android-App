@@ -29,6 +29,7 @@ import org.osmdroid.views.overlay.Marker
 import java.sql.Date
 import com.pusher.client.Pusher;
 import com.pusher.client.PusherOptions;
+import com.windstrom5.tugasakhir.connection.WorkHubs
 import com.windstrom5.tugasakhir.model.Pekerja
 import org.json.JSONException
 
@@ -54,10 +55,7 @@ class TrackingFragment : Fragment() {
         initializeMap()
         requestQueue = Volley.newRequestQueue(requireContext())
         perusahaan?.let { getPekerja(it) }
-        val options = PusherOptions()
-        options.setCluster("mt1") // Replace with your Pusher cluster
-        val pusher = Pusher("7d7b48e62cefacc3b046", options)
-        pusher.connect()
+        val pusher = WorkHubs.pusher
         for (pekerja in pekerjaList) {
             val channel = pusher.subscribe("location-updates.${pekerja.nama}")
             channel.bind("App\\Events\\LocationUpdated") { event ->
@@ -70,12 +68,11 @@ class TrackingFragment : Fragment() {
                 updateMapMarker(locationUpdate)
             }
         }
-
         return view
     }
 
     private fun getPekerja(perusahaan: Perusahaan) {
-        val apiUrl = "http://127.0.0.1:8000/api/getPekerja/${perusahaan.nama}"
+        val apiUrl = "https://df0f-125-163-245-254.ngrok-free.app/api/getPekerja/${perusahaan.nama}"
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,

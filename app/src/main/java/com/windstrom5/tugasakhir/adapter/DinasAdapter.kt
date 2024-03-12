@@ -12,54 +12,51 @@ import android.widget.TextView
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.windstrom5.tugasakhir.R
-import com.windstrom5.tugasakhir.model.Absen
+import com.windstrom5.tugasakhir.model.Dinas
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
-class AbsenAdapter(
-    private val absenList: List<Absen>,
+class DinasAdapter(
+    private val dinasList: List<Dinas>,
     private val perusahaan: Perusahaan,
     private val pekerja: Pekerja
-) : RecyclerView.Adapter<AbsenAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<DinasAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tanggalTextView: TextView = view.findViewById(R.id.tanggal)
-        val jamTextView: TextView = view.findViewById(R.id.jam)
+        val tujuanTextView: TextView = view.findViewById(R.id.tujuan)
         val actionButton: Button = view.findViewById(R.id.actionButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.history_absen, parent, false)
+            .inflate(R.layout.history_dinas, parent, false)
 
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val absen = absenList[position]
+        val dinas = dinasList[position]
 
         // Bind data to views
-        holder.tanggalTextView.text = absen.tanggal.toString()
-        holder.jamTextView.text = absen.jamMasuk
+        holder.tanggalTextView.text = "${dinas.tanggal_berangkat} - ${dinas.tanggal_pulang}"
+        holder.tujuanTextView.text = dinas.tujuan
 
         // Set click listener for the action button
         holder.actionButton.setOnClickListener {
             // Handle button click, e.g., initiate download
-            val pdfHtml = getHtmlTemplate(absen, perusahaan, pekerja)
+            val pdfHtml = getHtmlTemplate(dinas, perusahaan, pekerja)
             generateAndDownloadPdf(holder.actionButton.context, pdfHtml)
         }
     }
 
     override fun getItemCount(): Int {
-        return absenList.size
+        return dinasList.size
     }
 
     private fun generateAndDownloadPdf(context: Context, htmlContent: String) {
@@ -94,7 +91,7 @@ class AbsenAdapter(
         context.startActivity(intent)
     }
 
-    private fun getHtmlTemplate(absen: Absen, perusahaan: Perusahaan, pekerja: Pekerja): String {
+    private fun getHtmlTemplate(dinas: Dinas, perusahaan: Perusahaan, pekerja: Pekerja): String {
         // Define your HTML template with placeholders for data
         val template = """
             <!DOCTYPE html>
@@ -102,7 +99,7 @@ class AbsenAdapter(
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Absence Receipt for Employee</title>
+                    <title>Work Assignment Receipt for Employee</title>
                     <style>
                         body {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -142,13 +139,16 @@ class AbsenAdapter(
                     </header>
                     <img src="[URL to Perusahaan Logo]" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
-                        <p><strong>Date Printed:</strong> ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())}</p>
-                        <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
-                        <p><strong>Worker Name:</strong> ${pekerja.nama}</p>
-                        <p><strong>Date Worked:</strong> [absen Date]</p>
-                        <p><strong>Check-in Time:</strong> ${absen.jamMasuk}</p>
-                        <p><strong>Check-out Time:</strong> ${absen.jamKeluar}</p>
-                        <p><strong>Total Hours Worked:</strong> ${calculateTotalHours(absen.jamMasuk,absen.jamKeluar)}</p>
+                        <p><strong>Date Printed:</strong> ${
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
+                Date()
+            )}</p>
+                <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
+                <p><strong>Worker Name:</strong> ${pekerja.nama}</p>
+                <p><strong>Date of Assignment:</strong> [dinas Date]</p>
+                <p><strong>Departure Time:</strong> ${dinas.tanggal_berangkat}</p>
+                <p><strong>Return Time:</strong> ${dinas.tanggal_pulang}</p>
+                <p><strong>Assigned Activity:</strong> ${dinas.kegiatan}</p>
                     </div>
                     <footer>
                         <p>Powered by Workhubs</p>
@@ -174,4 +174,3 @@ class AbsenAdapter(
         return String.format(Locale.getDefault(), "%d hours %02d minutes", hours, minutes)
     }
 }
-

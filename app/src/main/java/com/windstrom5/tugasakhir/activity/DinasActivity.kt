@@ -1,8 +1,10 @@
 package com.windstrom5.tugasakhir.activity
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -10,6 +12,7 @@ import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityDinasBinding
 import com.windstrom5.tugasakhir.fragment.AddDinasFragment
 import com.windstrom5.tugasakhir.fragment.HistoryAbsenFragment
+import com.windstrom5.tugasakhir.fragment.HistoryDinasFragment
 import com.windstrom5.tugasakhir.fragment.ScanAbsensiFragment
 import com.windstrom5.tugasakhir.fragment.ShowQRCodeFragment
 import com.windstrom5.tugasakhir.fragment.TrackingFragment
@@ -36,20 +39,12 @@ class DinasActivity : AppCompatActivity() {
         navigation.setOnNavigationItemSelectedListener { menuItem ->
             if (!isFirstLaunch) {
                 when (menuItem.itemId) {
-                    R.id.pendingdinas -> {
-                        replaceFragment(ShowQRCodeFragment())
-                        true
-                    }
                     R.id.historydinas -> {
-                        replaceFragment(TrackingFragment())
+                        replaceFragment(HistoryDinasFragment())
                         true
                     }
                     R.id.adddinas -> {
                         replaceFragment(AddDinasFragment())
-                        true
-                    }
-                    R.id.historydinaspegawai -> {
-                        replaceFragment(HistoryAbsenFragment())
                         true
                     }
                     else -> false
@@ -59,6 +54,24 @@ class DinasActivity : AppCompatActivity() {
                 isFirstLaunch = false
                 true
             }
+        }
+    }
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if(pekerja != null){
+            val userBundle = Bundle()
+            val intent = Intent(this, UserActivity::class.java)
+            userBundle.putParcelable("user", pekerja)
+            userBundle.putParcelable("perusahaan", perusahaan)
+            intent.putExtra("data", userBundle)
+            startActivity(intent)
+        }else{
+            val userBundle = Bundle()
+            val intent = Intent(this, AdminActivity::class.java)
+            userBundle.putParcelable("user", admin)
+            userBundle.putParcelable("perusahaan", perusahaan)
+            intent.putExtra("data", userBundle)
+            startActivity(intent)
         }
     }
     private fun replaceFragment(fragment: Fragment) {
@@ -85,10 +98,15 @@ class DinasActivity : AppCompatActivity() {
                 val role = it.getString("role")
                 if(role == "Admin"){
                     admin = it.getParcelable("user")
-                    navigation.inflateMenu(R.menu.absenadmin)
+                    navigation.visibility = View.GONE
                 }else{
                     pekerja = it.getParcelable("user")
+                    navigation.visibility = View.VISIBLE
                     navigation.inflateMenu(R.menu.absenuser)
+                    if (isFirstLaunch) {
+                        replaceFragment(ScanAbsensiFragment())
+                        isFirstLaunch = false
+                    }
                 }
             }
         } else {

@@ -10,10 +10,13 @@ import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
@@ -25,6 +28,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.ReaderException
@@ -32,13 +36,20 @@ import com.google.zxing.Result
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.activity.UserActivity
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import com.windstrom5.tugasakhir.model.SecretKeyInfo
 import org.json.JSONException
 import org.json.JSONObject
 import com.windstrom5.tugasakhir.connection.Tracking
+import com.windstrom5.tugasakhir.feature.QRCodeAnalyzer
 import com.windstrom5.tugasakhir.model.Absen
+import io.github.g00fy2.quickie.QRResult
+import io.github.g00fy2.quickie.ScanCustomCode
+import io.github.g00fy2.quickie.ScanQRCode
+import io.github.g00fy2.quickie.config.BarcodeFormat
+import io.github.g00fy2.quickie.config.ScannerConfig
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
 import java.security.MessageDigest
@@ -49,12 +60,14 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ScanAbsensiFragment : Fragment() {
+    val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
     private lateinit var requestQueue: RequestQueue // Add this line
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var previewView:PreviewView
+    private lateinit var button : Button
+    private lateinit var logo : ImageView
     private val LOCATION_PERMISSION_REQUEST_CODE = 123
-    private var perusahaan : Perusahaan? = null
-    private var pekerja : Pekerja? = null
+    private var perusahaan: Perusahaan? = null
+    private var pekerja: Pekerja? = null
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
     override fun onCreateView(
@@ -66,11 +79,43 @@ class ScanAbsensiFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        previewView = view.findViewById(R.id.previewView)
+        checkLocationPermission()
+        button = view.findViewById(R.id.absen)
         cameraExecutor = Executors.newSingleThreadExecutor()
+        logo = view.findViewById(R.id.logoImage)
         requestQueue = Volley.newRequestQueue(requireContext())
         getBundle()
-        startCamera()
+        val imageUrl =
+            "https://df0f-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+
+        Glide.with(this)
+            .load(imageUrl)
+            .into(logo)
+
+        button.setOnClickListener{
+            scanCustomCode.launch(
+                ScannerConfig.build {
+                    setOverlayStringRes(R.string.scan) // string resource used for the scanner overlay
+                }
+            )
+        }
+    }
+
+    fun handleResult(result: QRResult) {
+        // handle the QRResult
+        val resultString = result.toString()
+
+        // Extract rawValue using a simple substring or regex
+        val rawValue = extractRawValue(resultString)
+        // Use the extracted rawValue in your further processing
+        getAllSecretKeysFromApi(rawValue)
+    }
+
+    private fun extractRawValue(resultString: String): String {
+        // Example: QRSuccess(content=Plain(rawBytes=[...], rawValue=...))
+        val regex = Regex("rawValue=(\\w+)\\)")
+        val matchResult = regex.find(resultString)
+        return matchResult?.groups?.get(1)?.value ?: ""
     }
     private fun checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(
@@ -123,153 +168,84 @@ class ScanAbsensiFragment : Fragment() {
             e.printStackTrace()
         }
     }
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-
-        cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-            val preview = androidx.camera.core.Preview.Builder().build()
-                .also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setTargetResolution(Size(1920, 1080))
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-
-            imageAnalysis.setAnalyzer(cameraExecutor, QRCodeAnalyzer { qrCode ->
-                getAllSecretKeysFromApi(qrCode)
-            })
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, imageAnalysis
-                )
-            } catch (exc: Exception) {
-                // Handle exceptions
-            }
-        }, ContextCompat.getMainExecutor(requireContext()))
-    }
-
-    private class QRCodeAnalyzer(private val onQrCodeScanned: (String) -> Unit) :
-        ImageAnalysis.Analyzer {
-        private val reader = QRCodeReader()
-
-        override fun analyze(imageProxy: ImageProxy) {
-            val buffer = imageProxy.planes[0].buffer
-            val data = ByteArray(buffer.remaining())
-            buffer.get(data)
-
-            val source = PlanarYUVLuminanceSource(
-                data,
-                imageProxy.width,
-                imageProxy.height,
-                0,
-                0,
-                imageProxy.width,
-                imageProxy.height,
-                false
-            )
-
-            val bitmap = BinaryBitmap(HybridBinarizer(source))
-
-            try {
-                val result: Result = reader.decode(bitmap)
-                onQrCodeScanned(result.text)
-            } catch (e: ReaderException) {
-                // QR code not found in the image
-            }
-
-            imageProxy.close()
-        }
-    }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "http://127.0.0.1:8000/api/getAllSecretKeys"
-
-        val jsonArrayRequest = JsonArrayRequest(
+        val apiUrl = "https://df0f-125-163-245-254.ngrok-free.app/api/getAllSecretKeys"
+        val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
-
                 val secretKeysList = mutableListOf<SecretKeyInfo>()
-
-                for (i in 0 until response.length()) {
-                    val jsonObject = response.getJSONObject(i)
-                    val namaPerusahaan = jsonObject.getString("namaperusahaan")
-                    val secretKey = jsonObject.getString("secret_key")
-                    val jamMasuk = jsonObject.getString("jam_masuk")
-                    val jamKeluar = jsonObject.getString("jam_keluar")
+                val perusahaanArray = response.getJSONArray("perusahaan")
+                for (i in 0 until perusahaanArray.length()) {
+                    val perusahaanObject = perusahaanArray.getJSONObject(i)
+                    val namaPerusahaan = perusahaanObject.getString("nama")
+                    val secretKey = perusahaanObject.getString("secret_key")
+                    val jamMasuk = perusahaanObject.getString("jam_masuk")
+                    val jamKeluar = perusahaanObject.getString("jam_keluar")
                     secretKeysList.add(SecretKeyInfo(namaPerusahaan, secretKey, jamMasuk, jamKeluar))
                 }
-                compareSecretKeys(secretKeysList, qrCode)
+                // Compare QR code with API secret keys
+                val isValidQRCode = compareSecretKeys(secretKeysList, qrCode)
+                // Handle the result
+                if (isValidQRCode) {
+                    perusahaan?.let { pekerja?.let { it1 -> Absen(it, it1) } }
+                } else {
+                    MotionToast.createToast(requireActivity(), "Error",
+                        "QR CODE INVALID",
+                        MotionToastStyle.ERROR,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
+                }
             },
             { error ->
-                // Handle error cases
+                error.message?.let { Log.d("testing", it) }
             })
 
-        requestQueue.add(jsonArrayRequest)
+        requestQueue.add(jsonObjectRequest)
     }
 
-    private fun compareSecretKeys(apiSecretKeys: List<SecretKeyInfo>, qrCode: String) {
-        val hashedQrCode = md5(qrCode)
-
+    private fun compareSecretKeys(apiSecretKeys: List<SecretKeyInfo>, qrCode: String): Boolean {
         for ((namaPerusahaan, secretKey, jamMasuk, jamKeluar) in apiSecretKeys) {
             val hashedSecretKey = md5(secretKey)
-            if (hashedSecretKey == hashedQrCode) {
-                if(namaPerusahaan == perusahaan?.nama){
-                    perusahaan?.let { pekerja?.let { it1 -> Absen(it, it1) } }
-                    Toast.makeText(requireContext(), "Valid QR Code for $namaPerusahaan", Toast.LENGTH_SHORT).show()
-                    return
-                }
+            if (hashedSecretKey == qrCode && namaPerusahaan == perusahaan?.nama) {
+                Toast.makeText(requireContext(), "Valid QR Code for $namaPerusahaan", Toast.LENGTH_SHORT).show()
+                return true
             }
         }
 
-        // QR code is invalid
-        // Handle accordingly
-        Toast.makeText(requireContext(), "Invalid QR Code", Toast.LENGTH_SHORT).show()
+        // Invalid QR Code
+        return false
     }
+
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
-        checkLocationPermission()
-        val url = "http://127.0.0.1:8000/absen"
+        val url = "https://df0f-125-163-245-254.ngrok-free.app/api/Absensi"
+        Log.d("testing",url)
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
         val currentTime = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(calendar.time)
         val params = JSONObject()
-        try {
-            params.put("nama", pekerja.nama)
-            params.put("perusahaan", perusahaan.nama)
-            params.put("tanggal", currentDate)
-            params.put("jam_masuk", currentTime)
-            params.put("jam_keluar", currentTime)
-            params.put("latitude", latitude)
-            params.put("longitude", longitude)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
+        params.put("nama", pekerja.nama)
+        params.put("perusahaan", perusahaan.nama)
+        params.put("tanggal", currentDate)
+        params.put("jam", currentTime)
+        params.put("latitude", latitude)
+        params.put("longitude", longitude)
+        Log.d("testing",url)
         val request = JsonObjectRequest(
             Request.Method.POST, url, params,
             { response ->
-                fun onResponse(response: JSONObject) {
-                    // Handle the response from the server
-                    try {
-                        val status = response.getString("status")
-                        val message = response.getString("message")
-
-                        // Process the status and message accordingly
-                        if ("success" == status) {
-                            if(message == "Absen Started"){
-//                                val broadcastIntent = Intent("com.windstrom5.tugasakhir.ACTION_LOCATION_UPDATE")
-//                                broadcastIntent.putExtra("latitude", latitude)
-//                                broadcastIntent.putExtra("longitude", longitude)
-//                                context?.sendBroadcast(broadcastIntent)
-                                val startServiceIntent = Intent(requireActivity(), Tracking::class.java)
-                                requireActivity().startService(startServiceIntent)
+                Log.d("testing",url)
+                try {
+                    val message = response.getString("message")
+                    // Process the status and message accordingly
+                    when (message) {
+                        "Absen Started" -> {
+                            Log.d("testing3", "Done")
+                            val startServiceIntent = Intent(requireActivity(), Tracking::class.java)
+                            requireActivity().startService(startServiceIntent)
+                            requireActivity().runOnUiThread {
                                 MotionToast.createToast(
                                     requireActivity(),
                                     "Absen Startrd",
@@ -277,11 +253,19 @@ class ScanAbsensiFragment : Fragment() {
                                     MotionToastStyle.SUCCESS,
                                     MotionToast.GRAVITY_BOTTOM,
                                     MotionToast.LONG_DURATION,
-                                    ResourcesCompat.getFont(requireContext(), www.sanju.motiontoast.R.font.helveticabold)
+                                    ResourcesCompat.getFont(
+                                        requireContext(),
+                                        www.sanju.motiontoast.R.font.helveticabold
+                                    )
                                 )
-                            }else{
-                                val serviceIntent = Intent(requireContext(), Tracking::class.java)
-                                requireContext().stopService(serviceIntent)
+                            }
+                        }
+
+                        "Absen Ended" -> {
+                            Log.d("testing2",url)
+                            val serviceIntent = Intent(requireContext(), Tracking::class.java)
+                            requireContext().stopService(serviceIntent)
+                            requireActivity().runOnUiThread {
                                 MotionToast.createToast(
                                     requireActivity(),
                                     "Absen Completed",
@@ -289,16 +273,34 @@ class ScanAbsensiFragment : Fragment() {
                                     MotionToastStyle.SUCCESS,
                                     MotionToast.GRAVITY_BOTTOM,
                                     MotionToast.LONG_DURATION,
-                                    ResourcesCompat.getFont(requireContext(), www.sanju.motiontoast.R.font.helveticabold)
+                                    ResourcesCompat.getFont(
+                                        requireContext(),
+                                        www.sanju.motiontoast.R.font.helveticabold
+                                    )
                                 )
                             }
-
-                        } else {
-                            // Handle error
                         }
-                    } catch (e: JSONException) {
-                        e.printStackTrace()
+                        else -> {
+                            Log.d("testing1",url)
+                            requireActivity().runOnUiThread {
+                                MotionToast.createToast(
+                                    requireActivity(),
+                                    "Absen Failed",
+                                    "You can only absen within 15 minutes of the scheduled time. Please try again.",
+                                    MotionToastStyle.ERROR,
+                                    MotionToast.GRAVITY_BOTTOM,
+                                    MotionToast.LONG_DURATION,
+                                    ResourcesCompat.getFont(
+                                        requireContext(),
+                                        www.sanju.motiontoast.R.font.helveticabold
+                                    )
+                                )
+                            }
+                        }
                     }
+                } catch (e: JSONException) {
+                    e.printStackTrace()
+                    Log.d("testing",url)
                 }
             },
             { error ->
@@ -369,3 +371,35 @@ class ScanAbsensiFragment : Fragment() {
         return template
     }
 }
+
+//    private fun startCamera() {
+//        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+//
+//        cameraProviderFuture.addListener({
+//            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+//
+//            val preview = Preview.Builder().build().also {
+//                it.setSurfaceProvider(previewView.surfaceProvider)
+//            }
+//
+//            val imageAnalysis = ImageAnalysis.Builder()
+//                .setTargetResolution(Size(1920, 1080))
+//                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+//                .build()
+//
+//            imageAnalysis.setAnalyzer(cameraExecutor, QRCodeAnalyzer(scanningSquare) { qrCode ->
+//                getAllSecretKeysFromApi(qrCode)
+//            })
+//
+//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//
+//            try {
+//                cameraProvider.unbindAll()
+//                cameraProvider.bindToLifecycle(
+//                    this, cameraSelector, preview, imageAnalysis
+//                )
+//            } catch (exc: Exception) {
+//                // Handle exceptions
+//            }
+//        }, ContextCompat.getMainExecutor(requireContext()))
+//    }

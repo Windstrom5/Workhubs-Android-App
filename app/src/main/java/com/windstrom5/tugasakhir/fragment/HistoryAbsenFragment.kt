@@ -18,16 +18,6 @@ import com.windstrom5.tugasakhir.model.Perusahaan
 import org.json.JSONException
 import java.sql.Date
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [HistoryAbsenFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class HistoryAbsenFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
@@ -71,13 +61,9 @@ class HistoryAbsenFragment : Fragment() {
                             absenObject.getString("jamKeluar"),
                             absenObject.getDouble("latitude"),
                             absenObject.getDouble("longitude"),
-                            Date(absenObject.getLong("updatedAt"))
                         )
                         absenList.add(absen)
                     }
-
-                    // Now you have a list of Absen objects (absenList)
-                    // Pass this list to your RecyclerView adapter
                     setupRecyclerView(absenList)
                 } catch (e: JSONException) {
                     e.printStackTrace()

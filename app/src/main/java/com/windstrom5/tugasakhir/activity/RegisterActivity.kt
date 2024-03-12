@@ -141,7 +141,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "https://67e3-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
+        val apiUrl = "https://9ca5-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -219,7 +219,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun makeApiRequest(secretKey: String) {
-        val url = "https://67e3-125-163-245-254.ngrok-free.app/api/"
+        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)

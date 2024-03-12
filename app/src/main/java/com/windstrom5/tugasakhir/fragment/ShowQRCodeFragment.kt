@@ -116,7 +116,7 @@ class ShowQRCodeFragment : Fragment() {
     private fun addLogoAsWatermark(qrCodeBitmap: Bitmap, logoLink: String, logoSize: Int) {
         Glide.with(this)
             .asBitmap()
-            .load("https://3fad-125-163-245-254.ngrok-free.app/storage/${logoLink}")
+            .load("https://df0f-125-163-245-254.ngrok-free.app/storage/${logoLink}")
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     val resizedLogo = Bitmap.createScaledBitmap(

@@ -50,14 +50,14 @@ class UserActivity : AppCompatActivity() {
         tv.setText(text)
         tvnamaAdmin.setText(nama)
         tvnamaPerusahaan.setText(namaPerusahaan)
-        absen.setOnTouchListener { _, event -> handleCardTouch(absen, event) }
-        lembur.setOnTouchListener { _, event -> handleCardTouch(lembur, event) }
-        dinas.setOnTouchListener { _, event -> handleCardTouch(dinas, event) }
-        izin.setOnTouchListener { _, event -> handleCardTouch(izin, event) }
-        company.setOnTouchListener { _, event -> handleCardTouch(company, event) }
-        cs.setOnTouchListener { _, event -> handleCardTouch(cs, event) }
+        absen.setOnTouchListener { _, event -> handleCardTouch(absen, event, "AbsensiActivity") }
+        lembur.setOnTouchListener { _, event -> handleCardTouch(lembur, event, "LemburActivity") }
+        dinas.setOnTouchListener { _, event -> handleCardTouch(dinas, event, "DinasActivity") }
+        izin.setOnTouchListener { _, event -> handleCardTouch(izin, event, "IzinActivity") }
+        company.setOnTouchListener { _, event -> handleCardTouch(company, event, "CompanyActivity") }
+        cs.setOnTouchListener { _, event -> handleCardTouch(cs, event, "CsActivity") }
     }
-    private fun handleCardTouch(cardView: CardView, event: MotionEvent): Boolean {
+    private fun handleCardTouch(cardView: CardView, event: MotionEvent, activityName: String): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 // User pressed down, change background tint to green
@@ -66,10 +66,46 @@ class UserActivity : AppCompatActivity() {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 // User released the click or canceled the click, revert to default color
                 cardView.setCardBackgroundColor(ContextCompat.getColor(this, R.color.whiteTextColor))
+                when (activityName) {
+                    "AbsensiActivity" -> {
+                        val intent = Intent(this, AbsensiActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "LemburActivity" -> {
+                        val intent = Intent(this, LemburActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "DinasActivity"-> {
+                        val intent = Intent(this, DinasActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "IzinActivity"-> {
+                        val intent = Intent(this, IzinActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "CompanyActivity"-> {
+                        val intent = Intent(this, CompanyActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    "CsActivity"-> {
+                        val intent = Intent(this, LemburActivity::class.java)
+                        startActivityWithExtras(intent)
+                    }
+                    // Add more cases for other activities
+                }
             }
         }
         // Return true to consume the touch event
         return true
+    }
+    private fun startActivityWithExtras(intent: Intent) {
+        val userBundle = Bundle()
+        userBundle.putParcelable("user", pekerja)
+        Log.d("Testing",pekerja.toString())
+        userBundle.putParcelable("perusahaan", perusahaan)
+        userBundle.putString("role", "Pekerja")
+        intent.putExtra("data", userBundle)
+        startActivity(intent)
     }
     private fun getBundle() {
         bundle = intent?.getBundleExtra("data")

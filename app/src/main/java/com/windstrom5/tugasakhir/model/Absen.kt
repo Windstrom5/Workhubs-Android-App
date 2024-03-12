@@ -12,31 +12,28 @@ data class Absen(
     val jamMasuk: String, // Change to your preferred time representation (e.g., String)
     val jamKeluar: String, // Change to your preferred time representation (e.g., String)
     val latitude: Double,
-    val longitude: Double,
-    val updatedAt: Date
+    val longitude: Double
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readValue(Int::class.java.classLoader) as? Int,
         parcel.readInt(),
         parcel.readInt(),
-        Date(parcel.readLong()),
+        parcel.readSerializable() as Date,
         parcel.readString() ?: "", // Change to your preferred time representation (e.g., String)
         parcel.readString() ?: "", // Change to your preferred time representation (e.g., String)
         parcel.readDouble(),
         parcel.readDouble(),
-        Date(parcel.readLong())
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeValue(id)
         parcel.writeInt(idPekerja)
         parcel.writeInt(idPerusahaan)
-        parcel.writeLong(tanggal.time)
+        parcel.writeSerializable(tanggal)
         parcel.writeString(jamMasuk)
         parcel.writeString(jamKeluar)
         parcel.writeDouble(latitude)
         parcel.writeDouble(longitude)
-        parcel.writeLong(updatedAt.time)
     }
 
     override fun describeContents(): Int {

@@ -16,8 +16,12 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
+import com.pusher.client.Pusher
+import com.pusher.client.PusherOptions
+import com.pusher.client.channel.SubscriptionEventListener
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.adapter.ListAnggotaAdapter
+import com.windstrom5.tugasakhir.connection.WorkHubs
 import com.windstrom5.tugasakhir.databinding.ActivityCompanyBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
@@ -32,6 +36,7 @@ import java.util.Locale
 class CompanyActivity : AppCompatActivity() {
     private lateinit var binding : ActivityCompanyBinding
     private var admin : Admin? = null
+    private var pekerja : Pekerja? = null
     private var bundle: Bundle? = null
     private var perusahaan : Perusahaan? = null
     private lateinit var recyclerView: RecyclerView
@@ -51,6 +56,18 @@ class CompanyActivity : AppCompatActivity() {
         recyclerView.layoutManager = layoutManager
         requestQueue = Volley.newRequestQueue(this)
         perusahaan?.let { fetchDataFromApi(it.nama) }
+        // Inside your Android code (CompanyActivity or relevant component)
+        val pusher = WorkHubs.pusher
+        pusher.connect()
+        val channel = pusher.subscribe("pekerja-channel")
+        // Listen for PekerjaUpdated events
+//        channel.bind("App\\Events\\LocationUpdated") { event ->
+//            override fun onEvent(channelName: String?, eventName: String?, data: String?) {
+//                // Handle PekerjaUpdated event
+//                // You can update your UI or fetch the latest data here
+//                fetchDataFromApi(perusahaan.nama)
+//            }
+//        })
         addPekerja.setOnClickListener{
             val intent = Intent(this, RegisterPekerjaActivity::class.java)
             val userBundle = Bundle()
@@ -62,7 +79,7 @@ class CompanyActivity : AppCompatActivity() {
         }
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val apiUrl = "https://3fad-125-163-245-254.ngrok-free.app/api/getAnggota/$namaPerusahaan"
+        val apiUrl = "https://9ca5-125-163-245-254.ngrok-free.app/api/getAnggota/$namaPerusahaan"
         val jsonArrayRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
@@ -171,15 +188,16 @@ class CompanyActivity : AppCompatActivity() {
         if (bundle != null) {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
-                admin = it.getParcelable("user")
                 val role = it.getString("role")
                 if(role == "Admin"){
+                    admin = it.getParcelable("user")
                     addPekerja.visibility = View.VISIBLE
                 }else{
+                    pekerja = it.getParcelable("user")
                     addPekerja.visibility = View.GONE
                 }
                 val imageUrl =
-                    "https://3fad-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "https://9ca5-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.companyLogoImageView
                 val text = binding.headerText
                 text.setText("List Anggota \nPerusahaan ${perusahaan?.nama}")
@@ -189,6 +207,24 @@ class CompanyActivity : AppCompatActivity() {
             }
         } else {
             Log.d("Error","Bundle Not Found")
+        }
+    }
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if(pekerja != null){
+            val userBundle = Bundle()
+            val intent = Intent(this, UserActivity::class.java)
+            userBundle.putParcelable("user", pekerja)
+            userBundle.putParcelable("perusahaan", perusahaan)
+            intent.putExtra("data", userBundle)
+            startActivity(intent)
+        }else{
+            val userBundle = Bundle()
+            val intent = Intent(this, AdminActivity::class.java)
+            userBundle.putParcelable("user", admin)
+            userBundle.putParcelable("perusahaan", perusahaan)
+            intent.putExtra("data", userBundle)
+            startActivity(intent)
         }
     }
 }

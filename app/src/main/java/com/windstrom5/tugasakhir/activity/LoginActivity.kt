@@ -52,8 +52,6 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        FirebaseApp.initializeApp(this)
-
         textInputPerusahaan = binding.textInputperusahaan
         editTextPerusahaan = binding.ACperusahaan
         textInputEmail = binding.textInputEmail
@@ -80,7 +78,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "https://3fad-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
+        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
         val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
             { response ->
                 val perusahaanArray = response.getJSONArray("perusahaan")
@@ -179,13 +177,10 @@ class LoginActivity : AppCompatActivity() {
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(namaPerusahaan: String, email: String, password: String) {
-        val url = "https://3fad-125-163-245-254.ngrok-free.app/api/login"
+        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/login"
         val sharedPreferencesManager = SharedPreferencesManager(this)
         val matchingPerusahaan = perusahaanList.find { it.nama == namaPerusahaan }
         if (matchingPerusahaan != null) {
-            Log.d("Ambatukam1",namaPerusahaan)
-            Log.d("Ambatukam1",email)
-            Log.d("Ambatukam1",password)
             val jsonParams = JSONObject()
             jsonParams.put("email", email)
             jsonParams.put("password", password)
@@ -198,6 +193,7 @@ class LoginActivity : AppCompatActivity() {
                         val user = response.getJSONObject("user")
                         val role = response.getString("Role")
                         sharedPreferencesManager.clearUserData()
+                        Log.d("Role",role)
                         if (role == "Admin") {
                             val admin = Admin(
                                 user.getInt("id"),
@@ -239,7 +235,6 @@ class LoginActivity : AppCompatActivity() {
 
                     } catch (e: JSONException) {
                         e.printStackTrace()
-                        Log.d("Ambatukam","Ambatukam")
                     }
                 },
                 { error ->

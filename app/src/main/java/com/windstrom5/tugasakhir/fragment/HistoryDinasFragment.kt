@@ -1,60 +1,118 @@
 package com.windstrom5.tugasakhir.fragment
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ExpandableListView
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.adapter.DinasExpandablePekerjaListAdapter
+import com.windstrom5.tugasakhir.model.Admin
+import com.windstrom5.tugasakhir.model.Dinas
+import com.windstrom5.tugasakhir.model.Pekerja
+import com.windstrom5.tugasakhir.model.Perusahaan
+import org.json.JSONObject
+import java.util.Date
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [HistoryDinasFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class HistoryDinasFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private lateinit var expandableListView: ExpandableListView
+    private lateinit var dinasListAdapter: DinasExpandablePekerjaListAdapter
+    private var perusahaan : Perusahaan? = null
+    private var admin : Admin? = null
+    private var pekerja : Pekerja? = null
+    private var role : String? = null
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        expandableListView = view.findViewById(R.id.expandableListView)
+        getBundle()
+    }
+    private fun fetchDataFromApiPekerja(companyName: String,pekerjaName: String) {
+        val queue = Volley.newRequestQueue(requireContext())
+        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api//getDataLemburPekerja/$companyName/$pekerjaName"
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+        val stringRequest = StringRequest(
+            Request.Method.GET, url,
+            { response ->
+                // Parse the JSON response and update the adapter
+                updateAdapterWithResponse(response)
+            },
+            { error ->
+                // Handle error
+                error.printStackTrace()
+            })
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest)
+    }
+    private fun fetchDataFromApiAdmin(companyName: String) {
+        val queue = Volley.newRequestQueue(requireContext())
+        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/getDataLemburPerusahaan/$companyName"
+
+        val stringRequest = StringRequest(
+            Request.Method.GET, url,
+            { response ->
+                // Parse the JSON response and update the adapter
+                updateAdapterWithResponse(response)
+            },
+            { error ->
+                // Handle error
+                error.printStackTrace()
+            })
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest)
+    }
+    private fun getBundle() {
+        val arguments = arguments
+        if (arguments != null) {
+            perusahaan = arguments.getParcelable("perusahaan")
+            role = arguments.getString("role")
+            if(role == "Admin"){
+                perusahaan?.let { fetchDataFromApiAdmin(it.nama) }
+                admin = arguments.getParcelable("user")
+            }else{
+                pekerja = arguments.getParcelable("user")
+                perusahaan?.let { pekerja?.let { it1 -> fetchDataFromApiPekerja(it.nama, it1.nama) } }
+            }
+        } else {
+            Log.d("Error","Bundle Not Found")
         }
     }
+    private fun updateAdapterWithResponse(response: String) {
+        val dinasList: MutableList<Dinas> = mutableListOf()
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_history_dinas, container, false)
-    }
+        try {
+            val jsonObject = JSONObject(response)
+            val dataArray = jsonObject.getJSONArray("data")
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment HistoryDinasFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            HistoryDinasFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+            for (i in 0 until dataArray.length()) {
+                val dinasObject = dataArray.getJSONObject(i)
+                val dinas = Dinas(
+                    dinasObject.optInt("id"),
+                    dinasObject.optInt("id_pekerja"),
+                    dinasObject.optInt("id_perusahaan"),
+                    dinasObject.optString("tujuan"),
+                    Date(dinasObject.optLong("tanggal_berangkat")),
+                    Date(dinasObject.optLong("tanggal_pulang")),
+                    dinasObject.optString("kegiatan"),
+                    dinasObject.optString("bukti"),
+                    dinasObject.optString("status")
+                )
+                dinasList.add(dinas)
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Update the adapter with the new data
+        dinasListAdapter = DinasExpandablePekerjaListAdapter(requireContext(), dinasList)
+        expandableListView.setAdapter(dinasListAdapter)
+        dinasListAdapter.notifyDataSetChanged()
     }
 }
