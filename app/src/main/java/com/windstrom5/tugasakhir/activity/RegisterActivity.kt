@@ -7,8 +7,10 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -63,6 +65,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var textViewProgress: TextView
     private lateinit var textViewCustom:TextView
     private val boundary = "*****"
+    private lateinit var loading : LinearLayout
     private lateinit var path : String
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 123
@@ -75,9 +78,7 @@ class RegisterActivity : AppCompatActivity() {
         location = binding.selectLocationButton
         TINamaPerusahaan = binding.textInputPerusahaan
         TIJamkeluar = binding.textInputkeluar
-        progressBar = findViewById<ProgressBar>(R.id.progressBar)
-        textViewProgress  = findViewById<TextView>(R.id.textViewProgress)
-        textViewCustom = findViewById<TextView>(R.id.textViewCustom)
+        loading = findViewById(R.id.layout_loading)
         TIJammasuk = binding.textInputMasuk
         edNamaPerusahaan = binding.editTextPerusahaan
         tvaddress = binding.tvAddress
@@ -111,8 +112,21 @@ class RegisterActivity : AppCompatActivity() {
             pickImageFromGallery()
         }
         createnow.setOnClickListener {
+            setLoading(true)
             val secretKey = generateRandomString()
             makeApiRequest(secretKey)
+        }
+    }
+    private fun setLoading(isLoading:Boolean){
+        if(isLoading){
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            )
+            loading!!.visibility = View.VISIBLE
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            loading!!.visibility = View.INVISIBLE
         }
     }
     private fun pickImageFromGallery() {
@@ -141,7 +155,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "https://9ca5-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
+        val apiUrl = "http://192.168.1.6:8000/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -219,7 +233,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun makeApiRequest(secretKey: String) {
-        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -271,6 +285,7 @@ class RegisterActivity : AppCompatActivity() {
                         path,
                         secretKey
                     )
+                    setLoading(false)
                     Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
                     val intent = Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
                     val bundle = Bundle()
@@ -283,6 +298,7 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                setLoading(false)
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })

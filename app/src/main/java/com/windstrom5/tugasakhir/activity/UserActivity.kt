@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityUserBinding
 import com.windstrom5.tugasakhir.model.Admin
@@ -113,6 +114,13 @@ class UserActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 pekerja = it.getParcelable("user")
+                val imageUrl =
+                    "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                val profileImageView = binding.profileB
+
+                Glide.with(this)
+                    .load(imageUrl)
+                    .into(profileImageView)
             }
         } else {
             Log.d("Error","Bundle Not Found")

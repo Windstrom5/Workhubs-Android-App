@@ -33,9 +33,9 @@ class DinasActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityDinasBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        getBundle()
         fragment = binding.content
         navigation = binding.navigation
+        getBundle()
         navigation.setOnNavigationItemSelectedListener { menuItem ->
             if (!isFirstLaunch) {
                 when (menuItem.itemId) {
@@ -80,8 +80,10 @@ class DinasActivity : AppCompatActivity() {
 
         if (admin != null) {
             args.putParcelable("user", admin)
+            args.putString("role","Admin")
         } else if (pekerja != null) {
-            args.putParcelable("usera", pekerja)
+            args.putParcelable("user", pekerja)
+            args.putString("role","Pekerja")
         }
         args.putParcelable("perusahaan",perusahaan)
         fragment.arguments = args
@@ -96,15 +98,16 @@ class DinasActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 val role = it.getString("role")
-                if(role == "Admin"){
+                if(role.toString() == "Admin"){
                     admin = it.getParcelable("user")
+                    replaceFragment(HistoryDinasFragment())
                     navigation.visibility = View.GONE
                 }else{
                     pekerja = it.getParcelable("user")
                     navigation.visibility = View.VISIBLE
-                    navigation.inflateMenu(R.menu.absenuser)
+                    navigation.inflateMenu(R.menu.dinasuser)
                     if (isFirstLaunch) {
-                        replaceFragment(ScanAbsensiFragment())
+                        replaceFragment(AddDinasFragment())
                         isFirstLaunch = false
                     }
                 }

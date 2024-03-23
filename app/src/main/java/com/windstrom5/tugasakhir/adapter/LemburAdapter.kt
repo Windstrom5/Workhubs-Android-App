@@ -1,98 +1,164 @@
 package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
-import android.content.Intent
-import android.graphics.pdf.PdfDocument
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
+import android.widget.BaseExpandableListAdapter
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.FileProvider
-import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.app.AppCompatActivity
 import com.windstrom5.tugasakhir.R
-import com.windstrom5.tugasakhir.model.Izin
-import com.windstrom5.tugasakhir.model.Lembur
-import com.windstrom5.tugasakhir.model.Pekerja
-import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
+import com.windstrom5.tugasakhir.model.LemburItem
+import com.windstrom5.tugasakhir.model.historyLembur
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.itextpdf.html2pdf.ConverterProperties
+import com.itextpdf.html2pdf.HtmlConverter
 
-class LemburAdapter (
-    private val lemburList: List<Lembur>,
-    private val perusahaan: Perusahaan,
-    private val pekerja: Pekerja
-) : RecyclerView.Adapter<LemburAdapter.ViewHolder>() {
-
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tanggalTextView: TextView = view.findViewById(R.id.tanggal)
-        val jamTextView: TextView = view.findViewById(R.id.jam)
-        val actionButton: Button = view.findViewById(R.id.actionButton)
+class LemburAdapter(
+    private val context: Context,
+    private val statusWithLemburList: List<historyLembur>,
+    private val Role:String
+) : BaseExpandableListAdapter() {
+    private val rotationAngleExpanded = 180f
+    private val rotationAngleCollapsed = 0f
+    override fun getGroupCount(): Int {
+        return statusWithLemburList.size
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.history_lembur, parent, false)
-
-        return ViewHolder(view)
+    override fun getChildrenCount(groupPosition: Int): Int {
+        return statusWithLemburList[groupPosition].lemburList.size
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val lembur = lemburList[position]
+    override fun getGroup(groupPosition: Int): Any {
+        return statusWithLemburList[groupPosition].status
+    }
 
-        // Bind data to views
-        holder.tanggalTextView.text = lembur.tanggal.toString()
-        holder.jamTextView.text = "${lembur.waktu_masuk} - ${lembur.waktu_pulang}"
+    override fun getChild(groupPosition: Int, childPosition: Int): Any {
+        return statusWithLemburList[groupPosition].lemburList[childPosition]
+    }
 
-        // Set click listener for the action button
-        holder.actionButton.setOnClickListener {
-            // Handle button click, e.g., initiate download
-            val pdfHtml = getHtmlTemplate(lembur, perusahaan, pekerja)
-            generateAndDownloadPdf(holder.actionButton.context, pdfHtml)
+    override fun getGroupId(groupPosition: Int): Long {
+        return groupPosition.toLong()
+    }
+
+    override fun getChildId(groupPosition: Int, childPosition: Int): Long {
+        return childPosition.toLong()
+    }
+
+    override fun hasStableIds(): Boolean {
+        return true
+    }
+
+    override fun getGroupView(
+        groupPosition: Int,
+        isExpanded: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
+        val status = getGroup(groupPosition) as String
+        val view =
+            convertView ?: LayoutInflater.from(context).inflate(R.layout.list_group, parent, false)
+        view.findViewById<TextView>(R.id.title).text = status
+        val arrowLogo = view.findViewById<ImageView>(R.id.arrowLogo)
+        if (isExpanded) {
+            arrowLogo.rotation = rotationAngleExpanded
+        } else {
+            arrowLogo.rotation = rotationAngleCollapsed
         }
+        return view
+    }
+    override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
+        return true
+    }
+    override fun getChildView(
+        groupPosition: Int,
+        childPosition: Int,
+        isLastChild: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
+        val lembur = getChild(groupPosition, childPosition) as LemburItem
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.history_lembur, parent, false)
+        val tanggal = view.findViewById<TextView>(R.id.tanggal)
+        val jam = view.findViewById<TextView>(R.id.jam)
+        val actionButton = view.findViewById<Button>(R.id.actionButton)
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
+        val tanggalFormatted = dateFormatter.format(lembur.tanggal)
+        val jammasuk = timeFormatter.format(lembur.waktu_masuk)
+        val jamkeluar = timeFormatter.format(lembur.waktu_pulang)
+        tanggal.text = tanggalFormatted
+        jam.text = "$jammasuk - $jamkeluar"
+        if (Role == "Admin") {
+            val buttonText = when (lembur.status) {
+                "Pending" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Respond \nLembur"
+                }
+
+                "Accept" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "View \nData"
+                }
+
+                else -> {
+                    actionButton.visibility = View.GONE
+                    "View \nData"
+                }
+            }
+            actionButton.text = buttonText
+
+            actionButton.setOnClickListener {
+                if (actionButton.text == "Download Receipt") {
+                    getHtmlTemplate(lembur)
+                }
+            }
+        } else {
+            val buttonText = when (lembur.status) {
+                "Pending" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Edit \nData"
+                }
+
+                "Accept" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Download \nReceipt"
+                }
+
+                else -> {
+                    actionButton.visibility = View.GONE
+                    "View \nData"
+                }
+            }
+            actionButton.text = buttonText
+            actionButton.setOnClickListener {
+                if (actionButton.text == "Download Receipt") {
+                    val htmlContent = getHtmlTemplate(lembur)
+                    generatePdfFromHtml(htmlContent)
+                } else if (actionButton.text == "Respond Lembur") {
+                    val fragmentManager = (context as AppCompatActivity).supportFragmentManager
+                    val previewDialogFragment = PreviewDialogFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("lembur",lembur) // Pass different object for lembur
+                    bundle.putString("layoutType", "lembur_layout") // Add layout type here
+                    previewDialogFragment.arguments = bundle
+                    previewDialogFragment.show(fragmentManager, "preview_dialog")
+                }
+            }
+        }
+        return view
     }
 
-    override fun getItemCount(): Int {
-        return lemburList.size
-    }
-
-    private fun generateAndDownloadPdf(context: Context, htmlContent: String) {
-        val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas = page.canvas
-
-        val webView = WebView(context)
-        webView.layout(0, 0, webView.width, webView.height)
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "utf-8", null)
-        webView.draw(canvas)
-
-        pdfDocument.finishPage(page)
-
-        // Save the PDF file
-        val file = File(context.cacheDir, "absen_pdf.pdf")
-        val fileOutputStream = FileOutputStream(file)
-        pdfDocument.writeTo(fileOutputStream)
-        pdfDocument.close()
-        fileOutputStream.close()
-
-        // Open the PDF file using an Intent
-        val uri = FileProvider.getUriForFile(
-            context,
-            "your.package.name.provider",
-            file
-        )
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(uri, "application/pdf")
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        context.startActivity(intent)
-    }
-
-    private fun getHtmlTemplate(lembur: Lembur, perusahaan: Perusahaan, pekerja: Pekerja): String {
+    private fun getHtmlTemplate(lembur: LemburItem): String {
         // Define your HTML template with placeholders for data
         val template = """
             <!DOCTYPE html>
@@ -143,9 +209,10 @@ class LemburAdapter (
                         <p><strong>Date Printed:</strong> ${
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
                 Date()
-            )}</p>
-                    <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
-                    <p><strong>Worker Name:</strong> ${pekerja.nama}</p>
+            )
+        }</p>
+                    <p><strong>Company Name:</strong> ${lembur.nama_perusahaan}</p>
+                    <p><strong>Worker Name:</strong> ${lembur.nama_pekerja}</p>
                     <p><strong>Date Worked:</strong> ${lembur.tanggal}</p>
                     <p><strong>Check-in Time:</strong> ${lembur.waktu_masuk}</p>
                     <p><strong>Check-out Time:</strong> ${lembur.waktu_pulang}</p>
@@ -162,16 +229,13 @@ class LemburAdapter (
         // Replace placeholders with actual data
         return template
     }
+    private fun generatePdfFromHtml(htmlContent: String) {
+        val outputPdfFile = File(context.getExternalFilesDir(null), "receipt.pdf")
+        val outputStream = FileOutputStream(outputPdfFile)
+        val converterProperties = ConverterProperties()
+        HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+        outputStream.close()
 
-    private fun calculateTotalHours(startTime: String, endTime: String): String {
-        val format = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val start = format.parse(startTime)
-        val end = format.parse(endTime)
-
-        val diff = end.time - start.time
-        val hours = diff / (60 * 60 * 1000)
-        val minutes = (diff % (60 * 60 * 1000)) / (60 * 1000)
-
-        return String.format(Locale.getDefault(), "%d hours %02d minutes", hours, minutes)
+        // PDF is generated, you can now save it or share it as needed
     }
 }

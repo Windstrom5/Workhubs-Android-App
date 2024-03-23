@@ -84,16 +84,17 @@
                         android:layout_height="60dp">
 
                         <AutoCompleteTextView
-                            android:id="@+id/acasal"
+                            android:id="@+id/acizin"
                             android:layout_width="match_parent"
-                            android:layout_height="47dp"
+                            android:layout_height="wrap_content"
                             android:background="#E5E4E2"
+                            android:inputType="none"
                             android:hint="Pilih Kategori Izin"
                             android:textSize="15dp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/pekerjaan"
+                        android:id="@+id/alasan"
                         android:layout_width="match_parent"
                         android:layout_height="120dp"
                         android:layout_marginTop="15dp"
@@ -177,11 +178,11 @@
 
                     </androidx.cardview.widget.CardView>
                     <Button
-                        android:id="@+id/cirsaveButton"
+                        android:id="@+id/submitButton"
                         style="@style/loginButton"
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="@dimen/loginViewsMargin"
-                        android:text="ADD NOW"
+                        android:text="Submit"
                         android:textAlignment="center"
                         app:initialCornerAngle="27dp"
                         android:layout_margin="13dp"

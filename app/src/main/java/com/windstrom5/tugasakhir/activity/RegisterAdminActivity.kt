@@ -11,9 +11,12 @@ import android.provider.MediaStore
 import android.text.InputType
 import org.json.JSONObject
 import android.util.Log
+import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
@@ -72,6 +75,7 @@ class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var namaPerusahaan: String
     private var perusahaan : Perusahaan? = null
     private val PICK_IMAGE_REQUEST_CODE = 1
+    private lateinit var loading : LinearLayout
     private lateinit var requestQueue: RequestQueue
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +87,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         TINama = binding.textInputNama
         selectImage = binding.selectImage
         TIEmail = binding.textInputEmail
+        loading = findViewById(R.id.layout_loading)
         TIPassword = binding.textInputPassword
         TITanggal = binding.textInputTanggal
         TITanggal.editText?.apply {
@@ -123,12 +128,25 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
         save = binding.cirsaveButton
         save.setOnClickListener {
+            setLoading(true)
             perusahaan?.let { it1 -> saveData(it1) }
         }
 
     }
+    private fun setLoading(isLoading:Boolean){
+        if(isLoading){
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            )
+            loading!!.visibility = View.VISIBLE
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            loading!!.visibility = View.INVISIBLE
+        }
+    }
     private fun saveData(perusahaan: Perusahaan){
-        val url = "https://67e3-125-163-245-254.ngrok-free.app/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -180,6 +198,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                                 )
                             }
                         }
+                        setLoading(false)
                         val sharedPreferencesManager = SharedPreferencesManager(this@RegisterAdminActivity)
                         sharedPreferencesManager.saveAdmin(admin)
                         val userBundle = Bundle()

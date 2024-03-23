@@ -1,5 +1,6 @@
 package com.windstrom5.tugasakhir.connection
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,6 +20,8 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.model.Pekerja
+import com.windstrom5.tugasakhir.model.Perusahaan
 import org.json.JSONObject
 
 class Tracking : Service() {
@@ -28,19 +31,32 @@ class Tracking : Service() {
             // Handle location updates
             val latitude = location.latitude
             val longitude = location.longitude
-            sendLocationUpdateHandler(latitude, longitude)
+            sendLocationUpdateHandler(latitude, longitude, perusahaan, pekerja)
         }
 
     }
 
     private lateinit var handler: Handler
     private lateinit var locationUpdateRunnable: Runnable
-
+    private lateinit var perusahaan: Perusahaan // Declare Perusahaan variable
+    private lateinit var pekerja: Pekerja // Declare Pekerja variable
     override fun onBind(intent: Intent?): IBinder? {
         // Return null because we don't intend to allow binding to this service
         return null
     }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Extract Perusahaan and Pekerja objects from the intent
+        perusahaan = intent?.getParcelableExtra("perusahaan")!!
+        pekerja = intent.getParcelableExtra("pekerja")!!
 
+        // Start listening for location updates
+        startLocationUpdates()
+        // Make the service a foreground service
+        startForegroundService()
+
+        // Return START_STICKY to ensure the service restarts if it's killed by the system
+        return START_STICKY
+    }
     override fun onCreate() {
         super.onCreate()
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -48,12 +64,12 @@ class Tracking : Service() {
         // Initialize Handler and Runnable for periodic location updates
         handler = Handler(Looper.getMainLooper())
         locationUpdateRunnable = Runnable { startLocationUpdates() }
-
-        // Start listening for location updates
-        startLocationUpdates()
-        // Make the service a foreground service
-        startForegroundService()
+//        // Start listening for location updates
+//        startLocationUpdates()
+//        // Make the service a foreground service
+//        startForegroundService()
     }
+    @SuppressLint("UnspecifiedImmutableFlag")
     private fun startForegroundService() {
         // Create a notification channel (for Android Oreo and higher)
         createNotificationChannel()
@@ -68,7 +84,7 @@ class Tracking : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Your App is running")
             .setContentText("Tracking location in the background")
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.mipmap.ic_logo)
             .setContentIntent(pendingIntent)
             .build()
         startForeground(NOTIFICATION_ID, notification)
@@ -103,11 +119,12 @@ class Tracking : Service() {
         }
     }
 
-    private fun sendLocationUpdateHandler(latitude: Double, longitude: Double) {
-        // Implement logic to send location update to the server using Volley
-        val url = "your_server_url/absen"
+    private fun sendLocationUpdateHandler(latitude: Double, longitude: Double, perusahaan: Perusahaan, pekerja: Pekerja) {
+        val url = "https://b184-36-73-110-50.ngrok-free.app/api/UpdateLocation"
         val params = JSONObject()
         try {
+            params.put("perusahaan", perusahaan.nama)
+            params.put("nama", pekerja.nama)
             params.put("latitude", latitude)
             params.put("longitude", longitude)
         } catch (e: Exception) {
@@ -115,14 +132,11 @@ class Tracking : Service() {
         }
 
         val request = JsonObjectRequest(
-            Request.Method.POST, url, params,
+            Request.Method.PUT, url, params,
             { response ->
-                // Handle the response from the server
                 try {
                     val status = response.getString("status")
                     val message = response.getString("message")
-
-                    // Process the status and message accordingly
                     if ("success" == status) {
                         // Handle success
                     } else {
@@ -133,12 +147,10 @@ class Tracking : Service() {
                 }
             },
             { error ->
-                // Handle error
                 error.printStackTrace()
             }
         )
 
-        // Add the request to the request queue
         Volley.newRequestQueue(this).add(request)
     }
 

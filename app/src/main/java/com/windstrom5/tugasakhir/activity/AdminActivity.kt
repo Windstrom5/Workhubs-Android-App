@@ -116,7 +116,7 @@ class AdminActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "https://9ca5-125-163-245-254.ngrok-free.app/storage/${admin?.profile}" // Replace with your Laravel image URL
+                    "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                 val profileImageView = binding.profileB
 
                 Glide.with(this)

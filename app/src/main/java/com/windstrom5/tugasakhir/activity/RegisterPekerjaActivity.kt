@@ -12,9 +12,12 @@ import android.provider.MediaStore
 import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
@@ -68,6 +71,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
     private var perusahaan : Perusahaan? = null
     private lateinit var selectedFile: File
     private var admin : Admin? = null
+    private lateinit var acKategori : AutoCompleteTextView
     private lateinit var binding: ActivityRegisterPekerjaBinding
     private lateinit var circleImageView: CircleImageView
     private lateinit var selectedImage: ByteArray
@@ -78,14 +82,20 @@ class RegisterPekerjaActivity : AppCompatActivity() {
     private val CAMERA_CAPTURE_REQUEST = 126
     private var idPerusahaan: Int? = null
     private var tempImageFile: File? = null
+    private lateinit var loading : LinearLayout
     private lateinit var namaPerusahaan: String
     private val PICK_IMAGE_REQUEST_CODE = 1
     private lateinit var requestQueue: RequestQueue
+    private var kategoriPekerja: List<String> =
+        mutableListOf("Admin","Pekerja");
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterPekerjaBinding.inflate(layoutInflater)
         setContentView(binding.root)
         getBundle()
+        acKategori = binding.acketegori
+        val adapter = ArrayAdapter(this@RegisterPekerjaActivity, android.R.layout.simple_dropdown_item_1line, kategoriPekerja)
+        acKategori.setAdapter(adapter)
         requestQueue = Volley.newRequestQueue(this)
         circleImageView = binding.circleImageView
         TINama = binding.textInputNama
@@ -136,7 +146,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
         }
     }
     private fun saveData(perusahaan: Perusahaan){
-        val url = "https://67e3-125-163-245-254.ngrok-free.app/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -313,7 +323,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "https://3fad-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.logo
                 Glide.with(this)
                     .load(imageUrl)

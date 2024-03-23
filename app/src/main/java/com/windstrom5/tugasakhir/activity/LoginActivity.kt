@@ -7,11 +7,15 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
@@ -42,6 +46,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var textInputPassword: TextInputLayout
     private lateinit var editTextPassword: EditText
     private lateinit var popupWindow: PopupWindow
+    private lateinit var loading : LinearLayout
     private lateinit var binding: ActivityLoginBinding
     private lateinit var login : Button
     private lateinit var acperusahaan : AutoCompleteTextView
@@ -61,12 +66,13 @@ class LoginActivity : AppCompatActivity() {
         login = binding.cirLoginButton
         register = binding.createPerusahan
         login.isEnabled = false
+        loading = findViewById(R.id.layout_loading)
         fetchDataFromApi()
         editTextEmail.addTextChangedListener(textWatcher)
         editTextPassword.addTextChangedListener(textWatcher)
         editTextPerusahaan.addTextChangedListener(textWatcher)
         login.setOnClickListener{
-            Log.d("Ambatukam5","Ambatukam5")
+            setLoading(true)
             login(textInputPerusahaan.editText?.text.toString(),
                 textInputEmail.editText?.text.toString(),
                 textInputPassword.editText?.text.toString())
@@ -78,7 +84,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/GetPerusahaan"
+        val url = "http://192.168.1.6:8000/api/GetPerusahaan"
         val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
             { response ->
                 val perusahaanArray = response.getJSONArray("perusahaan")
@@ -118,6 +124,18 @@ class LoginActivity : AppCompatActivity() {
         val sdf = SimpleDateFormat("HH:mm:ss")
         val date: Date = sdf.parse(timeStr)
         return Time(date.time)
+    }
+    private fun setLoading(isLoading:Boolean){
+        if(isLoading){
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            )
+            loading!!.visibility = View.VISIBLE
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            loading!!.visibility = View.INVISIBLE
+        }
     }
     private fun setUpAutoCompleteTextView(perusahaanList: List<Perusahaan>) {
         val autoCompleteTextView: AutoCompleteTextView = findViewById(R.id.ACperusahaan)
@@ -177,7 +195,7 @@ class LoginActivity : AppCompatActivity() {
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(namaPerusahaan: String, email: String, password: String) {
-        val url = "https://9ca5-125-163-245-254.ngrok-free.app/api/login"
+        val url = "http://192.168.1.6:8000/api/login"
         val sharedPreferencesManager = SharedPreferencesManager(this)
         val matchingPerusahaan = perusahaanList.find { it.nama == namaPerusahaan }
         if (matchingPerusahaan != null) {
@@ -201,10 +219,10 @@ class LoginActivity : AppCompatActivity() {
                                 user.getString("email"),
                                 user.getString("password"),
                                 user.getString("nama"),
-                                // Parse tanggal_lahir accordingly
                                 parseDate(user.getString("tanggal_lahir")),
                                 user.getString("profile")
                             )
+                            setLoading(false)
                             sharedPreferencesManager.saveAdmin(admin)
                             sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
                             val intent = Intent(this, AdminActivity::class.java)
@@ -223,6 +241,7 @@ class LoginActivity : AppCompatActivity() {
                                 parseDate(user.getString("tanggal_lahir")),
                                 user.getString("profile")
                             )
+                            setLoading(false)
                             sharedPreferencesManager.savePekerja(pekerja)
                             sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
                             val intent = Intent(this, UserActivity::class.java)

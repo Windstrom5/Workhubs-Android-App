@@ -86,7 +86,7 @@ class ScanAbsensiFragment : Fragment() {
         requestQueue = Volley.newRequestQueue(requireContext())
         getBundle()
         val imageUrl =
-            "https://df0f-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+            "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
         Glide.with(this)
             .load(imageUrl)
@@ -170,7 +170,7 @@ class ScanAbsensiFragment : Fragment() {
     }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "https://df0f-125-163-245-254.ngrok-free.app/api/getAllSecretKeys"
+        val apiUrl = "http://192.168.1.6:8000/api/getAllSecretKeys"
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
@@ -220,7 +220,7 @@ class ScanAbsensiFragment : Fragment() {
 
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
-        val url = "https://df0f-125-163-245-254.ngrok-free.app/api/Absensi"
+        val url = "http://192.168.1.6:8000/api/Absensi"
         Log.d("testing",url)
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
@@ -244,6 +244,8 @@ class ScanAbsensiFragment : Fragment() {
                         "Absen Started" -> {
                             Log.d("testing3", "Done")
                             val startServiceIntent = Intent(requireActivity(), Tracking::class.java)
+                            startServiceIntent.putExtra("perusahaan", perusahaan)
+                            startServiceIntent.putExtra("pekerja", pekerja)
                             requireActivity().startService(startServiceIntent)
                             requireActivity().runOnUiThread {
                                 MotionToast.createToast(

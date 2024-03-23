@@ -4,17 +4,24 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityLemburBinding
+import com.windstrom5.tugasakhir.fragment.AddDinasFragment
+import com.windstrom5.tugasakhir.fragment.AddIzinFragment
+import com.windstrom5.tugasakhir.fragment.AddLemburFragment
+import com.windstrom5.tugasakhir.fragment.HistoryDinasFragment
+import com.windstrom5.tugasakhir.fragment.HistoryLemburFragment
+import com.windstrom5.tugasakhir.fragment.TrackingFragment
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 
 class LemburActivity : AppCompatActivity() {
-    private lateinit var binding : ActivityLemburBinding
+    private lateinit var binding: ActivityLemburBinding
     private var bundle: Bundle? = null
     private var perusahaan : Perusahaan? = null
     private var admin : Admin? = null
@@ -26,7 +33,28 @@ class LemburActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLemburBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        navigation = binding.navigation
+        getBundle()
+        fragment = binding.content
+        navigation.setOnNavigationItemSelectedListener { menuItem ->
+            if (!isFirstLaunch) {
+                when (menuItem.itemId) {
+                    R.id.historylembur -> {
+                        replaceFragment(HistoryLemburFragment())
+                        true
+                    }
+                    R.id.addlembur -> {
+                        replaceFragment(AddLemburFragment())
+                        true
+                    }
+                    else -> false
+                }
+            } else {
+                // It's the first launch, do nothing or perform any setup needed
+                isFirstLaunch = false
+                true
+            }
+        }
     }
     override fun onBackPressed() {
         super.onBackPressed()
@@ -49,15 +77,15 @@ class LemburActivity : AppCompatActivity() {
     private fun replaceFragment(fragment: Fragment) {
         val transaction = supportFragmentManager.beginTransaction()
         val args = Bundle()
-
         if (admin != null) {
             args.putParcelable("user", admin)
+            args.putString("role","Admin")
         } else if (pekerja != null) {
-            args.putParcelable("usera", pekerja)
+            args.putParcelable("user", pekerja)
+            args.putString("role","Pekerja")
         }
         args.putParcelable("perusahaan",perusahaan)
         fragment.arguments = args
-
         transaction.replace(R.id.content, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
@@ -68,12 +96,19 @@ class LemburActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 val role = it.getString("role")
-                if(role == "Admin"){
+                Log.d("Role",role.toString())
+                if(role.toString() == "Admin"){
                     admin = it.getParcelable("user")
-                    navigation.inflateMenu(R.menu.absenadmin)
+                    replaceFragment(HistoryLemburFragment())
+                    navigation.visibility = View.GONE
                 }else{
                     pekerja = it.getParcelable("user")
-                    navigation.inflateMenu(R.menu.absenuser)
+                    navigation.visibility = View.VISIBLE
+
+                    if (isFirstLaunch) {
+                        replaceFragment(AddDinasFragment())
+                        isFirstLaunch = false
+                    }
                 }
             }
         } else {

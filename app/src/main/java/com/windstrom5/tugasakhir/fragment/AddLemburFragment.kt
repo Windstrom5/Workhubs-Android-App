@@ -1,6 +1,9 @@
 package com.windstrom5.tugasakhir.fragment
 
+import android.app.Activity
 import android.app.TimePickerDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -17,68 +20,196 @@ import com.windstrom5.tugasakhir.model.Perusahaan
 import java.util.Calendar
 import java.util.Locale
 import android.content.res.Resources
+import android.net.Uri
+import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.EditText
 import android.widget.TimePicker
+import android.widget.Toast
+import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
+import com.windstrom5.tugasakhir.activity.RegisterActivity
+import org.json.JSONObject
+import java.io.File
+import java.io.InputStream
 import java.sql.Time
+import java.text.SimpleDateFormat
 import java.util.*
 class AddLemburFragment : Fragment() {
-    // Define your views
-    private lateinit var edNama: TextInputEditText
-    private lateinit var edTanggal: TextInputEditText
-    private lateinit var edMasuk: TextInputEditText
-    private lateinit var edPulang: TextInputEditText
-    private lateinit var edpekerjaan: TextInputEditText
+    private lateinit var TINama: TextInputLayout
+    private lateinit var TITanggal: TextInputLayout
+    private lateinit var TIMasuk: TextInputLayout
+    private lateinit var TIPulang: TextInputLayout
+    private lateinit var TIPekerjaan: TextInputLayout
     private lateinit var uploadfileButton: Button
     private lateinit var selectedFileName: TextView
     private lateinit var changeFileButton: Button
-    private lateinit var cirsaveButton: Button
+    private lateinit var save: Button
     private var perusahaan : Perusahaan? = null
     private var pekerja : Pekerja? = null
-    private lateinit var TIKeluar: TextInputLayout
-    private lateinit var TIMasuk: TextInputLayout
-
+    private lateinit var selectedFile: File
+    private val PICK_IMAGE_REQUEST_CODE = 123
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_add_lembur, container, false)
+        TINama = view.findViewById(R.id.nama)
         getBundle()
-        TIKeluar = view.findViewById(R.id.TIKeluar)
-        edNama = view.findViewById(R.id.edNama)
-        edTanggal = view.findViewById(R.id.edTanggal)
-        edMasuk = view.findViewById(R.id.edMasuk)
-        edPulang = view.findViewById(R.id.edPulang)
-        edpekerjaan = view.findViewById(R.id.edpekerjaan)
+        TITanggal = view.findViewById(R.id.TITanggal)
+        TIMasuk = view.findViewById(R.id.TIMasuk)
+        TIPulang = view.findViewById(R.id.TIPulang)
+        TIPekerjaan = view.findViewById(R.id.pekerjaan)
         uploadfileButton = view.findViewById(R.id.uploadfile)
         selectedFileName = view.findViewById(R.id.selectedFileName)
         changeFileButton = view.findViewById(R.id.changeFile)
-        cirsaveButton = view.findViewById(R.id.cirsaveButton)
+        save = view.findViewById(R.id.cirsaveButton)
         TIMasuk.setEndIconOnClickListener{
-            perusahaan?.let { it1 -> showTimePickerDialog(TIMasuk, it1) }
+            TIMasuk.editText?.let { it1 -> showDatePickerDialog(it1) }
         }
-        TIKeluar.setEndIconOnClickListener {
-            perusahaan?.let { it1 -> showTimePickerDialog(TIKeluar, it1) }
+        TIPulang.setEndIconOnClickListener {
+            TIPulang.editText?.let { it1 -> showDatePickerDialog(it1) }
         }
+        TINama.editText?.addTextChangedListener(watcher)
+        TITanggal.editText?.addTextChangedListener(watcher)
+        TIMasuk.editText?.addTextChangedListener(watcher)
+        TIPulang.editText?.addTextChangedListener(watcher)
+        TIPekerjaan.editText?.addTextChangedListener(watcher)
         uploadfileButton.setOnClickListener {
-            // Implement file upload logic here
-            // You can use Intent.ACTION_GET_CONTENT to open a file picker
-            // and get the selected file's URI
-            // Once you have the file URI, you can update the selectedFileName TextView
-        }
-
-        // Set onClickListener for the change file button
-        changeFileButton.setOnClickListener {
-            // Implement logic to change the selected file
+            pickImageFromGallery()
         }
 
         // Set onClickListener for the save button
-        cirsaveButton.setOnClickListener {
+        save.setOnClickListener {
             // Implement logic to save the form data
             // You can access the entered data using the views like edNama.text.toString(), etc.
         }
 
         return view
     }
+
+    private val watcher = object : TextWatcher {
+        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
+            // Not needed for this example
+        }
+
+        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+            // Not needed for this example
+        }
+
+        override fun afterTextChanged(editable: Editable?) {
+            // Update the button state whenever a field is changed
+            save.isEnabled = isAllFieldsFilled()
+        }
+    }
+    private fun isAllFieldsFilled(): Boolean {
+        return TINama.editText?.text?.isNotEmpty() ?: false &&
+                TITanggal.editText?.text?.isNotEmpty()?: false  &&
+                TIMasuk.editText?.text?.isNotEmpty() ?: false &&
+                TIPulang.editText?.text?.isNotEmpty()?: false &&
+                TIPekerjaan.editText?.text?.isNotEmpty()?: false &&
+                selectedFileName.text != "No file selected"
+    }
+    private fun showDatePickerDialog(editText: EditText) {
+        // Load holidays from JSON
+        val holidaysMap = loadHolidaysFromJson(requireContext())
+
+        val disabledDays = holidaysMap.keys.toTypedArray()
+
+        val now = Calendar.getInstance()
+
+        val dpd = DatePickerDialog.newInstance(
+            DatePickerDialog.OnDateSetListener { _, year, monthOfYear, dayOfMonth ->
+                val selectedDate = Calendar.getInstance().apply {
+                    set(year, monthOfYear, dayOfMonth)
+                }
+
+                // Check if the selected date is a holiday
+                if (holidaysMap.containsKey(selectedDate)) {
+                    // Show Toast
+                    Toast.makeText(
+                        requireContext(),
+                        "Selected date is a holiday. Please choose another date.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val formattedDate = dateFormat.format(selectedDate.time)
+                    editText.setText(formattedDate)
+                }
+            },
+            now.get(Calendar.YEAR),
+            now.get(Calendar.MONTH),
+            now.get(Calendar.DAY_OF_MONTH)
+        )
+
+        dpd.setDisabledDays(disabledDays)
+        dpd.show(childFragmentManager, "DatePickerDialog")
+    }
+
+    private fun loadHolidaysFromJson(context: Context): Map<Calendar, String> {
+        val holidaysMap = mutableMapOf<Calendar, String>()
+
+        try {
+            val inputStream: InputStream = context.resources.openRawResource(R.raw.holidays)
+            val jsonString = inputStream.bufferedReader().use { it.readText() }
+            val jsonObject = JSONObject(jsonString)
+
+            // Iterate through the keys (dates) in the JSON object
+            for (key in jsonObject.keys()) {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val date = Calendar.getInstance().apply {
+                    time = dateFormat.parse(key) ?: Date()
+                }
+                val dateObject = jsonObject.getJSONObject(key)
+                val summary = dateObject.getString("summary")
+
+                // Add the date and summary to the map
+                holidaysMap[date] = summary
+                Log.d("A", "Holiday: Date = $key, Summary = $summary")
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return holidaysMap
+    }
+    private fun pickImageFromGallery() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "image/*"
+        startActivityForResult(intent, PICK_IMAGE_REQUEST_CODE)
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == PICK_IMAGE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { imageUri ->
+                // Get the real path from the URI
+                val realPath = getRealPathFromUri(imageUri)
+                if (realPath != null) {
+                    selectedFileName.text = File(realPath).name
+                    selectedFile = File(realPath)
+                    selectedFileName.addTextChangedListener(watcher)
+                } else {
+                    selectedFileName.text = "Failed to get real path"
+                }
+            }
+        }
+    }
+
+    private fun getRealPathFromUri(uri: Uri): String? {
+        val projection = arrayOf(MediaStore.Images.Media.DATA)
+        val cursor = requireActivity().contentResolver.query(uri, projection, null, null, null)
+        cursor?.use {
+            val columnIndex = it.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            it.moveToFirst()
+            return it.getString(columnIndex)
+        }
+        return null
+    }
+
     private fun showTimePickerDialog(textInputLayout: TextInputLayout, perusahaan: Perusahaan) {
         val calendar = Calendar.getInstance()
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
@@ -150,9 +281,11 @@ class AddLemburFragment : Fragment() {
         if (arguments != null) {
             perusahaan = arguments.getParcelable("perusahaan")
             pekerja = arguments.getParcelable("user")
+            TINama.editText?.setText(pekerja?.nama)
+            Log.d("namaPekerja", pekerja?.nama.toString())
+            TINama.isEnabled=false
         } else {
             Log.d("Error","Bundle Not Found")
         }
     }
-
 }

@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
@@ -21,13 +23,23 @@ import com.pusher.client.PusherOptions
 import com.pusher.client.channel.SubscriptionEventListener
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.adapter.ListAnggotaAdapter
+import com.windstrom5.tugasakhir.connection.ApiResponse
+import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.connection.WorkHubs
 import com.windstrom5.tugasakhir.databinding.ActivityCompanyBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import kotlinx.coroutines.Job
+import okhttp3.ResponseBody
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,11 +50,17 @@ class CompanyActivity : AppCompatActivity() {
     private var admin : Admin? = null
     private var pekerja : Pekerja? = null
     private var bundle: Bundle? = null
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private var perusahaan : Perusahaan? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ListAnggotaAdapter
+    private lateinit var role:String
     private lateinit var requestQueue: RequestQueue
     private lateinit var addPekerja: Button
+    private var job: Job? = null
+    private var fetchRunnable: Runnable? = null
+    private val handler = Handler()
+    private val pollingInterval = 2000L // Polling interval in milliseconds
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCompanyBinding.inflate(layoutInflater)
@@ -50,24 +68,17 @@ class CompanyActivity : AppCompatActivity() {
         addPekerja = binding.addPekerja
         getBundle()
         recyclerView = findViewById(R.id.recyclerViewPekerja)
-        adapter = ListAnggotaAdapter(emptyList(), emptyList()) // Initialize with empty lists
+        adapter =
+            perusahaan?.let { ListAnggotaAdapter(mutableListOf(), mutableListOf(), it,role,this@CompanyActivity) }!!// Initialize with empty lists
         recyclerView.adapter = adapter
         val layoutManager = GridLayoutManager(this, 2)
         recyclerView.layoutManager = layoutManager
         requestQueue = Volley.newRequestQueue(this)
         perusahaan?.let { fetchDataFromApi(it.nama) }
-        // Inside your Android code (CompanyActivity or relevant component)
-        val pusher = WorkHubs.pusher
-        pusher.connect()
-        val channel = pusher.subscribe("pekerja-channel")
-        // Listen for PekerjaUpdated events
-//        channel.bind("App\\Events\\LocationUpdated") { event ->
-//            override fun onEvent(channelName: String?, eventName: String?, data: String?) {
-//                // Handle PekerjaUpdated event
-//                // You can update your UI or fetch the latest data here
-//                fetchDataFromApi(perusahaan.nama)
-//            }
-//        })
+        swipeRefreshLayout = binding.swipeRefreshLayout
+        swipeRefreshLayout.setOnRefreshListener {
+            perusahaan?.let { fetchDataFromApi(it.nama) }
+        }
         addPekerja.setOnClickListener{
             val intent = Intent(this, RegisterPekerjaActivity::class.java)
             val userBundle = Bundle()
@@ -77,34 +88,47 @@ class CompanyActivity : AppCompatActivity() {
             intent.putExtra("data", userBundle)
             startActivity(intent)
         }
+
     }
+
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val apiUrl = "https://9ca5-125-163-245-254.ngrok-free.app/api/getAnggota/$namaPerusahaan"
-        val jsonArrayRequest = JsonObjectRequest(
-            Request.Method.GET, apiUrl, null,
-            { response ->
-                // Process the response JSON object
-                val perusahaanObject = response.getJSONObject("perusahaan")
-                val perusahaan = parsePerusahaan(perusahaanObject)
+        val url = "http://192.168.1.6:8000/api/"
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val apiService = retrofit.create(ApiService::class.java)
+//        fetchRunnable = object : Runnable {
+//            override fun run() {
+                val call = apiService.getDataPekerja(namaPerusahaan)
+                call.enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                        if (response.isSuccessful) {
+                            response.body()?.let { responseBody ->
+                                try {
+                                    val responseData = JSONObject(responseBody.string())
+                                    // Handle admin and pekerja as JSON objects
+                                    val adminArray = responseData.getJSONArray("admin")
+                                    val adminList = parseAdminList(adminArray)
+                                    val pekerjaArray = responseData.getJSONArray("pekerja")
+                                    val pekerjaList = parsePekerjaList(pekerjaArray)
+                                    adapter.updateData(pekerjaList.toMutableList(), adminList.toMutableList())
+                                    swipeRefreshLayout.isRefreshing = false
+                                } catch (e: JSONException) {
+                                    Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
+                                }
+                            }
+                        } else {
+                            // Handle unsuccessful response
+                            Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
+                        }
+                    }
 
-                // Handle admin and pekerja as JSON objects
-                val adminArray = response.getJSONArray("admin")
-                val adminList = parseAdminList(adminArray)
-
-                val pekerjaArray = response.getJSONArray("pekerja")
-                val pekerjaList = parsePekerjaList(pekerjaArray)
-
-                // Update the adapter with the received data
-                adapter.updateData(pekerjaList, adminList)
-            },
-            { error ->
-                // Handle error
-                error.printStackTrace()
-            }
-        )
-
-        // Add the request to the RequestQueue
-        requestQueue.add(jsonArrayRequest)
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        // Handle network failures
+                        Log.e("FetchDataError", "Failed to fetch data: ${t.message}")
+                    }
+                })
     }
 
     private fun parsePerusahaan(perusahaanObject: JSONObject): Perusahaan {
@@ -182,13 +206,16 @@ class CompanyActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         requestQueue.cancelAll(this)
+        fetchRunnable?.let {
+            handler.removeCallbacks(it)
+        }
     }
     private fun getBundle() {
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
-                val role = it.getString("role")
+                role = it.getString("role").toString()
                 if(role == "Admin"){
                     admin = it.getParcelable("user")
                     addPekerja.visibility = View.VISIBLE
@@ -197,7 +224,7 @@ class CompanyActivity : AppCompatActivity() {
                     addPekerja.visibility = View.GONE
                 }
                 val imageUrl =
-                    "https://9ca5-125-163-245-254.ngrok-free.app/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.companyLogoImageView
                 val text = binding.headerText
                 text.setText("List Anggota \nPerusahaan ${perusahaan?.nama}")
@@ -211,6 +238,10 @@ class CompanyActivity : AppCompatActivity() {
     }
     override fun onBackPressed() {
         super.onBackPressed()
+        // Remove any pending fetchRunnable instances from the handler
+        fetchRunnable?.let {
+            handler.removeCallbacks(it)
+        }
         if(pekerja != null){
             val userBundle = Bundle()
             val intent = Intent(this, UserActivity::class.java)

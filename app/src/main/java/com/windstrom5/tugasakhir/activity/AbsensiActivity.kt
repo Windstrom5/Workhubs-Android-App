@@ -76,7 +76,12 @@ class AbsensiActivity : AppCompatActivity() {
             startActivity(intent)
         }
     }
-
+    override fun onDestroy() {
+        if(admin != null){
+            TrackingFragment().stopFetchRunnable()
+        }
+        super.onDestroy()
+    }
     private fun replaceFragment(fragment: Fragment) {
         val transaction = supportFragmentManager.beginTransaction()
         val args = Bundle()
@@ -89,7 +94,6 @@ class AbsensiActivity : AppCompatActivity() {
         }
         args.putParcelable("perusahaan",perusahaan)
         fragment.arguments = args
-
         transaction.replace(R.id.content, fragment)
         transaction.addToBackStack(null)
         transaction.commit()

@@ -1,20 +1,21 @@
 package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
-import android.content.Intent
-import android.graphics.pdf.PdfDocument
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
+import android.widget.BaseExpandableListAdapter
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.FileProvider
-import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.app.AppCompatActivity
+import com.itextpdf.html2pdf.ConverterProperties
+import com.itextpdf.html2pdf.HtmlConverter
 import com.windstrom5.tugasakhir.R
-import com.windstrom5.tugasakhir.model.Dinas
-import com.windstrom5.tugasakhir.model.Pekerja
-import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
+import com.windstrom5.tugasakhir.model.DinasItem
+import com.windstrom5.tugasakhir.model.historyDinas
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -22,77 +23,125 @@ import java.util.Date
 import java.util.Locale
 
 class DinasAdapter(
-    private val dinasList: List<Dinas>,
-    private val perusahaan: Perusahaan,
-    private val pekerja: Pekerja
-) : RecyclerView.Adapter<DinasAdapter.ViewHolder>() {
-
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tanggalTextView: TextView = view.findViewById(R.id.tanggal)
-        val tujuanTextView: TextView = view.findViewById(R.id.tujuan)
-        val actionButton: Button = view.findViewById(R.id.actionButton)
+    private val context: Context,
+    private val statusWithDinasList: List<historyDinas>,
+    private val Role:String
+) : BaseExpandableListAdapter() {
+    private val rotationAngleExpanded = 180f
+    private val rotationAngleCollapsed = 0f
+    override fun getGroupCount(): Int {
+        return statusWithDinasList.size
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.history_dinas, parent, false)
-
-        return ViewHolder(view)
+    override fun getChildrenCount(groupPosition: Int): Int {
+        return statusWithDinasList[groupPosition].dinasList.size
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val dinas = dinasList[position]
+    override fun getGroup(groupPosition: Int): Any {
+        return statusWithDinasList[groupPosition].status
+    }
 
-        // Bind data to views
-        holder.tanggalTextView.text = "${dinas.tanggal_berangkat} - ${dinas.tanggal_pulang}"
-        holder.tujuanTextView.text = dinas.tujuan
+    override fun getChild(groupPosition: Int, childPosition: Int): Any {
+        return statusWithDinasList[groupPosition].dinasList[childPosition]
+    }
 
-        // Set click listener for the action button
-        holder.actionButton.setOnClickListener {
-            // Handle button click, e.g., initiate download
-            val pdfHtml = getHtmlTemplate(dinas, perusahaan, pekerja)
-            generateAndDownloadPdf(holder.actionButton.context, pdfHtml)
+    override fun getGroupId(groupPosition: Int): Long {
+        return groupPosition.toLong()
+    }
+
+    override fun getChildId(groupPosition: Int, childPosition: Int): Long {
+        return childPosition.toLong()
+    }
+
+    override fun hasStableIds(): Boolean {
+        return true
+    }
+
+    override fun getGroupView(groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup?): View {
+        val status = getGroup(groupPosition) as String
+        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_group, parent, false)
+        view.findViewById<TextView>(R.id.title).text = status
+        val arrowLogo = view.findViewById<ImageView>(R.id.arrowLogo)
+        if (isExpanded) {
+            arrowLogo.rotation = rotationAngleExpanded
+        } else {
+            arrowLogo.rotation = rotationAngleCollapsed
         }
+        return view
     }
 
-    override fun getItemCount(): Int {
-        return dinasList.size
+    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
+        val dinas = getChild(groupPosition, childPosition) as DinasItem
+        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.history_dinas, parent, false)
+        val tanggal = view.findViewById<TextView>(R.id.tanggal)
+        val tujuan = view.findViewById<TextView>(R.id.tujuan)
+        val actionButton = view.findViewById<Button>(R.id.actionButton)
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val tanggalBerangkatFormatted = dateFormatter.format(dinas.tanggal_berangkat)
+        val tanggalPulangFormatted = dateFormatter.format(dinas.tanggal_pulang)
+        tanggal.text = "$tanggalBerangkatFormatted - $tanggalPulangFormatted"
+        tujuan.text = dinas.tujuan
+        if (Role == "Admin"){
+            val buttonText = when (dinas.status) {
+                "Pending" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Respond \nDinas"
+                }
+                "Accept" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "View \nData"
+                }
+                else -> {
+                    actionButton.visibility = View.GONE
+                    "View \nData"
+                }
+            }
+            actionButton.text = buttonText
+
+            actionButton.setOnClickListener {
+//                if (actionButton.text == "Download Receipt"){
+//
+//                }
+            }
+        }else{
+            val buttonText = when (dinas.status) {
+                "Pending" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Edit \nData"
+                }
+                "Accept" -> {
+                    actionButton.visibility = View.VISIBLE
+                    "Download \nReceipt"
+                }
+                else -> {
+                    actionButton.visibility = View.GONE
+                    "View \nData"
+                }
+            }
+            actionButton.text = buttonText
+
+            actionButton.setOnClickListener {
+                if (actionButton.text == "Download Receipt"){
+                    val htmlContent = getHtmlTemplate(dinas)
+                    generatePdfFromHtml(htmlContent)
+                }else if(actionButton.text == "Respond Dinas"){
+                    val fragmentManager = (context as AppCompatActivity).supportFragmentManager
+                    val previewDialogFragment = PreviewDialogFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("dinas", dinas) // Pass different object for lembur
+                    bundle.putString("layoutType", "dinas_layout") // Add layout type here
+                    previewDialogFragment.arguments = bundle
+                    previewDialogFragment.show(fragmentManager, "preview_dialog")
+                }
+            }
+        }
+        return view
     }
 
-    private fun generateAndDownloadPdf(context: Context, htmlContent: String) {
-        val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas = page.canvas
-
-        val webView = WebView(context)
-        webView.layout(0, 0, webView.width, webView.height)
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "utf-8", null)
-        webView.draw(canvas)
-
-        pdfDocument.finishPage(page)
-
-        // Save the PDF file
-        val file = File(context.cacheDir, "absen_pdf.pdf")
-        val fileOutputStream = FileOutputStream(file)
-        pdfDocument.writeTo(fileOutputStream)
-        pdfDocument.close()
-        fileOutputStream.close()
-
-        // Open the PDF file using an Intent
-        val uri = FileProvider.getUriForFile(
-            context,
-            "your.package.name.provider",
-            file
-        )
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(uri, "application/pdf")
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        context.startActivity(intent)
+    override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
+        return true
     }
-
-    private fun getHtmlTemplate(dinas: Dinas, perusahaan: Perusahaan, pekerja: Pekerja): String {
-        // Define your HTML template with placeholders for data
+    private fun getHtmlTemplate(dinas: DinasItem): String {
         val template = """
             <!DOCTYPE html>
                 <html lang="en">
@@ -143,9 +192,9 @@ class DinasAdapter(
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
                 Date()
             )}</p>
-                <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
-                <p><strong>Worker Name:</strong> ${pekerja.nama}</p>
-                <p><strong>Date of Assignment:</strong> [dinas Date]</p>
+                <p><strong>Company Name:</strong> ${dinas.nama_perusahaan}</p>
+                <p><strong>Worker Name:</strong> ${dinas.nama_pekerja}</p>
+                <p><strong>Date of Assignment:</strong></p>
                 <p><strong>Departure Time:</strong> ${dinas.tanggal_berangkat}</p>
                 <p><strong>Return Time:</strong> ${dinas.tanggal_pulang}</p>
                 <p><strong>Assigned Activity:</strong> ${dinas.kegiatan}</p>
@@ -162,15 +211,17 @@ class DinasAdapter(
         return template
     }
 
-    private fun calculateTotalHours(startTime: String, endTime: String): String {
-        val format = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val start = format.parse(startTime)
-        val end = format.parse(endTime)
+    private fun generatePdfFromHtml(htmlContent: String) {
+        val outputPdfFile = File(context.getExternalFilesDir(null), "receipt.pdf")
+        val outputStream = FileOutputStream(outputPdfFile)
+        val converterProperties = ConverterProperties()
+        HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+        outputStream.close()
 
-        val diff = end.time - start.time
-        val hours = diff / (60 * 60 * 1000)
-        val minutes = (diff % (60 * 60 * 1000)) / (60 * 1000)
-
-        return String.format(Locale.getDefault(), "%d hours %02d minutes", hours, minutes)
+        // PDF is generated, you can now save it or share it as needed
     }
 }
+
+
+
+

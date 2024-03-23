@@ -11,7 +11,11 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityIzinBinding
 import com.windstrom5.tugasakhir.fragment.AddDinasFragment
+import com.windstrom5.tugasakhir.fragment.AddIzinFragment
 import com.windstrom5.tugasakhir.fragment.HistoryAbsenFragment
+import com.windstrom5.tugasakhir.fragment.HistoryDinasFragment
+import com.windstrom5.tugasakhir.fragment.HistoryIzinFragment
+import com.windstrom5.tugasakhir.fragment.HistoryLemburFragment
 import com.windstrom5.tugasakhir.fragment.ScanAbsensiFragment
 import com.windstrom5.tugasakhir.fragment.ShowQRCodeFragment
 import com.windstrom5.tugasakhir.fragment.TrackingFragment
@@ -32,18 +36,18 @@ class IzinActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityIzinBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        navigation = binding.navigation
         getBundle()
         fragment = binding.content
-        navigation = binding.navigation
         navigation.setOnNavigationItemSelectedListener { menuItem ->
             if (!isFirstLaunch) {
                 when (menuItem.itemId) {
                     R.id.historyizin -> {
-                        replaceFragment(TrackingFragment())
+                        replaceFragment(HistoryIzinFragment())
                         true
                     }
                     R.id.adddinas -> {
-                        replaceFragment(AddDinasFragment())
+                        replaceFragment(AddIzinFragment())
                         true
                     }
                     else -> false
@@ -76,15 +80,15 @@ class IzinActivity : AppCompatActivity() {
     private fun replaceFragment(fragment: Fragment) {
         val transaction = supportFragmentManager.beginTransaction()
         val args = Bundle()
-
         if (admin != null) {
             args.putParcelable("user", admin)
+            args.putString("role","Admin")
         } else if (pekerja != null) {
-            args.putParcelable("usera", pekerja)
+            args.putParcelable("user", pekerja)
+            args.putString("role","Pekerja")
         }
         args.putParcelable("perusahaan",perusahaan)
         fragment.arguments = args
-
         transaction.replace(R.id.content, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
@@ -95,15 +99,17 @@ class IzinActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 val role = it.getString("role")
-                if(role == "Admin"){
+                Log.d("Role",role.toString())
+                if(role.toString() == "Admin"){
                     admin = it.getParcelable("user")
+                    replaceFragment(HistoryIzinFragment())
                     navigation.visibility = View.GONE
                 }else{
                     pekerja = it.getParcelable("user")
                     navigation.visibility = View.VISIBLE
-                    navigation.inflateMenu(R.menu.absenuser)
+                    navigation.inflateMenu(R.menu.izinuser)
                     if (isFirstLaunch) {
-                        replaceFragment(ScanAbsensiFragment())
+                        replaceFragment(AddIzinFragment())
                         isFirstLaunch = false
                     }
                 }

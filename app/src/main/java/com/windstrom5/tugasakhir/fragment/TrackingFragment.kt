@@ -29,9 +29,17 @@ import org.osmdroid.views.overlay.Marker
 import java.sql.Date
 import com.pusher.client.Pusher;
 import com.pusher.client.PusherOptions;
+import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.connection.WorkHubs
 import com.windstrom5.tugasakhir.model.Pekerja
+import okhttp3.ResponseBody
+import org.json.JSONArray
 import org.json.JSONException
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class TrackingFragment : Fragment() {
     private lateinit var webSocket: WebSocket
@@ -39,12 +47,13 @@ class TrackingFragment : Fragment() {
     private lateinit var scarlet: Scarlet
     private lateinit var locationService: LocationWebSocketService
     private val markers = mutableMapOf<String, Marker>() // Map to store markers by user name
-    private val handler = Handler(Looper.getMainLooper())
     private lateinit var requestQueue: RequestQueue
     private var perusahaan : Perusahaan? = null
     private var admin : Admin? = null
     private val pekerjaList = mutableListOf<Pekerja>()
-    private val updateIntervalMillis = 5000L
+    private val pollingInterval = 2000L
+    private val handler = Handler()
+    private var fetchRunnable: Runnable? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -54,58 +63,114 @@ class TrackingFragment : Fragment() {
         getBundle()
         initializeMap()
         requestQueue = Volley.newRequestQueue(requireContext())
-        perusahaan?.let { getPekerja(it) }
-        val pusher = WorkHubs.pusher
-        for (pekerja in pekerjaList) {
-            val channel = pusher.subscribe("location-updates.${pekerja.nama}")
-            channel.bind("App\\Events\\LocationUpdated") { event ->
-                val data = event.data
-                val nama: String = data[0].toString()
-                val latitude: Double = data[1].toString().toDouble()
-                val longitude: Double = data[2].toString().toDouble()
-                val updated_at: String = data[3].toString()
-                val locationUpdate = LocationUpdate(nama, latitude, longitude, updated_at)
-                updateMapMarker(locationUpdate)
-            }
-        }
+        perusahaan?.let { fetchDataFromApi(it) }
+//        val pusher = WorkHubs.pusher
+//        val channel = pusher.subscribe("location-updates.${perusahaan?.nama}")
+//        channel.bind("App\\Events\\LocationUpdated") { event ->
+//            val data = event.data
+//            val nama: String = data[0].toString()
+//            val latitude: Double = data[1].toString().toDouble()
+//            val longitude: Double = data[2].toString().toDouble()
+//            val updated_at: String = data[3].toString()
+//            val locationUpdate = LocationUpdate(nama, latitude, longitude, updated_at)
+//            updateMapMarker(locationUpdate)
+//        }
         return view
     }
-
-    private fun getPekerja(perusahaan: Perusahaan) {
-        val apiUrl = "https://df0f-125-163-245-254.ngrok-free.app/api/getPekerja/${perusahaan.nama}"
-
-        val jsonObjectRequest = JsonObjectRequest(
-            Request.Method.GET, apiUrl, null,
-            { response ->
-                try {
-                    val pekerjaArray = response.getJSONArray("pekerja") // Assuming your response has a "pekerja" array
-                    for (i in 0 until pekerjaArray.length()) {
-                        val pekerjaObject = pekerjaArray.getJSONObject(i)
-                        val pekerja = Pekerja(
-                            null,
-                            pekerjaObject.getInt("id_perusahaan"),
-                            pekerjaObject.getString("email"),
-                            pekerjaObject.getString("password"),
-                            pekerjaObject.getString("nama"),
-                            Date(pekerjaObject.getLong("tanggal_lahir")),
-                            pekerjaObject.getString("profile")
-                        )
-                        pekerjaList.add(pekerja)
+    private fun fetchDataFromApi(perusahaan: Perusahaan) {
+        val url = "http://192.168.1.6:8000/api/"
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val apiService = retrofit.create(ApiService::class.java)
+        fetchRunnable = object : Runnable {
+            override fun run() {
+                val call = apiService.getLocationPekerja(perusahaan.nama)
+                call.enqueue(object : Callback<ResponseBody> {
+                    override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                        if (response.isSuccessful) {
+                            response.body()?.let { responseBody ->
+                                try {
+                                    val absenDataArray = JSONArray(responseBody.string())
+                                    // Iterate through the JSONArray and create LocationUpdate objects
+                                    val locationUpdateList = mutableListOf<LocationUpdate>()
+                                    for (i in 0 until absenDataArray.length()) {
+                                        val absenObject = absenDataArray.getJSONObject(i)
+                                        val nama = absenObject.getString("nama")
+                                        val latitude = absenObject.getDouble("latitude")
+                                        val longitude = absenObject.getDouble("longitude")
+                                        val updated_at = absenObject.getString("updated_at")
+                                        val locationUpdate = LocationUpdate(nama, latitude, longitude, updated_at)
+                                        locationUpdateList.add(locationUpdate)
+                                    }
+                                    // Update map markers with the location updates
+                                    locationUpdateList.forEach { updateMapMarker(it) }
+                                } catch (e: JSONException) {
+                                    Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
+                                }
+                            }
+                        } else {
+                            // Handle unsuccessful response
+                            Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
+                        }
                     }
 
-                    // Now the pekerjaList contains all the fetched Pekerja data
-                    // You can use pekerjaList as needed
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                }
-            },
-            { error ->
-                // Handle error cases
-                error.printStackTrace()
-            })
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        // Handle network failures
+                        Log.e("FetchDataError", "Failed to fetch data: ${t.message}")
+                    }
+                })
 
-        requestQueue.add(jsonObjectRequest)
+                // Schedule the next polling after the interval
+                handler.postDelayed(this, pollingInterval)
+            }
+        }
+        fetchRunnable?.let {
+            handler.post(it)
+        }
     }
+
+    fun stopFetchRunnable() {
+        fetchRunnable?.let {
+            handler.removeCallbacks(it)
+        }
+    }
+//    private fun getPekerja(perusahaan: Perusahaan) {
+//        val apiUrl = "http://192.168.1.6:8000/api/getPekerja/${perusahaan.nama}"
+//
+//        val jsonObjectRequest = JsonObjectRequest(
+//            Request.Method.GET, apiUrl, null,
+//            { response ->
+//                try {
+//                    val pekerjaArray = response.getJSONArray("pekerja") // Assuming your response has a "pekerja" array
+//                    for (i in 0 until pekerjaArray.length()) {
+//                        val pekerjaObject = pekerjaArray.getJSONObject(i)
+//                        val pekerja = Pekerja(
+//                            null,
+//                            pekerjaObject.getInt("id_perusahaan"),
+//                            pekerjaObject.getString("email"),
+//                            pekerjaObject.getString("password"),
+//                            pekerjaObject.getString("nama"),
+//                            Date(pekerjaObject.getLong("tanggal_lahir")),
+//                            pekerjaObject.getString("profile")
+//                        )
+//                        pekerjaList.add(pekerja)
+//                    }
+//
+//                    // Now the pekerjaList contains all the fetched Pekerja data
+//                    // You can use pekerjaList as needed
+//                } catch (e: JSONException) {
+//                    e.printStackTrace()
+//                }
+//            },
+//            { error ->
+//                // Handle error cases
+//                error.printStackTrace()
+//            })
+//
+//        requestQueue.add(jsonObjectRequest)
+//    }
     private fun getBundle() {
         val arguments = arguments
         if (arguments != null) {
