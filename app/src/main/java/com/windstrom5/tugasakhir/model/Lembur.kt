@@ -6,6 +6,7 @@ import java.sql.Time
 import java.util.Date
 
 data class Lembur(
+    val id: Int? = null,
     val id_perusahaan: Int,
     val id_pekerja: Int,
     val tanggal: Date, // Assuming you handle dates as strings
@@ -16,6 +17,7 @@ data class Lembur(
     val status: String
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readValue(Int::class.java.classLoader) as? Int,
         parcel.readInt(),
         parcel.readInt(),
         parcel.readSerializable() as Date,

@@ -5,6 +5,7 @@ import android.os.Parcelable
 import java.util.Date
 
 data class Izin(
+    val id: Int? = null,
     val id_pekerja: Int,
     val id_perusahaan: Int,
     val tanggal: Date,
@@ -14,6 +15,7 @@ data class Izin(
     val status: String
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readValue(Int::class.java.classLoader) as? Int,
         parcel.readInt(),
         parcel.readInt(),
         parcel.readSerializable() as Date,

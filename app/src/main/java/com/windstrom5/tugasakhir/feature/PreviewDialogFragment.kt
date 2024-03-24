@@ -16,6 +16,7 @@ import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import com.google.android.material.textfield.TextInputLayout
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.model.DinasItem
 import com.windstrom5.tugasakhir.model.IzinItem
 import com.windstrom5.tugasakhir.model.LemburItem
@@ -23,6 +24,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
+import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -104,40 +110,12 @@ class PreviewDialogFragment: DialogFragment() {
             if (isPdf) {
                 val webView = view.findViewById<WebView>(R.id.webView)
                 webView.visibility = View.VISIBLE
-// Load PDF into WebView
                 webView.settings.javaScriptEnabled = true // Enable JavaScript if required
                 webView.settings.allowFileAccessFromFileURLs = true // Allow access to file URLs
                 webView.settings.allowUniversalAccessFromFileURLs = true // Allow access to file URLs on Android 8+
                 // Load the PDF directly without going through the ngrok warning page
                 val headers = mapOf("ngrok-skip-browser-warning" to "true")
                 webView.loadUrl("https://docs.google.com/gview?embedded=true&url=$attachmentUrl")
-//                val pdfFileName = "${context?.cacheDir}/${System.currentTimeMillis()}.pdf"
-//                val file = File(pdfFileName)
-//
-//                // Download the PDF file
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    try {
-//                        val inputStream = URL(attachmentUrl).openStream()
-//                        val outputStream = FileOutputStream(file)
-//                        inputStream.copyTo(outputStream)
-//                        outputStream.close()
-//
-//                        // Load the downloaded PDF file into PDFView
-//                        withContext(Dispatchers.Main) {
-//                            val pdfView = view.findViewById<PDFView>(R.id.pdfView)
-//                            pdfView.visibility = View.VISIBLE
-//                            pdfView.fromFile(file)
-//                                .defaultPage(0)
-//                                .enableSwipe(true)
-//                                .swipeHorizontal(false)
-//                                .enableDoubletap(true)
-//                                .load()
-//                        }
-//                    } catch (e: IOException) {
-//                        e.printStackTrace()
-//                        // Handle download or loading errors
-//                    }
-//                }
             } else {
                 // Load image using Glide or Picasso
                 val imageView = view.findViewById<ImageView>(R.id.imageView)
@@ -158,4 +136,37 @@ class PreviewDialogFragment: DialogFragment() {
         }
     }
 
+    private fun updateStatus(status: String) {
+        val id = arguments?.getInt("id") // Assuming you have an ID associated with the item
+        if (id != null) {
+            // Call your API to update the status
+            val requestBody = JSONObject().apply {
+                put("status", status)
+            }
+            // Make a network request using Retrofit
+            val apiService = retrofit.create(ApiService::class.java)
+            val call = apiService.updateStatus(id, requestBody.toString())
+            call.enqueue(object : Callback<ResponseBody> {
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    if (response.isSuccessful) {
+                        // Handle successful response
+                        dismiss() // Dismiss the dialog after updating the status
+                    } else {
+                        // Handle unsuccessful response
+                        Log.e("UpdateStatusError", "Failed to update status: ${response.code()}")
+                        dismiss() // Dismiss the dialog even if the status update fails
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    // Handle network failures
+                    Log.e("UpdateStatusError", "Failed to update status: ${t.message}")
+                    dismiss() // Dismiss the dialog even if the status update fails
+                }
+            })
+        } else {
+            Log.e("UpdateStatusError", "Item ID is null")
+            dismiss() // Dismiss the dialog if the item ID is null
+        }
+    }
 }
