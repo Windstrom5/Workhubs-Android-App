@@ -25,11 +25,25 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.core.content.res.ResourcesCompat
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import com.windstrom5.tugasakhir.activity.RegisterActivity
+import com.windstrom5.tugasakhir.connection.ApiResponse
+import com.windstrom5.tugasakhir.connection.ApiService
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 import java.io.File
 import java.io.InputStream
 import java.sql.Time
@@ -82,13 +96,20 @@ class AddLemburFragment : Fragment() {
 
         // Set onClickListener for the save button
         save.setOnClickListener {
-            // Implement logic to save the form data
-            // You can access the entered data using the views like edNama.text.toString(), etc.
+            setLoading(true)
+            pekerja?.let { it1 -> perusahaan?.let { it2 -> saveDataLembur(it1, it2) } }
         }
 
         return view
     }
-
+    private fun setLoading(isLoading: Boolean) {
+        val loadingLayout = activity?.findViewById<LinearLayout>(R.id.layout_loading)
+        if (isLoading) {
+            loadingLayout?.visibility = View.VISIBLE
+        } else {
+            loadingLayout?.visibility = View.INVISIBLE
+        }
+    }
     private val watcher = object : TextWatcher {
         override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
             // Not needed for this example
@@ -287,5 +308,51 @@ class AddLemburFragment : Fragment() {
         } else {
             Log.d("Error","Bundle Not Found")
         }
+    }
+
+    private fun saveDataLembur(pekerja: Pekerja,perusahaan: Perusahaan){
+        val url = "http://192.168.1.6:8000/api/"
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiService::class.java)
+        val nama_Perusahaan = createPartFromString(perusahaan.nama)
+        val nama = createPartFromString(pekerja.nama)
+        val tanggal = createPartFromString(TITanggal.editText?.text.toString())
+        val waktu_masuk = createPartFromString(TIMasuk.editText?.text.toString())
+        val waktu_pulang = createPartFromString(TIPulang.editText?.text.toString())
+        val kegiatan = createPartFromString(TIPekerjaan.editText?.text.toString())
+
+        val buktifile = selectedFile
+        val requestFile = RequestBody.create(MediaType.parse("pdf/*"), buktifile)
+        val buktipart = MultipartBody.Part.createFormData("bukti", buktifile.name, requestFile)
+        val call = apiService.uploadLembur(nama_Perusahaan,nama,tanggal, waktu_masuk,waktu_pulang, kegiatan, buktipart)
+        call.enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    val apiResponse = response.body()
+                    Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
+                    MotionToast.createToast(requireActivity(), "Add Dinas Success",
+                        "Data Dinas Berhasil Ditambahkan",
+                        MotionToastStyle.SUCCESS,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
+                } else {
+                    Log.e("ApiResponse", "Error: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                Log.e("ApiResponse", "Request failed: ${t.message}")
+            }
+        })
+        setLoading(false)
+    }
+    private fun createPartFromString(value: String): RequestBody {
+        return RequestBody.create(MediaType.parse("text/plain"), value)
     }
 }

@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
@@ -119,10 +120,18 @@ class AddDinasFragment : Fragment() {
         tilpulang.editText?.addTextChangedListener(watcher)
         keterangan.editText?.addTextChangedListener(watcher)
         save.setOnClickListener {
+            setLoading(true)
             perusahaan?.let { it1 -> pekerja?.let { it2 -> saveDataDinas(it2, it1) } }
         }
     }
-
+    private fun setLoading(isLoading: Boolean) {
+        val loadingLayout = activity?.findViewById<LinearLayout>(R.id.layout_loading)
+        if (isLoading) {
+            loadingLayout?.visibility = View.VISIBLE
+        } else {
+            loadingLayout?.visibility = View.INVISIBLE
+        }
+    }
     private fun saveDataDinas(pekerja: Pekerja,perusahaan: Perusahaan){
         val url = "http://192.168.1.6:8000/api/"
 
@@ -163,6 +172,7 @@ class AddDinasFragment : Fragment() {
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })
+        setLoading(false)
     }
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)

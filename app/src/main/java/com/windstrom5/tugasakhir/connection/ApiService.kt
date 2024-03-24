@@ -129,5 +129,15 @@ interface ApiService {
         @Part("id") id: RequestBody,
         @Part("status") status: RequestBody
     ): Call<ApiResponse>
+    @PUT("UpdateLembur")
+    fun updateLembur(
+        @Part("id") id: RequestBody,
+        @Part("status") status: RequestBody
+    ): Call<ApiResponse>
+    @PUT("UpdateDinas")
+    fun updateDinas(
+        @Part("id") id: RequestBody,
+        @Part("status") status: RequestBody
+    ): Call<ApiResponse>
 }
 

@@ -16,6 +16,7 @@ import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import com.google.android.material.textfield.TextInputLayout
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.model.DinasItem
 import com.windstrom5.tugasakhir.model.IzinItem
@@ -24,11 +25,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -59,7 +64,6 @@ class PreviewDialogFragment: DialogFragment() {
             view.findViewById<TextInputLayout>(R.id.tanggalInputLayout).editText?.setText("${dinas.tanggal_berangkat} - ${dinas.tanggal_pulang}")
             view.findViewById<TextInputLayout>(R.id.tujuanInputLayout).editText?.setText(dinas.tujuan)
             view.findViewById<TextInputLayout>(R.id.kegiatanInputLayout).editText?.setText(dinas.kegiatan)
-
             val pdfUrl = "https://zgwlhkjfnp.sharedwithexpose.com/storage/${dinas.bukti}"
             val pdfView = view.findViewById<PDFView>(R.id.pdfView)
             pdfView.fromUri(Uri.parse(pdfUrl))
@@ -73,11 +77,11 @@ class PreviewDialogFragment: DialogFragment() {
             // Set click listeners for accept and reject buttons if needed
             // Example:
             view.findViewById<Button>(R.id.acceptButton).setOnClickListener {
-                // Perform accept action
+                updateStatus("Accept","Dinas")
             }
 
             view.findViewById<Button>(R.id.rejectButton).setOnClickListener {
-                dismiss()
+                updateStatus("Reject","Dinas")
             }
         } else if (lembur != null) {
             view.findViewById<TextInputLayout>(R.id.namaInputLayout).editText?.setText(lembur.nama_pekerja)
@@ -92,11 +96,11 @@ class PreviewDialogFragment: DialogFragment() {
                 .load("https://zgwlhkjfnp.sharedwithexpose.com/storage/${lembur.bukti}")
                 .into(imageView)
             view.findViewById<Button>(R.id.acceptButton).setOnClickListener {
-                // Perform accept action
+                updateStatus("Accept","Lembur")
             }
 
             view.findViewById<Button>(R.id.rejectButton).setOnClickListener {
-                dismiss()
+                updateStatus("Reject","Lembur")
             }
         }else if (izin != null){
             view.findViewById<TextInputLayout>(R.id.namaInputLayout).editText?.setText(izin.nama_pekerja)
@@ -125,29 +129,40 @@ class PreviewDialogFragment: DialogFragment() {
                     .into(imageView)
             }
             view.findViewById<Button>(R.id.acceptButton).setOnClickListener {
-                // Perform accept action
+                updateStatus("Accept","Izin")
             }
 
             view.findViewById<Button>(R.id.rejectButton).setOnClickListener {
-                dismiss()
+                updateStatus("Reject","Izin")
             }
         }else{
             Toast.makeText(requireContext(),"Failed Open The Dialog",Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun updateStatus(status: String) {
+    private fun updateStatus(status: String,category:String) {
         val id = arguments?.getInt("id") // Assuming you have an ID associated with the item
         if (id != null) {
             // Call your API to update the status
-            val requestBody = JSONObject().apply {
-                put("status", status)
-            }
+            val url = "http://192.168.1.6:8000/api/"
             // Make a network request using Retrofit
+            val retrofit = Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+            val idRequestBody = RequestBody.create(MediaType.parse("text/plain"), id.toString())
+            val statusRequestBody = RequestBody.create(MediaType.parse("text/plain"), status)
             val apiService = retrofit.create(ApiService::class.java)
-            val call = apiService.updateStatus(id, requestBody.toString())
-            call.enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+            val call: Call<ApiResponse> // Declare the call variable outside the if-else statement
+            if (category == "Izin") {
+                call = apiService.updateIzin(idRequestBody, statusRequestBody)
+            } else if (category == "Lembur") {
+                call = apiService.updateLembur(idRequestBody, statusRequestBody)
+            } else {
+                call = apiService.updateDinas(idRequestBody, statusRequestBody)
+            }
+            call.enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                     if (response.isSuccessful) {
                         // Handle successful response
                         dismiss() // Dismiss the dialog after updating the status
@@ -158,7 +173,7 @@ class PreviewDialogFragment: DialogFragment() {
                     }
                 }
 
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                     // Handle network failures
                     Log.e("UpdateStatusError", "Failed to update status: ${t.message}")
                     dismiss() // Dismiss the dialog even if the status update fails

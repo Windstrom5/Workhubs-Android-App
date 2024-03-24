@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
@@ -92,7 +93,16 @@ class AddIzinFragment : Fragment() {
         acIzin.addTextChangedListener(watcher)
         TIAlasan.editText?.addTextChangedListener(watcher)
         save.setOnClickListener {
+            setLoading(true)
             pekerja?.let { it1 -> perusahaan?.let { it2 -> saveDataIzin(it1, it2) } }
+        }
+    }
+    private fun setLoading(isLoading: Boolean) {
+        val loadingLayout = activity?.findViewById<LinearLayout>(R.id.layout_loading)
+        if (isLoading) {
+            loadingLayout?.visibility = View.VISIBLE
+        } else {
+            loadingLayout?.visibility = View.INVISIBLE
         }
     }
 
@@ -199,6 +209,7 @@ class AddIzinFragment : Fragment() {
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })
+        setLoading(false)
     }
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)
