@@ -17,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
@@ -67,7 +68,9 @@ class LoginActivity : AppCompatActivity() {
         register = binding.createPerusahan
         login.isEnabled = false
         loading = findViewById(R.id.layout_loading)
-        fetchDataFromApi()
+        val perusahaanList: ArrayList<Perusahaan>? = intent.getSerializableExtra("perusahaanList") as? ArrayList<Perusahaan>
+        setUpAutoCompleteTextView(perusahaanList ?: emptyList())
+//        fetchDataFromApi()
         editTextEmail.addTextChangedListener(textWatcher)
         editTextPassword.addTextChangedListener(textWatcher)
         editTextPerusahaan.addTextChangedListener(textWatcher)
@@ -185,6 +188,18 @@ class LoginActivity : AppCompatActivity() {
             updateLoginButtonState()
         }
     }
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setMessage("Are you sure you want to exit the app?")
+            .setPositiveButton("Yes") { _, _ ->
+                super.onBackPressed()
+                finishAffinity() // Close all activities in the task
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
 
     private fun updateLoginButtonState() {
         val isPerusahaanFilled = editTextPerusahaan.text.isNotBlank()
@@ -267,6 +282,7 @@ class LoginActivity : AppCompatActivity() {
             )
             Volley.newRequestQueue(this).add(request)
         }
+        setLoading(false)
     }
     private fun parseDate(dateString: String): Date {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())

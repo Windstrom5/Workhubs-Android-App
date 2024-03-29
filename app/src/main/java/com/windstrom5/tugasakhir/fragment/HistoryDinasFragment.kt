@@ -54,7 +54,7 @@ class HistoryDinasFragment : Fragment() {
                 perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
             }
         }else{
-            perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
+            perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
             swipeRefreshLayout.setOnRefreshListener {
                 perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
             }

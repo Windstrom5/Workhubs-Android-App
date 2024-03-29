@@ -113,11 +113,14 @@ class HistoryLemburFragment : Fragment(){
                             // Populate ExpandableListView with data
                             val expandableListView =
                                 view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                            val adapter = LemburAdapter(
-                                requireContext(),
-                                statusWithLemburList,
-                                "Pekerja"
-                            )
+                            val adapter = perusahaan?.let {
+                                LemburAdapter(
+                                    it,
+                                    requireContext(),
+                                    statusWithLemburList,
+                                    "Pekerja"
+                                )
+                            }
                             expandableListView?.setAdapter(adapter)
                             swipeRefreshLayout.isRefreshing = false
                         } catch (e: JSONException) {
@@ -185,11 +188,14 @@ class HistoryLemburFragment : Fragment(){
                             // Populate ExpandableListView with data
                             val expandableListView =
                                 view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                            val adapter = LemburAdapter(
-                                requireContext(),
-                                statusWithLemburList,
-                                "Admin"
-                            )
+                            val adapter = perusahaan?.let {
+                                LemburAdapter(
+                                    it,
+                                    requireContext(),
+                                    statusWithLemburList,
+                                    "Pekerja"
+                                )
+                            }
                             expandableListView?.setAdapter(adapter)
                             swipeRefreshLayout.isRefreshing = false
                         } catch (e: JSONException) {

@@ -25,10 +25,13 @@ import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TimePicker
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isEmpty
+import com.bumptech.glide.Glide
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import com.windstrom5.tugasakhir.activity.RegisterActivity
 import com.windstrom5.tugasakhir.connection.ApiResponse
@@ -58,11 +61,13 @@ class AddLemburFragment : Fragment() {
     private lateinit var uploadfileButton: Button
     private lateinit var selectedFileName: TextView
     private lateinit var changeFileButton: Button
+    private lateinit var imageView: ImageView
     private lateinit var save: Button
     private var perusahaan : Perusahaan? = null
     private var pekerja : Pekerja? = null
     private lateinit var selectedFile: File
     private val PICK_IMAGE_REQUEST_CODE = 123
+    private var isTIMasukFilled = false
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -76,14 +81,25 @@ class AddLemburFragment : Fragment() {
         TIPulang = view.findViewById(R.id.TIPulang)
         TIPekerjaan = view.findViewById(R.id.pekerjaan)
         uploadfileButton = view.findViewById(R.id.uploadfile)
+        imageView = view.findViewById(R.id.imageView)
         selectedFileName = view.findViewById(R.id.selectedFileName)
         changeFileButton = view.findViewById(R.id.changeFile)
         save = view.findViewById(R.id.cirsaveButton)
         TIMasuk.setEndIconOnClickListener{
-            TIMasuk.editText?.let { it1 -> showDatePickerDialog(it1) }
+            perusahaan?.let { it1 -> showTimePickerDialog(TIMasuk, it1) }
         }
+
         TIPulang.setEndIconOnClickListener {
-            TIPulang.editText?.let { it1 -> showDatePickerDialog(it1) }
+            if (!isTIMasukFilled) {
+                MotionToast.createToast(requireActivity(), "Error",
+                    "Masukkan Jam Masuk Terlebih Dahulu",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(requireActivity(), R.font.ralewaybold))
+            }else{
+                perusahaan?.let { it1 -> showTimePickerDialog(TIPulang, it1) }
+            }
         }
         TINama.editText?.addTextChangedListener(watcher)
         TITanggal.editText?.addTextChangedListener(watcher)
@@ -102,6 +118,7 @@ class AddLemburFragment : Fragment() {
 
         return view
     }
+
     private fun setLoading(isLoading: Boolean) {
         val loadingLayout = activity?.findViewById<LinearLayout>(R.id.layout_loading)
         if (isLoading) {
@@ -213,6 +230,10 @@ class AddLemburFragment : Fragment() {
                     selectedFileName.text = File(realPath).name
                     selectedFile = File(realPath)
                     selectedFileName.addTextChangedListener(watcher)
+                    imageView.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(imageUri)
+                        .into(imageView)
                 } else {
                     selectedFileName.text = "Failed to get real path"
                 }
@@ -231,27 +252,52 @@ class AddLemburFragment : Fragment() {
         return null
     }
 
-    private fun showTimePickerDialog(textInputLayout: TextInputLayout, perusahaan: Perusahaan) {
+    private fun showTimePickerDialog(textInputLayout: TextInputLayout,perusahaan: Perusahaan) {
         val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = calendar.get(Calendar.MINUTE)
+        val masuk = perusahaan.jam_masuk.toString()
+        val keluar = perusahaan.jam_keluar.toString()
+        val masukParts = masuk.split(":")
+        val keluarParts = keluar.split(":")
+        val masukHour = masukParts[0].toInt()
+        val masukMinute = masukParts[1].toInt()
+        if(textInputLayout.id == R.id.TIMasuk){
+            val timePickerDialog = TimePickerDialog(
+                requireContext(),
+                TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
+                    val selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
+                    textInputLayout.editText?.setText(selectedTime)
+                    isTIMasukFilled = true
+                },
+                masukHour,
+                masukMinute,
+                true
+            )
+            // Set the time range for the TimePickerDialog
+            timePickerDialog.updateTime(masukHour, masukMinute)
+            timePickerDialog.setRange(perusahaan.jam_masuk, perusahaan.jam_keluar)
+            timePickerDialog.show()
+        }else{
+            val masuk = view?.findViewById<TextInputLayout>(R.id.TIMasuk)?.editText?.text.toString()
+            val masukParts = masuk.split(":")
+            val masukHour = masukParts[0].toInt()
+            val masukMinute = masukParts[1].toInt()
+            val timePickerDialog = TimePickerDialog(
+                requireContext(),
+                TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
+                    val selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
+                    textInputLayout.editText?.setText(selectedTime)
+                },
+                masukHour,
+                masukMinute,
+                true
+            )
 
-        val timePickerDialog = TimePickerDialog(
-            requireContext(),
-            TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
-                val selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
-                textInputLayout.editText?.setText(selectedTime)
-            },
-            currentHour,
-            currentMinute,
-            true
-        )
+            // Set the time range for the TimePickerDialog
+            timePickerDialog.updateTime(masukHour, masukMinute)
+            timePickerDialog.setRange(perusahaan.jam_masuk, perusahaan.jam_keluar)
 
-        // Set the time range for the TimePickerDialog
-        timePickerDialog.updateTime(currentHour, currentMinute)
-        timePickerDialog.setRange(perusahaan.jam_masuk, perusahaan.jam_keluar)
-
-        timePickerDialog.show()
+            timePickerDialog.show()
+        }
     }
 
     private fun TimePickerDialog.setRange(minTime: Time, maxTime: Time) {

@@ -10,6 +10,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -19,6 +20,7 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
+import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
@@ -65,6 +67,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var textViewProgress: TextView
     private lateinit var textViewCustom:TextView
     private val boundary = "*****"
+    private lateinit var imageView: ImageView
     private lateinit var loading : LinearLayout
     private lateinit var path : String
     companion object {
@@ -80,6 +83,7 @@ class RegisterActivity : AppCompatActivity() {
         TIJamkeluar = binding.textInputkeluar
         loading = findViewById(R.id.layout_loading)
         TIJammasuk = binding.textInputMasuk
+        imageView = binding.imageView
         edNamaPerusahaan = binding.editTextPerusahaan
         tvaddress = binding.tvAddress
         selectedFileName = binding.selectedFileName
@@ -187,6 +191,10 @@ class RegisterActivity : AppCompatActivity() {
                 if (realPath != null) {
                     selectedFileName.text = File(realPath).name
                     selectedFile = File(realPath)
+                    imageView.visibility = View.VISIBLE
+                    Glide.with(this)
+                        .load(imageUri) // Load the image using the URI
+                        .into(imageView) // Set it into the ImageView
                 } else {
                     selectedFileName.text = "Failed to get real path"
                 }

@@ -16,11 +16,14 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
+import com.github.barteksc.pdfviewer.PDFView
 import com.google.android.material.textfield.TextInputLayout
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import com.windstrom5.tugasakhir.R
@@ -58,6 +61,8 @@ class AddIzinFragment : Fragment() {
     private lateinit var selectedFileName: TextView
     private lateinit var save: Button
     private var perusahaan : Perusahaan? = null
+    private lateinit var imageView: ImageView
+    private lateinit var pdfView: PDFView
     private var pekerja : Pekerja? = null
     private lateinit var selectedFile: File
     private val PDF_REQUEST_CODE = 123
@@ -79,6 +84,8 @@ class AddIzinFragment : Fragment() {
         acIzin = view.findViewById(R.id.acizin)
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, izinKerjaOptions)
         acIzin.setAdapter(adapter)
+        imageView = view.findViewById(R.id.imageView)
+        pdfView = view.findViewById(R.id.pdfView)
         selectedFileName = view.findViewById(R.id.selectedFileName)
         TIAlasan = view.findViewById(R.id.alasan)
         uploadfileButton = view.findViewById(R.id.uploadfile)
@@ -251,6 +258,11 @@ class AddIzinFragment : Fragment() {
                 if (mimeType != null) {
                     if (mimeType.startsWith("image/")) {
                         // Handle PDF file
+                        imageView.visibility = View.VISIBLE
+                        pdfView.visibility = View.GONE
+                        Glide.with(this)
+                            .load(fileUri)
+                            .into(imageView)
                         val displayName = getRealPdfPathFromUri(fileUri)
                         if (displayName != null) {
                             val file = File(requireContext().cacheDir, displayName)
@@ -263,7 +275,6 @@ class AddIzinFragment : Fragment() {
                                 selectedFileName.text = displayName
                                 selectedFileName.addTextChangedListener(watcher)
                                 selectedFile = file
-                                Log.d("MyFragment", "Selected File: $selectedFile")
                             } catch (e: IOException) {
                                 Log.e("MyFragment", "Failed to copy file: ${e.message}")
                             }
@@ -272,6 +283,9 @@ class AddIzinFragment : Fragment() {
                         }
                     } else if (mimeType == "application/pdf") {
                         // Handle PDF file
+                        imageView.visibility = View.GONE
+                        pdfView.visibility = View.VISIBLE
+                        displayPdf(fileUri)
                         val displayName = getRealPdfPathFromUri(fileUri)
                         if (displayName != null) {
                             val file = File(requireContext().cacheDir, displayName)
@@ -284,7 +298,6 @@ class AddIzinFragment : Fragment() {
                                 selectedFileName.text = displayName
                                 selectedFileName.addTextChangedListener(watcher)
                                 selectedFile = file
-                                Log.d("MyFragment", "Selected File: $selectedFile")
                             } catch (e: IOException) {
                                 Log.e("MyFragment", "Failed to copy file: ${e.message}")
                             }
@@ -305,7 +318,22 @@ class AddIzinFragment : Fragment() {
             }
         }
     }
-
+    private fun displayPdf(uri: Uri) {
+        Log.d("uri5",uri.toString())
+        pdfView.fromUri(uri)
+            .password(null) // If your PDF is password protected, provide the password here
+            .defaultPage(0) // Specify which page to display by default
+            .enableSwipe(true) // Enable or disable swipe to change pages
+            .swipeHorizontal(false) // Set to true to enable horizontal swipe
+            .enableDoubletap(true) // Enable double tap to zoom
+            .onLoad { /* Called when PDF is loaded */ }
+            .onPageChange { page, pageCount -> /* Called when page is changed */ }
+            .onPageError { page, t -> /* Called when an error occurs while loading a page */ }
+            .scrollHandle(null) // Specify a custom scroll handle if needed
+            .enableAntialiasing(true) // Improve rendering a little bit on low-res screens
+            .spacing(0) // Add spacing between pages in dp
+            .load()
+    }
     private fun getRealImagePathFromUri(uri: Uri): String? {
         val projection = arrayOf(MediaStore.Images.Media.DATA)
         val cursor = requireActivity().contentResolver.query(uri, projection, null, null, null)

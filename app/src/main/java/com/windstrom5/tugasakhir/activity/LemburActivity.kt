@@ -104,9 +104,9 @@ class LemburActivity : AppCompatActivity() {
                 }else{
                     pekerja = it.getParcelable("user")
                     navigation.visibility = View.VISIBLE
-
+                    navigation.inflateMenu(R.menu.lemburuser)
                     if (isFirstLaunch) {
-                        replaceFragment(AddDinasFragment())
+                        replaceFragment(AddLemburFragment())
                         isFirstLaunch = false
                     }
                 }

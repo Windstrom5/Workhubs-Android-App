@@ -91,7 +91,6 @@ class AddDinasFragment : Fragment() {
         val kotaDataList = readAndParseKotaJson()
         val provinsiDataList = readAndParseProvinsiJson()
         val combinedDataList = combineAndFormatData(kotaDataList, provinsiDataList)
-        Log.d("List",combinedDataList.toString())
         val adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_dropdown_item_1line,

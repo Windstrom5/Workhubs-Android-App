@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import com.itextpdf.html2pdf.HtmlConverter
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
 import com.windstrom5.tugasakhir.model.DinasItem
+import com.windstrom5.tugasakhir.model.Perusahaan
 import com.windstrom5.tugasakhir.model.historyDinas
 import java.io.File
 import java.io.FileOutputStream
@@ -81,58 +83,51 @@ class DinasAdapter(
         val tanggalPulangFormatted = dateFormatter.format(dinas.tanggal_pulang)
         tanggal.text = "$tanggalBerangkatFormatted - $tanggalPulangFormatted"
         tujuan.text = dinas.tujuan
-        if (Role == "Admin"){
-            val buttonText = when (dinas.status) {
-                "Pending" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Respond \nDinas"
-                }
-                "Accept" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "View \nData"
-                }
-                else -> {
-                    actionButton.visibility = View.GONE
-                    "View \nData"
-                }
-            }
-            actionButton.text = buttonText
-
-            actionButton.setOnClickListener {
-//                if (actionButton.text == "Download Receipt"){
-//
-//                }
-            }
-        }else{
-            val buttonText = when (dinas.status) {
-                "Pending" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Edit \nData"
-                }
-                "Accept" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Download \nReceipt"
-                }
-                else -> {
-                    actionButton.visibility = View.GONE
-                    "View \nData"
-                }
-            }
-            actionButton.text = buttonText
-
-            actionButton.setOnClickListener {
-                if (actionButton.text == "Download Receipt"){
+        if (Role == "Admin" && dinas.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Respond \nIzin"
+        } else if (Role == "Admin" && dinas.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "View \nData"
+        } else if (Role != "Admin" && dinas.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Edit \nData"
+        } else if (Role != "Admin" && dinas.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Download \nReceipt"
+        } else {
+            actionButton.visibility = View.GONE
+            actionButton.text =  "View \nData"
+        }
+        actionButton.setOnClickListener {
+            when (actionButton.text) {
+                "Download Receipt" -> {
                     val htmlContent = getHtmlTemplate(dinas)
                     generatePdfFromHtml(htmlContent)
-                }else if(actionButton.text == "Respond Dinas"){
+                }
+                "Respond \nIzin" -> {
+                    Log.d("izin", "clicked")
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
-                    bundle.putParcelable("dinas", dinas) // Pass different object for lembur
+                    bundle.putParcelable("dinas", dinas) // Pass different object for izin
                     bundle.putString("layoutType", "dinas_layout") // Add layout type here
+                    bundle.putString("category","Respond")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
+                "Edit \nData" ->{
+                    Log.d("izin", "clicked")
+                    val fragmentManager = (context as AppCompatActivity).supportFragmentManager
+                    val previewDialogFragment = PreviewDialogFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("dinas", dinas) // Pass different object for izin
+                    bundle.putString("layoutType", "dinas_layout") // Add layout type here
+                    bundle.putString("category","Edit")
+                    previewDialogFragment.arguments = bundle
+                    previewDialogFragment.show(fragmentManager, "preview_dialog")
+                }
+                // Handle other button actions if needed
             }
         }
         return view

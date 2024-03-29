@@ -54,14 +54,18 @@ class HistoryIzinFragment : Fragment() {
                 perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
             }
         }else{
-            perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
+            role?.let { Log.d("Role2", it) }
+            pekerja?.let { fetchDataPekerjaFromApi(perusahaan!!.nama,it.nama) }
             swipeRefreshLayout.setOnRefreshListener {
+                Log.d("perusahaaan2",pekerja.toString())
                 perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
             }
         }
         return view
     }
     private fun fetchDataPekerjaFromApi(namaPerusahaan: String,nama_pekerja: String) {
+        Log.d("perusahaaan2",namaPerusahaan)
+
         val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -99,7 +103,6 @@ class HistoryIzinFragment : Fragment() {
                                     statusWithIzinMap[status] = mutableListOf(izin)
                                 }
                             }
-
                             val statusWithIzinList = statusWithIzinMap.map { entry ->
                                 historyIzin(entry.key, entry.value)
                             }

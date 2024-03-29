@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,8 +22,10 @@ import java.util.Date
 import java.util.Locale
 import com.itextpdf.html2pdf.ConverterProperties
 import com.itextpdf.html2pdf.HtmlConverter
+import com.windstrom5.tugasakhir.model.Perusahaan
 
 class LemburAdapter(
+    private val perusahaan: Perusahaan,
     private val context: Context,
     private val statusWithLemburList: List<historyLembur>,
     private val Role:String
@@ -98,61 +101,52 @@ class LemburAdapter(
         val jamkeluar = timeFormatter.format(lembur.waktu_pulang)
         tanggal.text = tanggalFormatted
         jam.text = "$jammasuk - $jamkeluar"
-        if (Role == "Admin") {
-            val buttonText = when (lembur.status) {
-                "Pending" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Respond \nLembur"
-                }
-
-                "Accept" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "View \nData"
-                }
-
-                else -> {
-                    actionButton.visibility = View.GONE
-                    "View \nData"
-                }
-            }
-            actionButton.text = buttonText
-
-            actionButton.setOnClickListener {
-                if (actionButton.text == "Download Receipt") {
-                    getHtmlTemplate(lembur)
-                }
-            }
+        if (Role == "Admin" && lembur.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Respond \nIzin"
+        } else if (Role == "Admin" && lembur.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "View \nData"
+        } else if (Role != "Admin" && lembur.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Edit \nData"
+        } else if (Role != "Admin" && lembur.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Download \nReceipt"
         } else {
-            val buttonText = when (lembur.status) {
-                "Pending" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Edit \nData"
-                }
-
-                "Accept" -> {
-                    actionButton.visibility = View.VISIBLE
-                    "Download \nReceipt"
-                }
-
-                else -> {
-                    actionButton.visibility = View.GONE
-                    "View \nData"
-                }
-            }
-            actionButton.text = buttonText
-            actionButton.setOnClickListener {
-                if (actionButton.text == "Download Receipt") {
+            actionButton.visibility = View.GONE
+            actionButton.text =  "View \nData"
+        }
+        actionButton.setOnClickListener {
+            when (actionButton.text) {
+                "Download Receipt" -> {
                     val htmlContent = getHtmlTemplate(lembur)
                     generatePdfFromHtml(htmlContent)
-                } else if (actionButton.text == "Respond Lembur") {
+                }
+                "Respond \nIzin" -> {
+                    Log.d("izin", "clicked")
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
-                    bundle.putParcelable("lembur",lembur) // Pass different object for lembur
+                    bundle.putParcelable("lembur", lembur) // Pass different object for izin
                     bundle.putString("layoutType", "lembur_layout") // Add layout type here
+                    bundle.putString("category","Respond")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
+                "Edit \nData" ->{
+                    Log.d("izin", "clicked")
+                    val fragmentManager = (context as AppCompatActivity).supportFragmentManager
+                    val previewDialogFragment = PreviewDialogFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("lembur", lembur) // Pass different object for izin
+                    bundle.putString("layoutType", "lembur_layout") // Add layout type here
+                    bundle.putString("category","Edit")
+                    bundle.putParcelable("perusahaan",perusahaan)
+                    previewDialogFragment.arguments = bundle
+                    previewDialogFragment.show(fragmentManager, "preview_dialog")
+                }
+                // Handle other button actions if needed
             }
         }
         return view

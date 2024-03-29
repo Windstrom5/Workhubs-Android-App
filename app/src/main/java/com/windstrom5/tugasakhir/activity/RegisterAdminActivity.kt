@@ -177,7 +177,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                             MotionToast.LONG_DURATION,
                             ResourcesCompat.getFont(this@RegisterAdminActivity,
                                 R.font.ralewaybold))
-                    val intent = Intent(this@RegisterAdminActivity, AdminActivity::class.java)
+                    val intent = Intent(this@RegisterAdminActivity, SplashActivity::class.java)
                     val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
                     val formattedDate = TITanggal.editText?.text.toString()
                     try {
@@ -199,12 +199,6 @@ class RegisterAdminActivity : AppCompatActivity() {
                             }
                         }
                         setLoading(false)
-                        val sharedPreferencesManager = SharedPreferencesManager(this@RegisterAdminActivity)
-                        sharedPreferencesManager.saveAdmin(admin)
-                        val userBundle = Bundle()
-                        userBundle.putParcelable("user", admin)
-                        userBundle.putParcelable("perusahaan", perusahaan)
-                        intent.putExtra("data", userBundle)
                         startActivity(intent)
                     } catch (e: ParseException) {
                         e.printStackTrace()

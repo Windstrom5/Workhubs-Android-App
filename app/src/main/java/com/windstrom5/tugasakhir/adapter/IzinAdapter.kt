@@ -102,30 +102,23 @@ class IzinAdapter (
         val tanggalFormatted = dateFormatter.format(izin.tanggal)
         tanggal.text = tanggalFormatted
         alasan.text = izin.kategori
-        val buttonText = when {
-            Role == "Admin" && izin.status == "Pending" -> {
-                actionButton.visibility = View.VISIBLE
-                "Respond \nIzin"
-            }
-            Role == "Admin" && izin.status == "Accept" -> {
-                actionButton.visibility = View.VISIBLE
-                "View \nData"
-            }
-            Role != "Admin" && izin.status == "Pending" -> {
-                actionButton.visibility = View.VISIBLE
-                "Edit \nData"
-            }
-            Role != "Admin" && izin.status == "Accept" -> {
-                actionButton.visibility = View.VISIBLE
-                "Download \nReceipt"
-            }
-            else -> {
-                actionButton.visibility = View.GONE
-                "View \nData"
-            }
+        Role?.let { Log.d("Role3", it) }
+        if (Role == "Admin" && izin.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Respond \nIzin"
+        } else if (Role == "Admin" && izin.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "View \nData"
+        } else if (Role != "Admin" && izin.status == "Pending") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Edit \nData"
+        } else if (Role != "Admin" && izin.status == "Accept") {
+            actionButton.visibility = View.VISIBLE
+            actionButton.text =  "Download \nReceipt"
+        } else {
+            actionButton.visibility = View.GONE
+            actionButton.text =  "View \nData"
         }
-
-        actionButton.text = buttonText
 
         actionButton.setOnClickListener {
             when (actionButton.text) {
@@ -140,6 +133,18 @@ class IzinAdapter (
                     val bundle = Bundle()
                     bundle.putParcelable("izin", izin) // Pass different object for izin
                     bundle.putString("layoutType", "izin_layout") // Add layout type here
+                    bundle.putString("category","Respond")
+                    previewDialogFragment.arguments = bundle
+                    previewDialogFragment.show(fragmentManager, "preview_dialog")
+                }
+                "Edit \nData" ->{
+                    Log.d("izin", "clicked")
+                    val fragmentManager = (context as AppCompatActivity).supportFragmentManager
+                    val previewDialogFragment = PreviewDialogFragment()
+                    val bundle = Bundle()
+                    bundle.putParcelable("izin", izin) // Pass different object for izin
+                    bundle.putString("layoutType", "izin_layout") // Add layout type here
+                    bundle.putString("category","Edit")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }

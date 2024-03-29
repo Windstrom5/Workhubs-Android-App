@@ -120,6 +120,9 @@ dependencies {
     implementation ("com.wdullaer:materialdatetimepicker:4.2.3")
     implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.24")
     implementation ("com.itextpdf:itext7-core:7.2.1")
-    implementation ("com.itextpdf:itext7-pdfhtml:2.1.6")
     implementation ("com.itextpdf:html2pdf:3.0.0")
+    implementation "com.github.kittinunf.fuel:fuel:2.3.1"
+    implementation "com.github.skydoves:powermenu:2.2.4"
+    implementation 'com.github.muigukenneth:ElegantDialog:1.1.5'
+    implementation 'com.github.droidbyme:DroidDialog:1d3d30d4ef'
 }

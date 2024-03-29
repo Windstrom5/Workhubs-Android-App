@@ -53,6 +53,7 @@
                             android:id="@+id/edNama"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:background="#E5E4E2"
                             android:textColor="@color/black"
                             android:focusable="false"
                             android:enabled="false"/>
@@ -69,6 +70,7 @@
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/edTanggal"
                             android:layout_width="match_parent"
+                            android:background="#E5E4E2"
                             android:layout_height="wrap_content"
                             android:textColor="@color/black"
                             android:focusable="false"
@@ -130,7 +132,23 @@
                                 android:textSize="18sp"
                                 android:layout_gravity="center"
                                 android:textStyle="bold" />
+                            <FrameLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+                                <!-- ImageView for Image -->
+                                <ImageView
+                                    android:id="@+id/imageView"
+                                    android:layout_width="900px"
+                                    android:layout_height="900px"
+                                    android:visibility="gone" />
 
+                                <!-- PDFView for PDF -->
+                                <com.github.barteksc.pdfviewer.PDFView
+                                    android:id="@+id/pdfView"
+                                    android:layout_width="900px"
+                                    android:layout_height="900px"
+                                    android:visibility="gone" />
+                            </FrameLayout>
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"

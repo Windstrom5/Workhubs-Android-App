@@ -1,31 +1,35 @@
 package com.windstrom5.tugasakhir.activity
 
 import android.annotation.SuppressLint
+import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
+import android.app.ProgressDialog
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
-import com.pusher.client.Pusher
-import com.pusher.client.PusherOptions
-import com.pusher.client.channel.SubscriptionEventListener
+import com.skydoves.powermenu.MenuAnimation
+import com.skydoves.powermenu.OnMenuItemClickListener
+import com.skydoves.powermenu.PowerMenu
+import com.skydoves.powermenu.PowerMenuItem
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.adapter.ListAnggotaAdapter
-import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.ApiService
-import com.windstrom5.tugasakhir.connection.WorkHubs
+import com.windstrom5.tugasakhir.connection.ReverseGeocoder
 import com.windstrom5.tugasakhir.databinding.ActivityCompanyBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
@@ -35,6 +39,7 @@ import okhttp3.ResponseBody
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import org.osmdroid.util.GeoPoint
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -57,10 +62,14 @@ class CompanyActivity : AppCompatActivity() {
     private lateinit var role:String
     private lateinit var requestQueue: RequestQueue
     private lateinit var addPekerja: Button
+    private lateinit var setting:ImageView
     private var job: Job? = null
     private var fetchRunnable: Runnable? = null
     private val handler = Handler()
     private val pollingInterval = 2000L // Polling interval in milliseconds
+    private lateinit var countpekerja : TextView
+    private lateinit var countadmin : TextView
+    private lateinit var address : TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCompanyBinding.inflate(layoutInflater)
@@ -74,8 +83,12 @@ class CompanyActivity : AppCompatActivity() {
         val layoutManager = GridLayoutManager(this, 2)
         recyclerView.layoutManager = layoutManager
         requestQueue = Volley.newRequestQueue(this)
+        countpekerja = binding.countpekerja
+        countadmin = binding.countadmin
+        address = binding.tvAddress
         perusahaan?.let { fetchDataFromApi(it.nama) }
         swipeRefreshLayout = binding.swipeRefreshLayout
+        setting = binding.setting
         swipeRefreshLayout.setOnRefreshListener {
             perusahaan?.let { fetchDataFromApi(it.nama) }
         }
@@ -88,9 +101,115 @@ class CompanyActivity : AppCompatActivity() {
             intent.putExtra("data", userBundle)
             startActivity(intent)
         }
+        setting.setOnClickListener{
+            val powerMenu = PowerMenu.Builder(this)
+                .addItem(PowerMenuItem("Edit Company", false))
+                .addItem(PowerMenuItem("Add Worker", false))
+                .addItem(PowerMenuItem("Delete Company", false))
+                .setAnimation(MenuAnimation.SHOWUP_TOP_RIGHT)
+                .setMenuRadius(10f)
+                .setMenuShadow(10f)
+                .setTextColorResource(R.color.blackTextColor)
+                .setTextSize(12)
+                .setSelectedTextColorResource(R.color.white)
+                .setMenuColor(Color.WHITE)
+                .setOnMenuItemClickListener(object : OnMenuItemClickListener<PowerMenuItem> {
+                    override fun onItemClick(position: Int, item: PowerMenuItem) {
+                        when (position) {
+                            0 -> {
+                                // Handle edit company option
+                            }
+                            1 -> {
+                                // Handle add worker option
+                                val intent = Intent(this@CompanyActivity, RegisterPekerjaActivity::class.java)
+                                val userBundle = Bundle()
+                                userBundle.putParcelable("user", admin)
+                                userBundle.putParcelable("perusahaan", perusahaan)
+                                userBundle.putString("role", "Admin")
+                                intent.putExtra("data", userBundle)
+                                startActivity(intent)
+                            }
+                            2->{
+                                showDialogWithIcon(perusahaan!!.nama)
+                            }
+                        }
+                    }
+                })
+                .build()
 
+            powerMenu.showAsDropDown(it)
+        }
+    }
+    private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://192.168.1.6:8000/api/") // Replace with your base URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val service = retrofit.create(ApiService::class.java)
+        val call = service.deleteCompany(idPerusahaan)
+
+        call.enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if (response.isSuccessful) {
+                    callback.invoke(true)
+                } else {
+                    callback.invoke(false)
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                callback.invoke(false)
+            }
+        })
+    }
+    private fun showDialogWithIcon(namaPerusahaan: String) {
+        val loadingDialog = ProgressDialog.show(this@CompanyActivity, "Loading", "Please wait...", true, false)
+        AlertDialog.Builder(this@CompanyActivity)
+            .setCancelable(true)
+            .setMessage("Are You Sure Want To Delete Your $namaPerusahaan Company?")
+            .setTitle("Confirmation")
+            .setPositiveButton("Yes") { dialog, _ ->
+                dialog.dismiss()
+                loadingDialog.show()
+                perusahaan?.id?.let {
+                    deleteCompany(it) { success ->
+                        loadingDialog.dismiss() // Dismiss the loading dialog
+                        if (success) {
+                            showSuccessDialog()
+                        } else {
+                            showErrorDialog()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+    private fun showSuccessDialog() {
+        AlertDialog.Builder(this@CompanyActivity)
+            .setMessage("Company deleted successfully")
+            .setTitle("Success")
+            .setPositiveButton("OK") { dialog, _ ->
+                val sharedPreferencesManager = SharedPreferencesManager(this)
+                sharedPreferencesManager.clearUserData()
+                startActivity(Intent(this@CompanyActivity, LoginActivity::class.java))
+                finish() // Finish the current activity
+            }
+            .show()
     }
 
+    private fun showErrorDialog() {
+        AlertDialog.Builder(this@CompanyActivity)
+            .setMessage("Failed to delete company")
+            .setTitle("Error")
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
     private fun fetchDataFromApi(namaPerusahaan: String) {
         val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
@@ -107,9 +226,38 @@ class CompanyActivity : AppCompatActivity() {
                             response.body()?.let { responseBody ->
                                 try {
                                     val responseData = JSONObject(responseBody.string())
-                                    // Handle admin and pekerja as JSON objects
                                     val adminArray = responseData.getJSONArray("admin")
+                                    val perusahaanObject = responseData.optJSONObject("perusahaan")
+
+                                    val perusahaan: Perusahaan? = if (perusahaanObject != null) {
+                                        val id = perusahaanObject.optInt("id")
+                                        val nama = perusahaanObject.getString("nama")
+                                        val latitude = perusahaanObject.getDouble("latitude")
+                                        val longitude = perusahaanObject.getDouble("longitude")
+                                        val addressInfo = ReverseGeocoder.getAddressFromLocation(this@CompanyActivity, GeoPoint(latitude, longitude))
+                                        if (addressInfo != null) {
+                                            val addressText = "${addressInfo.province}\n${addressInfo.country}"
+                                            address.text = addressText
+                                        } else {
+                                            address.text = "Address information not available"
+                                        }
+                                        val jamMasukString = perusahaanObject.getString("jam_masuk")
+                                        val jamKeluarString = perusahaanObject.getString("jam_keluar")
+                                        val jamMasuk = Time.valueOf(jamMasukString)
+                                        val jamKeluar = Time.valueOf(jamKeluarString)
+                                        val batasAktifString = perusahaanObject.getString("batas_aktif")
+                                        val batasAktif = java.sql.Date.valueOf(batasAktifString) // Use java.sql.Date for consistency
+                                        val logo = perusahaanObject.getString("logo")
+                                        val secretKey = perusahaanObject.getString("secret_key")
+                                        Perusahaan(id, nama, latitude, longitude, jamMasuk, jamKeluar, batasAktif, logo, secretKey)
+                                    } else {
+                                        null
+                                    }
                                     val adminList = parseAdminList(adminArray)
+                                    val jumlahPekerja = responseData.optInt("jumlahpekerja", 0)
+                                    val jumlahAdmin = responseData.optInt("jumlahadmin", 0)
+                                    countpekerja.setText(jumlahPekerja.toString())
+                                    countadmin.setText(jumlahAdmin.toString())
                                     val pekerjaArray = responseData.getJSONArray("pekerja")
                                     val pekerjaList = parsePekerjaList(pekerjaArray)
                                     adapter.updateData(pekerjaList.toMutableList(), adminList.toMutableList())
@@ -129,27 +277,6 @@ class CompanyActivity : AppCompatActivity() {
                         Log.e("FetchDataError", "Failed to fetch data: ${t.message}")
                     }
                 })
-    }
-
-    private fun parsePerusahaan(perusahaanObject: JSONObject): Perusahaan {
-        // Implement parsing logic for perusahaan data
-        val batasAktif = perusahaanObject.getString("batas_aktif")
-        val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val javaUtilDate = dateParser.parse(batasAktif)
-
-        // Convert java.util.Date to java.sql.Date
-        val sqlDate = java.sql.Date(javaUtilDate.time)
-        return Perusahaan(
-            perusahaanObject.getInt("id"),
-            perusahaanObject.getString("nama"),
-            perusahaanObject.getDouble("latitude"),
-            perusahaanObject.getDouble("longitude"),
-            convertStringToTime(perusahaanObject.getString("jam_masuk")),
-            convertStringToTime(perusahaanObject.getString("jam_keluar")),
-            sqlDate,
-            perusahaanObject.getString("logo"),
-            perusahaanObject.getString("secret_key")
-        )
     }
 
     @SuppressLint("SimpleDateFormat")
@@ -225,9 +352,9 @@ class CompanyActivity : AppCompatActivity() {
                 }
                 val imageUrl =
                     "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
-                val profileImageView = binding.companyLogoImageView
-                val text = binding.headerText
-                text.setText("List Anggota \nPerusahaan ${perusahaan?.nama}")
+                val profileImageView = binding.circleImageView
+                val text = binding.tvName
+                text.setText(perusahaan?.nama)
                 Glide.with(this)
                     .load(imageUrl)
                     .into(profileImageView)
