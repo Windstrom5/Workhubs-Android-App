@@ -75,6 +75,7 @@ class CompanyActivity : AppCompatActivity() {
         binding = ActivityCompanyBinding.inflate(layoutInflater)
         setContentView(binding.root)
         addPekerja = binding.addPekerja
+        setting = binding.setting
         getBundle()
         recyclerView = findViewById(R.id.recyclerViewPekerja)
         adapter =
@@ -88,7 +89,6 @@ class CompanyActivity : AppCompatActivity() {
         address = binding.tvAddress
         perusahaan?.let { fetchDataFromApi(it.nama) }
         swipeRefreshLayout = binding.swipeRefreshLayout
-        setting = binding.setting
         swipeRefreshLayout.setOnRefreshListener {
             perusahaan?.let { fetchDataFromApi(it.nama) }
         }
@@ -117,7 +117,13 @@ class CompanyActivity : AppCompatActivity() {
                     override fun onItemClick(position: Int, item: PowerMenuItem) {
                         when (position) {
                             0 -> {
-                                // Handle edit company option
+                                val intent = Intent(this@CompanyActivity, EditCompany::class.java)
+                                val userBundle = Bundle()
+                                userBundle.putParcelable("user", admin)
+                                userBundle.putParcelable("perusahaan", perusahaan)
+                                userBundle.putString("role", "Admin")
+                                intent.putExtra("data", userBundle)
+                                startActivity(intent)
                             }
                             1 -> {
                                 // Handle add worker option
@@ -142,7 +148,7 @@ class CompanyActivity : AppCompatActivity() {
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.6:8000/api/") // Replace with your base URL
+            .baseUrl("http://192.168.1.4:8000/api/") // Replace with your base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -211,14 +217,14 @@ class CompanyActivity : AppCompatActivity() {
             .show()
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.4:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val apiService = retrofit.create(ApiService::class.java)
 //        fetchRunnable = object : Runnable {
-//            override fun run() {
+//            override fun run() {fdid
                 val call = apiService.getDataPekerja(namaPerusahaan)
                 call.enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -287,7 +293,6 @@ class CompanyActivity : AppCompatActivity() {
     }
 
     private fun parseAdminList(adminArray: JSONArray): List<Admin> {
-        // Implement parsing logic for admin data
         val adminList = mutableListOf<Admin>()
         for (i in 0 until adminArray.length()) {
             val adminObject = adminArray.getJSONObject(i)
@@ -307,7 +312,6 @@ class CompanyActivity : AppCompatActivity() {
     }
 
     private fun parsePekerjaList(pekerjaArray: JSONArray): List<Pekerja> {
-        // Implement parsing logic for pekerja data
         val pekerjaList = mutableListOf<Pekerja>()
         for (i in 0 until pekerjaArray.length()) {
             val pekerjaObject = pekerjaArray.getJSONObject(i)
@@ -344,14 +348,16 @@ class CompanyActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 role = it.getString("role").toString()
                 if(role == "Admin"){
+                    setting.visibility = View.VISIBLE
                     admin = it.getParcelable("user")
                     addPekerja.visibility = View.VISIBLE
                 }else{
+                    setting.visibility = View.GONE
                     pekerja = it.getParcelable("user")
                     addPekerja.visibility = View.GONE
                 }
                 val imageUrl =
-                    "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.circleImageView
                 val text = binding.tvName
                 text.setText(perusahaan?.nama)
@@ -366,9 +372,9 @@ class CompanyActivity : AppCompatActivity() {
     override fun onBackPressed() {
         super.onBackPressed()
         // Remove any pending fetchRunnable instances from the handler
-        fetchRunnable?.let {
-            handler.removeCallbacks(it)
-        }
+//        fetchRunnable?.let {
+//            handler.removeCallbacks(it)
+//        }
         if(pekerja != null){
             val userBundle = Bundle()
             val intent = Intent(this, UserActivity::class.java)

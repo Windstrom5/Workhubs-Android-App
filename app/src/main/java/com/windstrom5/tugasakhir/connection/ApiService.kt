@@ -1,12 +1,11 @@
 package com.windstrom5.tugasakhir.connection
 
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.response
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.Response
-import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -14,6 +13,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 interface ApiService {
@@ -176,5 +176,14 @@ interface ApiService {
 
     @GET("GetPerusahaan")
     fun getPerusahaan():Call<ResponseBody>
+    @GET("perusahaan/{nama_perusahaan}")
+    fun getPerusahaan(@Path("nama_perusahaan") namaPerusahaan: String): Call<Perusahaan>
+    @GET("checkEmail") // Adjust the endpoint accordingly
+    fun checkEmail(@Query("email") email: String): Call<response>
+    @Multipart
+    @POST("resetPassword")
+    fun resetPassword(
+        @Path("email") email: String,
+    ): Call<ApiResponse>
 }
 

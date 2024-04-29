@@ -42,7 +42,7 @@ class HistoryAbsenFragment : Fragment() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.4:8000/api/"
 
         val jsonArrayRequest = JsonArrayRequest(
             Request.Method.GET, url, null,

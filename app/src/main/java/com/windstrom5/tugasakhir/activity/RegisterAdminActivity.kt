@@ -9,8 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.InputType
-import org.json.JSONObject
 import android.util.Log
+import android.util.Patterns
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -19,9 +19,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
-import com.android.volley.Request
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.databinding.ActivityRegisterAdminBinding
@@ -29,8 +27,10 @@ import com.windstrom5.tugasakhir.model.Admin
 import com.google.android.material.textfield.TextInputLayout
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiResponse
-import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
+import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.perusahaancreate
+import com.windstrom5.tugasakhir.model.response
 import de.hdodenhof.circleimageview.CircleImageView
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -74,6 +74,7 @@ class RegisterAdminActivity : AppCompatActivity() {
     private var tempImageFile: File? = null
     private lateinit var namaPerusahaan: String
     private var perusahaan : Perusahaan? = null
+    private var perusahaancreate : perusahaancreate? = null
     private val PICK_IMAGE_REQUEST_CODE = 1
     private lateinit var loading : LinearLayout
     private lateinit var requestQueue: RequestQueue
@@ -128,10 +129,65 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
         save = binding.cirsaveButton
         save.setOnClickListener {
-            setLoading(true)
-            perusahaan?.let { it1 -> saveData(it1) }
-        }
+            val email = binding.textInputEmail.editText?.text.toString().trim()
+            if(TINama == null || TIEmail == null || TIPassword == null || TITanggal == null){
+                MotionToast.createToast(this@RegisterAdminActivity, "Error",
+                    "Ada Form Yang belum Terisi",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
+            }else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                setLoading(true)
+                val url = "http://192.168.1.4:8000/api/"
+                val retrofit = Retrofit.Builder()
+                    .baseUrl(url)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
 
+                val apiService = retrofit.create(ApiService::class.java)
+                val call = apiService.checkEmail(email)
+                call.enqueue(object : Callback<response> {
+                    override fun onResponse(call: Call<response>, response: Response<response>) {
+                        if (response.isSuccessful) {
+                            val apiResponse = response.body()
+                            if (apiResponse?.pekerja == null && apiResponse?.admin == null) {
+                                // Worker not found with the email, proceed to addPerusahaan and saveData
+                                addPerusahaan()
+                                perusahaan?.let { it1 -> saveData(it1) }
+                            } else {
+                                runOnUiThread {
+                                    setLoading(false)
+                                    MotionToast.createToast(
+                                        this@RegisterAdminActivity, "Error",
+                                        "Email Sudah Digunakan",
+                                        MotionToastStyle.ERROR,
+                                        MotionToast.GRAVITY_BOTTOM,
+                                        MotionToast.LONG_DURATION,
+                                        ResourcesCompat.getFont(
+                                            this@RegisterAdminActivity,
+                                            R.font.ralewaybold
+                                        )
+                                    )
+                                }
+                            }
+                        } else {
+                            // Handle unsuccessful response
+                        }
+                        setLoading(false)
+                    }
+
+                    override fun onFailure(call: Call<response>, t: Throwable) {
+                        // Handle failure
+                        setLoading(false)
+                    }
+                })
+
+            } else {
+                // Email format is incorrect
+                // Handle accordingly
+            }
+        }
     }
     private fun setLoading(isLoading:Boolean){
         if(isLoading){
@@ -146,7 +202,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
     }
     private fun saveData(perusahaan: Perusahaan){
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.4:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -185,20 +241,26 @@ class RegisterAdminActivity : AppCompatActivity() {
                         val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         val formattedDateSql = dateFormatSql.format(parsedDate)
                         val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
-                        perusahaan.id?.let {
-                            if (parsedDateSql != null) {
-                                admin = Admin(
-                                    id_Admin,
-                                    it,
-                                    TIEmail.editText?.text.toString(),
-                                    TIPassword.editText?.text.toString(),
-                                    TINama.editText?.text.toString(),
-                                    parsedDateSql,
-                                    path
-                                )
-                            }
-                        }
+//                        perusahaan.id?.let {
+//                            if (parsedDateSql != null) {
+//                                admin = Admin(
+//                                    id_Admin,
+//                                    it,
+//                                    TIEmail.editText?.text.toString(),
+//                                    TIPassword.editText?.text.toString(),
+//                                    TINama.editText?.text.toString(),
+//                                    parsedDateSql,
+//                                    path
+//                                )
+//                            }
+//                        }
                         setLoading(false)
+                        MotionToast.createToast(this@RegisterAdminActivity, "Error",
+                            "Berhasil Menyimpan Data. Restarting APP....",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
                         startActivity(intent)
                     } catch (e: ParseException) {
                         e.printStackTrace()
@@ -228,7 +290,76 @@ class RegisterAdminActivity : AppCompatActivity() {
             }
         })
     }
+    private fun addPerusahaan() {
+        val url = "http://192.168.1.4:8000/api/"
 
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val apiService = retrofit.create(ApiService::class.java)
+
+        // Convert values to RequestBody
+        val nama =  createPartFromString(perusahaancreate!!.nama)
+        val latitude = createPartFromString(perusahaancreate!!.latitude.toString())
+        val longitude = createPartFromString(perusahaancreate!!.longitude.toString())
+        val jamMasuk = createPartFromString(perusahaancreate!!.jam_masuk.toString())
+        val jamKeluar = createPartFromString(perusahaancreate!!.jam_keluar.toString())
+        val batasAktif = createPartFromString(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time))
+        val secretKeyPart = createPartFromString(perusahaancreate!!.secret_key)
+
+        val logoFile = perusahaancreate!!.logo
+        val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
+        val logoPart = MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
+
+        // Make the API call
+        val call = apiService.uploadPerusahaan(nama, latitude, longitude, jamMasuk, jamKeluar, batasAktif, secretKeyPart, logoPart)
+
+        // Execute the call asynchronously
+        call.enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    val apiResponse = response.body()
+                    Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
+                    Log.d("path", " ${apiResponse?.profile_path}")
+                    // Assuming path is a global variable
+                    val path = apiResponse?.profile_path ?: ""
+                    val id_perusahaan = apiResponse?.id ?: 0
+                    // Continue with other actions after API response
+                    val calendar = Calendar.getInstance()
+                    calendar.add(Calendar.YEAR, 1)
+                    val futureDate = calendar.time
+                    val sqlDate = java.sql.Date(futureDate.time)
+//                    perusahaan = Perusahaan(
+//                        id_perusahaan,
+//                        perusahaancreate!!.nama,
+//                        perusahaancreate!!.latitude,
+//                        perusahaancreate!!.longitude,
+//                        perusahaancreate!!.jam_masuk,
+//                        perusahaancreate!!.jam_keluar,
+//                        sqlDate,
+//                        path,
+//                        perusahaancreate!!.secret_key,
+//                    )
+                    setLoading(false)
+                    Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
+                    val intent = Intent(this@RegisterAdminActivity, RegisterAdminActivity::class.java)
+                    val bundle = Bundle()
+                    bundle.putParcelable("perusahaan", perusahaan)
+                    intent.putExtra("data", bundle)
+                    startActivity(intent)
+                } else {
+                    Log.e("ApiResponse", "Error: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                setLoading(false)
+                Log.e("ApiResponse", "Request failed: ${t.message}")
+            }
+        })
+    }
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)
     }

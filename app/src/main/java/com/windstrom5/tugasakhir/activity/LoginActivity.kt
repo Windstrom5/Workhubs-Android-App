@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -34,10 +35,19 @@ import org.json.JSONException
 import org.json.JSONObject
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
+import javax.mail.Authenticator
 import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Properties
+import javax.mail.Message
+import javax.mail.MessagingException
+import javax.mail.Session
+import javax.mail.Transport
+import javax.mail.internet.AddressException
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeMessage
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var textInputPerusahaan: TextInputLayout
@@ -68,8 +78,8 @@ class LoginActivity : AppCompatActivity() {
         register = binding.createPerusahan
         login.isEnabled = false
         loading = findViewById(R.id.layout_loading)
-        val perusahaanList: ArrayList<Perusahaan>? = intent.getSerializableExtra("perusahaanList") as? ArrayList<Perusahaan>
-        setUpAutoCompleteTextView(perusahaanList ?: emptyList())
+        perusahaanList = (intent.getSerializableExtra("perusahaanList") as? ArrayList<Perusahaan>)!!
+        setUpAutoCompleteTextView(perusahaanList)
 //        fetchDataFromApi()
         editTextEmail.addTextChangedListener(textWatcher)
         editTextPassword.addTextChangedListener(textWatcher)
@@ -87,7 +97,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "http://192.168.1.6:8000/api/GetPerusahaan"
+        val url = "http://192.168.1.4:8000/api/GetPerusahaan"
         val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
             { response ->
                 val perusahaanArray = response.getJSONArray("perusahaan")
@@ -210,9 +220,12 @@ class LoginActivity : AppCompatActivity() {
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(namaPerusahaan: String, email: String, password: String) {
-        val url = "http://192.168.1.6:8000/api/login"
+        val url = "http://192.168.1.4:8000/api/login"
+        val checkBoxRememberMe = findViewById<CheckBox>(R.id.checkBoxRememberMe)
+        val rememberMeChecked = checkBoxRememberMe.isChecked
         val sharedPreferencesManager = SharedPreferencesManager(this)
         val matchingPerusahaan = perusahaanList.find { it.nama == namaPerusahaan }
+        Log.d("Perusahaan", perusahaanList.toString())
         if (matchingPerusahaan != null) {
             val jsonParams = JSONObject()
             jsonParams.put("email", email)
@@ -238,8 +251,10 @@ class LoginActivity : AppCompatActivity() {
                                 user.getString("profile")
                             )
                             setLoading(false)
-                            sharedPreferencesManager.saveAdmin(admin)
-                            sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
+                            if (rememberMeChecked) {
+                                sharedPreferencesManager.saveAdmin(admin)
+                                sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
+                            }
                             val intent = Intent(this, AdminActivity::class.java)
                             val userBundle = Bundle()
                             userBundle.putParcelable("user", admin)
@@ -257,8 +272,10 @@ class LoginActivity : AppCompatActivity() {
                                 user.getString("profile")
                             )
                             setLoading(false)
-                            sharedPreferencesManager.savePekerja(pekerja)
-                            sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
+                            if (rememberMeChecked) {
+                                sharedPreferencesManager.savePekerja(pekerja)
+                                sharedPreferencesManager.savePerusahaan(matchingPerusahaan)
+                            }
                             val intent = Intent(this, UserActivity::class.java)
                             val userBundle = Bundle()
                             userBundle.putParcelable("user", pekerja)
@@ -282,6 +299,7 @@ class LoginActivity : AppCompatActivity() {
             )
             Volley.newRequestQueue(this).add(request)
         }
+        Log.d("Perusahaan", matchingPerusahaan.toString())
         setLoading(false)
     }
     private fun parseDate(dateString: String): Date {

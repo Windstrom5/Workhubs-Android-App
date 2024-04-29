@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.RegisterPekerjaActivity"
+    tools:context=".activity.RegisterAdminActivity"
     android:focusableInTouchMode="true"
     android:gravity="center"
     android:background="@drawable/background"
@@ -19,7 +19,6 @@
             android:layout_height="211dp"
             android:layout_marginTop="12dp"
             android:layout_marginBottom="20dp"
-            android:layout_gravity="center"
             android:foregroundGravity="center"
             android:src="@drawable/logo" />
 
@@ -52,12 +51,12 @@
                         <TextView
                             style="@style/viewParent.headerText.NoMode"
                             android:layout_alignParentLeft="true"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginRight="20dp"
+                            android:layout_marginLeft="50dp"
+                            android:layout_marginRight="50dp"
                             android:fontFamily="@font/ralewaybold"
                             android:foregroundGravity="center"
                             android:gravity="center"
-                            android:text="Register New Anggota Data"
+                            android:text="Register New Pekerja Data"
                             android:textSize="30dp" />
 
                     </RelativeLayout>
@@ -84,24 +83,10 @@
                             android:alpha="0.5"/>
                     </FrameLayout>
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/kategori"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                        android:elevation="2dp"
-                        android:layout_marginTop="15dp"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <AutoCompleteTextView
-                            android:id="@+id/acketegori"
-                            android:background="#E5E4E2"
-                            style="@style/modifiedEditText"
-                            android:inputType="none"
-                            android:hint="Pilih Kategori Pekerja"
-                            android:textSize="15dp" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputNama"
                         style="@style/parent"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/baseline_emoji_people_24"
                         android:layout_marginTop="@dimen/loginViewsMargin">
                         <EditText
                             android:id="@+id/editTextPerusahaan"
@@ -112,6 +97,8 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputEmail"
                         style="@style/parent"
+                        app:endIconDrawable="@drawable/baseline_email_24"
+                        app:endIconMode="custom"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText
@@ -125,12 +112,13 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputPassword"
                         style="@style/parent"
+                        app:endIconMode="password_toggle"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText
                             android:id="@+id/editTextPassword"
                             style="@style/modifiedEditText"
-                            android:hint="Masukkan Password"
+                            android:hint="@string/login_password_hint"
                             android:inputType="textPassword"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>

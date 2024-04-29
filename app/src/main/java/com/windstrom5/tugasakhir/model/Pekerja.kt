@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import java.util.Date
 
-class Pekerja (
+data class Pekerja (
     val id: Int? = null,
     val id_perusahaan:Int,
     val email: String,

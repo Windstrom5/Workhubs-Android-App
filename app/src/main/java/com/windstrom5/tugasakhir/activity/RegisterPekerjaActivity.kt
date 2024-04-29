@@ -11,7 +11,9 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.InputType
 import android.util.Log
+import android.util.Patterns
 import android.view.View
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
@@ -35,6 +37,7 @@ import com.windstrom5.tugasakhir.databinding.ActivityRegisterPekerjaBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.response
 import de.hdodenhof.circleimageview.CircleImageView
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -93,13 +96,11 @@ class RegisterPekerjaActivity : AppCompatActivity() {
         binding = ActivityRegisterPekerjaBinding.inflate(layoutInflater)
         setContentView(binding.root)
         getBundle()
-        acKategori = binding.acketegori
-        val adapter = ArrayAdapter(this@RegisterPekerjaActivity, android.R.layout.simple_dropdown_item_1line, kategoriPekerja)
-        acKategori.setAdapter(adapter)
         requestQueue = Volley.newRequestQueue(this)
         circleImageView = binding.circleImageView
         TINama = binding.textInputNama
         selectImage = binding.selectImage
+        loading = findViewById(R.id.layout_loading)
         TIEmail = binding.textInputEmail
         TIPassword = binding.textInputPassword
         TITanggal = binding.textInputTanggal
@@ -140,13 +141,74 @@ class RegisterPekerjaActivity : AppCompatActivity() {
             datePicker.show()
         }
         save = binding.cirsaveButton
-        save.setOnClickListener {
-            perusahaan?.let { it1 -> saveData(it1) }
+        val email = binding.textInputEmail.editText?.text.toString().trim()
+        if(TINama == null || TIEmail == null || TIPassword == null || TITanggal == null){
+            MotionToast.createToast(this@RegisterPekerjaActivity, "Error",
+                "Ada Form Yang belum Terisi",
+                MotionToastStyle.ERROR,
+                MotionToast.GRAVITY_BOTTOM,
+                MotionToast.LONG_DURATION,
+                ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold))
+        }else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            setLoading(true)
+            val url = "http://192.168.1.4:8000/api/"
+            val retrofit = Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
+            val apiService = retrofit.create(ApiService::class.java)
+            val call = apiService.checkEmail(email)
+            call.enqueue(object : Callback<response> {
+                override fun onResponse(call: Call<response>, response: Response<response>) {
+                    if (response.isSuccessful) {
+                        val apiResponse = response.body()
+                        if (apiResponse?.pekerja == null && apiResponse?.admin == null) {
+                            perusahaan?.let { it1 -> saveData(it1) }
+                        } else {
+                            runOnUiThread{
+                                setLoading(false)
+                                MotionToast.createToast(this@RegisterPekerjaActivity, "Error",
+                                    "Email Sudah Digunakan",
+                                    MotionToastStyle.ERROR,
+                                    MotionToast.GRAVITY_BOTTOM,
+                                    MotionToast.LONG_DURATION,
+                                    ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold))
+                            }
+                        }
+                    } else {
+                        // Handle unsuccessful response
+                    }
+                    setLoading(false)
+                }
+
+                override fun onFailure(call: Call<response>, t: Throwable) {
+                    // Handle failure
+                    setLoading(false)
+                }
+            })
+
+        } else {
+            // Email format is incorrect
+            // Handle accordingly
         }
     }
+
+    private fun setLoading(isLoading:Boolean){
+        if(isLoading){
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            )
+            loading!!.visibility = View.VISIBLE
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            loading!!.visibility = View.INVISIBLE
+        }
+    }
+
     private fun saveData(perusahaan: Perusahaan){
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.4:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -323,7 +385,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.logo
                 Glide.with(this)
                     .load(imageUrl)

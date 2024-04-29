@@ -60,7 +60,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun fetchDataFromApi() {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.4:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -121,7 +121,14 @@ class SplashActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    // Handle unsuccessful response
+                    MotionToast.createToast(this@SplashActivity,
+                        "Error",
+                        "Gagal Menyambungkan Ke Server",
+                        MotionToastStyle.ERROR,
+                        MotionToast.GRAVITY_BOTTOM,
+                        MotionToast.LONG_DURATION,
+                        ResourcesCompat.getFont(this@SplashActivity,
+                            R.font.ralewaybold))
                     Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
                 }
             }
@@ -229,7 +236,7 @@ class SplashActivity : AppCompatActivity() {
     private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?) {
         val logoImageView = findViewById<ImageView>(R.id.logoImageView)
         val imageUrl =
-            "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+            "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
         Glide.with(this)
             .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL
@@ -240,7 +247,8 @@ class SplashActivity : AppCompatActivity() {
                 val intent = Intent(this@SplashActivity, AdminActivity::class.java)
                 val userBundle = Bundle()
                 userBundle.putParcelable("user", admin)
-                intent.putExtra("user_bundle", userBundle)
+                userBundle.putParcelable("perusahaan", perusahaan)
+                intent.putExtra("data", userBundle)
                 startActivity(intent)
                 finish()
             }, splashTimeOut)
@@ -249,7 +257,8 @@ class SplashActivity : AppCompatActivity() {
                 val intent = Intent(this@SplashActivity, UserActivity::class.java)
                 val userBundle = Bundle()
                 userBundle.putParcelable("user", pekerja)
-                intent.putExtra("user_bundle", userBundle)
+                userBundle.putParcelable("perusahaan", perusahaan)
+                intent.putExtra("data", userBundle)
                 startActivity(intent)
                 finish()
             }, splashTimeOut)

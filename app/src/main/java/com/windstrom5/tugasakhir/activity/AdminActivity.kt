@@ -6,11 +6,13 @@ import android.util.Log
 import android.view.MotionEvent
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.databinding.ActivityAdminBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Perusahaan
@@ -31,6 +33,7 @@ class AdminActivity : AppCompatActivity() {
     private lateinit var izin:CardView
     private lateinit var company:CardView
     private lateinit var cs:CardView
+    private lateinit var back : ImageView
     private var admin : Admin? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +46,21 @@ class AdminActivity : AppCompatActivity() {
         lembur = binding.LemburCard
         dinas = binding.DinasCard
         izin = binding.IzinCard
+        back = binding.backB
+        back.setOnClickListener{
+            AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to Log Out?")
+                .setPositiveButton("Yes") { _, _ ->
+                    super.onBackPressed()
+                    val sharedPreferencesManager = SharedPreferencesManager(this)
+                    sharedPreferencesManager.clearUserData()
+                    startActivity(Intent(this,LoginActivity::class.java))
+                }
+                .setNegativeButton("No") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
         company = binding.CompanyCard
         cs = binding.CustomerServiceCard
         val nama = admin?.nama
@@ -59,6 +77,20 @@ class AdminActivity : AppCompatActivity() {
         izin.setOnTouchListener { _, event -> handleCardTouch(izin, event, "IzinActivity") }
         company.setOnTouchListener { _, event -> handleCardTouch(company, event, "CompanyActivity") }
         cs.setOnTouchListener { _, event -> handleCardTouch(cs, event, "CsActivity") }
+    }
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setMessage("Are you sure you want to Log Out?")
+            .setPositiveButton("Yes") { _, _ ->
+                super.onBackPressed()
+                val sharedPreferencesManager = SharedPreferencesManager(this)
+                sharedPreferencesManager.clearUserData()
+                startActivity(Intent(this,LoginActivity::class.java))
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
     private fun handleCardTouch(cardView: CardView, event: MotionEvent, activityName: String): Boolean {
         when (event.action) {
@@ -116,7 +148,7 @@ class AdminActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                    "http://192.168.1.4:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                 val profileImageView = binding.profileB
 
                 Glide.with(this)

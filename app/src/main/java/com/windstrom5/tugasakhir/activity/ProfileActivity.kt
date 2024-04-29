@@ -1,6 +1,7 @@
 package com.windstrom5.tugasakhir.activity
 
 import android.app.AlertDialog
+import android.icu.text.SimpleDateFormat
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,7 @@ import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import de.hdodenhof.circleimageview.CircleImageView
+import java.util.Locale
 
 class ProfileActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProfileBinding
@@ -90,14 +92,18 @@ class ProfileActivity : AppCompatActivity() {
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
                         val imageUrl =
-                            "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
                         nama.setText(pekerja?.nama)
                         username.setText(pekerja?.nama)
                         email.setText(pekerja?.email)
-                        tanggalLahir.setText(pekerja?.tanggal_lahir.toString())
+                        val dateString = pekerja?.tanggal_lahir
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val tanggalLahirDate = dateFormat.parse(dateString.toString())
+                        val formattedDate = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID")).format(tanggalLahirDate)
+                        tanggalLahir.setText(formattedDate)
                         promote.visibility=View.VISIBLE
                         delete.visibility=View.VISIBLE
                     }else{
@@ -107,7 +113,7 @@ class ProfileActivity : AppCompatActivity() {
                         email.setText(admin?.email)
                         tanggalLahir.setText(admin?.tanggal_lahir.toString())
                         val imageUrl =
-                            "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.4:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
@@ -118,7 +124,7 @@ class ProfileActivity : AppCompatActivity() {
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
                         val imageUrl =
-                            "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
@@ -135,7 +141,7 @@ class ProfileActivity : AppCompatActivity() {
                         email.setText(admin?.email)
                         tanggalLahir.setText(admin?.tanggal_lahir.toString())
                         val imageUrl =
-                            "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.4:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)

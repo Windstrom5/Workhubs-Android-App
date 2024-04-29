@@ -63,6 +63,8 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputPerusahaan"
                         style="@style/parent"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/baseline_emoji_people_24"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText

@@ -16,6 +16,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
+import androidx.core.content.res.ResourcesCompat
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
@@ -29,13 +30,18 @@ import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.databinding.ActivityRegisterBinding
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.perusahaancreate
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import www.sanju.motiontoast.MotionToast
+import www.sanju.motiontoast.MotionToastStyle
 import java.io.File
 import java.security.SecureRandom
 import java.sql.Time
@@ -117,8 +123,81 @@ class RegisterActivity : AppCompatActivity() {
         }
         createnow.setOnClickListener {
             setLoading(true)
+            if(TINamaPerusahaan == null || TIJammasuk == null || TIJamkeluar == null || imageView.visibility == View.GONE || information.visibility == View.GONE){
+                MotionToast.createToast(this@RegisterActivity, "Error",
+                    "Ada Form Yang belum Terisi",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterActivity, R.font.ralewaybold))
+            }
             val secretKey = generateRandomString()
-            makeApiRequest(secretKey)
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.YEAR, 1)
+            val futureDate = calendar.time
+            val sqlDate = java.sql.Date(futureDate.time)
+            val register = perusahaancreate(
+                TINamaPerusahaan.editText?.text.toString(),
+                Tvlatitude.text.toString().toDouble(),
+                Tvlongitude.text.toString().toDouble(),
+                stringToSqlTime(TIJammasuk.editText?.text.toString()),
+                stringToSqlTime(TIJamkeluar.editText?.text.toString()),
+                sqlDate,
+                selectedFile,
+                secretKey)
+            val url = "http://192.168.1.4:8000/api/"
+            val retrofit = Retrofit.Builder()
+                .baseUrl(url)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val apiService = retrofit.create(ApiService::class.java)
+            val call = apiService.getPerusahaan()
+
+            call.enqueue(object : Callback<ResponseBody> {
+                override fun onResponse(call: Call<ResponseBody>, response: RetrofitResponse<ResponseBody>) {
+                    if (response.isSuccessful) {
+                        val responseBody = response.body()?.string()
+                        val json = JSONObject(responseBody)
+                        if (json.has("error")) {
+                            // Perusahaan not found
+                            runOnUiThread {
+                                setLoading(false)
+                                val intent =
+                                    Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
+                                val bundle = Bundle()
+                                bundle.putParcelable("perusahaan", register)
+                                intent.putExtra("data", bundle)
+                                startActivity(intent)
+                            }
+                        } else {
+                            runOnUiThread {
+                                setLoading(false)
+                                MotionToast.createToast(
+                                    this@RegisterActivity, "Error",
+                                    "Perusahaan Sudah Ada",
+                                    MotionToastStyle.ERROR,
+                                    MotionToast.GRAVITY_BOTTOM,
+                                    MotionToast.LONG_DURATION,
+                                    ResourcesCompat.getFont(
+                                        this@RegisterActivity,
+                                        R.font.ralewaybold
+                                    )
+                                )
+                            }
+                        }
+                    } else {
+                        // Handle unsuccessful response
+                        setLoading(false)
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    // Handle failure
+                    setLoading(false)
+                }
+            })
+
         }
     }
     private fun setLoading(isLoading:Boolean){
@@ -159,7 +238,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "http://192.168.1.6:8000/api/GetPerusahaan"
+        val apiUrl = "http://192.168.1.4:8000/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -240,77 +319,77 @@ class RegisterActivity : AppCompatActivity() {
         return Time(date.time)
     }
 
-    private fun makeApiRequest(secretKey: String) {
-        val url = "http://192.168.1.6:8000/api/"
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val apiService = retrofit.create(ApiService::class.java)
-
-        // Convert values to RequestBody
-        val nama = createPartFromString(TINamaPerusahaan.editText?.text.toString())
-        val latitude = createPartFromString(Tvlatitude.text.toString().toDouble().toString())
-        val longitude = createPartFromString(Tvlongitude.text.toString().toDouble().toString())
-        val jamMasuk = createPartFromString(stringToSqlTime(TIJammasuk.editText?.text.toString()).toString())
-        val jamKeluar = createPartFromString(stringToSqlTime(TIJamkeluar.editText?.text.toString()).toString())
-        val batasAktif = createPartFromString(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time))
-        val secretKeyPart = createPartFromString(secretKey)
-
-        val logoFile = selectedFile
-        val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
-        val logoPart = MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
-
-        // Make the API call
-        val call = apiService.uploadPerusahaan(nama, latitude, longitude, jamMasuk, jamKeluar, batasAktif, secretKeyPart, logoPart)
-
-        // Execute the call asynchronously
-        call.enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(call: Call<ApiResponse>, response: RetrofitResponse<ApiResponse>) {
-                if (response.isSuccessful) {
-                    val apiResponse = response.body()
-                    Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
-                    Log.d("path", " ${apiResponse?.profile_path}")
-                    // Assuming path is a global variable
-                    val path = apiResponse?.profile_path ?: ""
-                    val id_perusahaan = apiResponse?.id ?: 0
-                    // Continue with other actions after API response
-                    val calendar = Calendar.getInstance()
-                    calendar.add(Calendar.YEAR, 1)
-                    val futureDate = calendar.time
-                    val sqlDate = java.sql.Date(futureDate.time)
-
-                    perusahaan = Perusahaan(
-                        id_perusahaan,
-                        TINamaPerusahaan.editText?.text.toString(),
-                        Tvlatitude.text.toString().toDouble(),
-                        Tvlongitude.text.toString().toDouble(),
-                        stringToSqlTime(TIJammasuk.editText?.text.toString()),
-                        stringToSqlTime(TIJamkeluar.editText?.text.toString()),
-                        sqlDate,
-                        path,
-                        secretKey
-                    )
-                    setLoading(false)
-                    Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
-                    val intent = Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
-                    val bundle = Bundle()
-                    bundle.putParcelable("perusahaan", perusahaan)
-                    intent.putExtra("data", bundle)
-                    startActivity(intent)
-                } else {
-                    Log.e("ApiResponse", "Error: ${response.code()}")
-                }
-            }
-
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                setLoading(false)
-                Log.e("ApiResponse", "Request failed: ${t.message}")
-            }
-        })
-    }
+//    private fun makeApiRequest(secretKey: String) {
+//        val url = "http://192.168.1.4:8000/api/"
+//
+//        val retrofit = Retrofit.Builder()
+//            .baseUrl(url)
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .build()
+//
+//        val apiService = retrofit.create(ApiService::class.java)
+//
+//        // Convert values to RequestBody
+//        val nama = createPartFromString(TINamaPerusahaan.editText?.text.toString())
+//        val latitude = createPartFromString(Tvlatitude.text.toString().toDouble().toString())
+//        val longitude = createPartFromString(Tvlongitude.text.toString().toDouble().toString())
+//        val jamMasuk = createPartFromString(stringToSqlTime(TIJammasuk.editText?.text.toString()).toString())
+//        val jamKeluar = createPartFromString(stringToSqlTime(TIJamkeluar.editText?.text.toString()).toString())
+//        val batasAktif = createPartFromString(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time))
+//        val secretKeyPart = createPartFromString(secretKey)
+//
+//        val logoFile = selectedFile
+//        val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
+//        val logoPart = MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
+//
+//        // Make the API call
+//        val call = apiService.uploadPerusahaan(nama, latitude, longitude, jamMasuk, jamKeluar, batasAktif, secretKeyPart, logoPart)
+//
+//        // Execute the call asynchronously
+//        call.enqueue(object : Callback<ApiResponse> {
+//            override fun onResponse(call: Call<ApiResponse>, response: RetrofitResponse<ApiResponse>) {
+//                if (response.isSuccessful) {
+//                    val apiResponse = response.body()
+//                    Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
+//                    Log.d("path", " ${apiResponse?.profile_path}")
+//                    // Assuming path is a global variable
+//                    val path = apiResponse?.profile_path ?: ""
+//                    val id_perusahaan = apiResponse?.id ?: 0
+//                    // Continue with other actions after API response
+//                    val calendar = Calendar.getInstance()
+//                    calendar.add(Calendar.YEAR, 1)
+//                    val futureDate = calendar.time
+//                    val sqlDate = java.sql.Date(futureDate.time)
+//
+//                    perusahaan = Perusahaan(
+//                        id_perusahaan,
+//                        TINamaPerusahaan.editText?.text.toString(),
+//                        Tvlatitude.text.toString().toDouble(),
+//                        Tvlongitude.text.toString().toDouble(),
+//                        stringToSqlTime(TIJammasuk.editText?.text.toString()),
+//                        stringToSqlTime(TIJamkeluar.editText?.text.toString()),
+//                        sqlDate,
+//                        path,
+//                        secretKey
+//                    )
+//                    setLoading(false)
+//                    Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
+//                    val intent = Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
+//                    val bundle = Bundle()
+//                    bundle.putParcelable("perusahaan", perusahaan)
+//                    intent.putExtra("data", bundle)
+//                    startActivity(intent)
+//                } else {
+//                    Log.e("ApiResponse", "Error: ${response.code()}")
+//                }
+//            }
+//
+//            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+//                setLoading(false)
+//                Log.e("ApiResponse", "Request failed: ${t.message}")
+//            }
+//        })
+//    }
 
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)

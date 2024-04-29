@@ -32,7 +32,7 @@ class SharedPreferencesManager(context: Context) {
     fun clearUserData() {
         val editor = sharedPreferences.edit()
         editor.remove("pekerja")
-        editor.remove("reviewer")
+        editor.remove("admin")
         editor.remove("perusahaan")
         editor.remove("login")
         editor.apply()

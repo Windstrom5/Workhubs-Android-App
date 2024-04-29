@@ -5,11 +5,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.databinding.ActivityUserBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
@@ -29,6 +32,7 @@ class UserActivity : AppCompatActivity() {
     private lateinit var izin:CardView
     private lateinit var company:CardView
     private lateinit var cs:CardView
+    private lateinit var back : ImageView
     private var pekerja : Pekerja? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +47,21 @@ class UserActivity : AppCompatActivity() {
         izin = binding.IzinCard
         company = binding.CompanyCard
         cs = binding.CustomerServiceCard
+        back = binding.backB
+        back.setOnClickListener{
+            AlertDialog.Builder(this)
+                .setMessage("Are you sure you want to Log Out?")
+                .setPositiveButton("Yes") { _, _ ->
+                    super.onBackPressed()
+                    val sharedPreferencesManager = SharedPreferencesManager(this)
+                    sharedPreferencesManager.clearUserData()
+                    startActivity(Intent(this,LoginActivity::class.java))
+                }
+                .setNegativeButton("No") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
         val nama = pekerja?.nama
         tvnamaAdmin = binding.textView2
         tvnamaPerusahaan = binding.textView3
@@ -99,6 +118,20 @@ class UserActivity : AppCompatActivity() {
         // Return true to consume the touch event
         return true
     }
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setMessage("Are you sure you want to Log Out?")
+            .setPositiveButton("Yes") { _, _ ->
+                super.onBackPressed()
+                val sharedPreferencesManager = SharedPreferencesManager(this)
+                sharedPreferencesManager.clearUserData()
+                startActivity(Intent(this,LoginActivity::class.java))
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
     private fun startActivityWithExtras(intent: Intent) {
         val userBundle = Bundle()
         userBundle.putParcelable("user", pekerja)
@@ -115,7 +148,7 @@ class UserActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 pekerja = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                    "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                 val profileImageView = binding.profileB
 
                 Glide.with(this)

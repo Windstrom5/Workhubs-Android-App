@@ -27,6 +27,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".activity.ForgotActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.VerificationActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.EditCompany"
             android:exported="false" />
         <activity

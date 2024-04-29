@@ -85,8 +85,9 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputNama"
                         style="@style/parent"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/baseline_emoji_people_24"
                         android:layout_marginTop="@dimen/loginViewsMargin">
-z
                         <EditText
                             android:id="@+id/editTextPerusahaan"
                             style="@style/modifiedEditText"
@@ -96,6 +97,8 @@ z
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputEmail"
                         style="@style/parent"
+                        app:endIconDrawable="@drawable/baseline_email_24"
+                        app:endIconMode="custom"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText
@@ -109,12 +112,13 @@ z
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputPassword"
                         style="@style/parent"
+                        app:endIconMode="password_toggle"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText
                             android:id="@+id/editTextPassword"
                             style="@style/modifiedEditText"
-                            android:hint="Masukkan Password"
+                            android:hint="@string/login_password_hint"
                             android:inputType="textPassword"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>

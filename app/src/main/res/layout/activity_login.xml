@@ -84,6 +84,8 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputEmail"
                         style="@style/parent"
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@drawable/baseline_email_24"
                         android:layout_marginTop="@dimen/loginViewsMargin">
 
                         <EditText
@@ -109,13 +111,42 @@
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <TextView
-                        style="@style/viewParent"
-                        android:layout_gravity="end"
-                        android:layout_marginTop="10dp"
-                        android:text="Forgot Password?"
-                        android:textColor="@color/primaryTextColor"
-                        android:textSize="@dimen/newsMoreTextSize" />
+                    <LinearLayout
+                        android:id="@+id/layoutRememberForgot"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_below="@id/createPerusahan"
+                        android:layout_marginTop="16dp">
+
+                        <!-- Remember Me CheckBox -->
+                        <CheckBox
+                            android:id="@+id/checkBoxRememberMe"
+                            android:layout_width="wrap_content"
+                            android:layout_height="16dp"
+                            android:text="Remember Me"
+                            android:textColor="@color/primaryTextColor"
+                            android:textSize="@dimen/newsMoreTextSize" />
+
+                        <!-- Forgot Password Text -->
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
+
+                        <!-- Forgot Password Text -->
+                        <TextView
+                            android:id="@+id/textViewForgotPassword"
+                            style="@style/viewParent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end"
+                            android:text="Forgot Password?"
+                            android:textColor="@color/primaryTextColor"
+                            android:textSize="@dimen/newsMoreTextSize" />
+
+                    </LinearLayout>
 
                     <Button
                         android:id="@+id/cirLoginButton"

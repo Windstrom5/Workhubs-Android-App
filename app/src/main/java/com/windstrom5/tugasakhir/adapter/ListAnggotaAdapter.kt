@@ -46,7 +46,7 @@ class ListAnggotaAdapter(
         fun bind(currentPekerja: Pekerja) {
             // Set data to views for Pekerja
             Glide.with(binding.profileImageView.context)
-                .load("https://f236-36-81-23-4.ngrok-free.app/storage/${currentPekerja.profile}")
+                .load("http://192.168.1.4:8000/storage/${currentPekerja.profile}")
                 .into(binding.profileImageView)
             binding.nameTextView.text = currentPekerja.nama
             binding.roleTextView.text = "Pekerja"
@@ -72,7 +72,7 @@ class ListAnggotaAdapter(
         fun bind(currentAdmin: Admin) {
             // Set data to views for Admin
             Glide.with(binding.profileImageView.context)
-                .load("https://f236-36-81-23-4.ngrok-free.app/storage/${currentAdmin.profile}")
+                .load("http://192.168.1.4:8000/storage/${currentAdmin.profile}")
                 .into(binding.profileImageView)
             binding.nameTextView.text = currentAdmin.nama
             binding.roleTextView.text = "Admin"

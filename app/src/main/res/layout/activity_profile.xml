@@ -43,7 +43,9 @@
                         android:layout_width="130dp"
                         android:layout_height="130dp"
                         android:src="@drawable/profile"
-                        android:layout_gravity="center"/>
+                        android:layout_gravity="center"
+                        app:civ_border_width="2dp"
+                        app:civ_border_color="#FF000000"/>
 
                     <TextView
                         android:id="@+id/Name"
@@ -241,17 +243,15 @@
                 android:gravity="center"
                 android:textColor="@color/whiteTextColor"
                 android:textStyle="bold"
-                android:visibility="gone"
                 android:backgroundTint="#00cd00"
                 android:layout_gravity="center"
-                android:text="Promote To \nAdmin"/>
+                android:text="Promote Admin"/>
             <Button
                 android:id="@+id/delete"
                 android:layout_margin="13dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:visibility="gone"
                 android:backgroundTint="#ff2800"
                 android:textColor="@color/whiteTextColor"
                 android:textStyle="bold"
