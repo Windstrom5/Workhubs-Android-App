@@ -53,6 +53,7 @@ class MapActivity : AppCompatActivity(){
     private lateinit var tvPerusahaan : TextView
     private lateinit var openClose:TextView
     private lateinit var cardview : CardView
+    private lateinit var category: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
@@ -257,9 +258,14 @@ class MapActivity : AppCompatActivity(){
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
-                namaPerusahaan = it.getString("namaPerusahaan") ?: ""
-                openhour = it.getString("openhour") ?: ""
-                closehour = it.getString("closehour") ?: ""
+                category = it.getString("edit")?: ""
+                if(category == "edit"){
+
+                }else{
+                    namaPerusahaan = it.getString("namaPerusahaan") ?: ""
+                    openhour = it.getString("openhour") ?: ""
+                    closehour = it.getString("closehour") ?: ""
+                }
             }
         } else {
             // Handle the case when bundle is null

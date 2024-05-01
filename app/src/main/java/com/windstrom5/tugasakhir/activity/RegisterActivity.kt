@@ -106,6 +106,7 @@ class RegisterActivity : AppCompatActivity() {
                 bundle.putString("namaPerusahaan", TINamaPerusahaan.editText?.text.toString())
                 bundle.putString("openhour", TIJammasuk.editText?.text.toString())
                 bundle.putString("closehour", TIJamkeluar.editText?.text.toString())
+                bundle.putString("category","edit")
                 intent.putExtra("data", bundle)
                 startActivity(intent)
             } else {

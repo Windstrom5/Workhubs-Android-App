@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -35,11 +36,13 @@ class AdminActivity : AppCompatActivity() {
     private lateinit var cs:CardView
     private lateinit var back : ImageView
     private var admin : Admin? = null
+    private lateinit var edit:Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAdminBinding.inflate(layoutInflater)
         setContentView(binding.root)
         getBundle()
+        edit = binding.todoB
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
         val namaPerusahaan = perusahaan?.nama
         absen = binding.AbsensiCard
@@ -47,6 +50,9 @@ class AdminActivity : AppCompatActivity() {
         dinas = binding.DinasCard
         izin = binding.IzinCard
         back = binding.backB
+        edit.setOnClickListener{
+
+        }
         back.setOnClickListener{
             AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to Log Out?")

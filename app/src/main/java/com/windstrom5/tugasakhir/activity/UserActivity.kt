@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -34,6 +35,7 @@ class UserActivity : AppCompatActivity() {
     private lateinit var cs:CardView
     private lateinit var back : ImageView
     private var pekerja : Pekerja? = null
+    private lateinit var edit: Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUserBinding.inflate(layoutInflater)
@@ -48,6 +50,10 @@ class UserActivity : AppCompatActivity() {
         company = binding.CompanyCard
         cs = binding.CustomerServiceCard
         back = binding.backB
+        edit = binding.todoB
+        edit.setOnClickListener{
+
+        }
         back.setOnClickListener{
             AlertDialog.Builder(this)
                 .setMessage("Are you sure you want to Log Out?")

@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:layout_gravity="center"
     android:background="@drawable/background"
-    tools:context=".activity.EditCompany">
+    tools:context=".activity.EditUserActivity">
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:text="Company"
+                android:text="User"
                 android:textStyle="normal"
                 android:textColor="@color/white"
                 android:textSize="30sp"
@@ -107,45 +107,28 @@
                                 android:src="@drawable/ic_pencil" />
                         </LinearLayout>
                         <TextView
-                            android:id="@+id/idperusahaan"
+                            android:id="@+id/perusahaan"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:layout_marginBottom="10dp"
                             android:gravity="center"
-                            android:text="PID:362Hb458760"
+                            android:text="Company Name"
                             android:textColor="#5C5A5A"
                             android:textSize="13sp"
                             android:textStyle="normal" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
             </RelativeLayout>
-            <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true">
-
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/logo"
-                    android:src="@drawable/logo"
-                    android:padding="5dp"
-                    android:layout_width="98dp"
-                    android:layout_height="98dp"
-                    app:civ_border_width="2dp"
-                    app:civ_border_color="#FF000000"/>
-
-                <ImageView
-                    android:id="@+id/select_image"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/baseline_camera_alt_24"
-                    android:layout_gravity="bottom|end"
-                    android:alpha="0.5"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginEnd="8dp"/>
-
-            </FrameLayout>
-
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/logo"
+                android:src="@drawable/logo"
+                android:padding="5dp"
+                android:layout_centerHorizontal="true"
+                android:layout_width="98dp"
+                android:layout_height="98dp"
+                app:civ_border_width="2dp"
+                app:civ_border_color="#FF000000"/>
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
     <ScrollView
@@ -182,11 +165,11 @@
                                 android:layout_height="wrap_content">
                                 <ImageView
                                     android:padding="5dp"
-                                    android:src="@drawable/ic_home"
+                                    android:src="@drawable/ic_email"
                                     android:layout_width="35dp"
                                     android:layout_height="35dp"/>
                                 <TextView
-                                    android:text="Address"
+                                    android:text="Email"
                                     android:textSize="16sp"
                                     android:layout_margin="5dp"
                                     android:textStyle="bold|normal"
@@ -218,21 +201,12 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content">
                                 <TextView
-                                    android:id="@+id/Provinsi"
-                                    android:text="Hitech City MMts Station Park"
+                                    android:id="@+id/textviewemail"
+                                    android:text="email"
                                     android:textSize="17sp"
                                     android:textColor="@color/black"
                                     android:textStyle="bold"
                                     android:gravity="center"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"/>
-                                <TextView
-                                    android:id="@+id/alamat"
-                                    android:text="Bhagyanager Colony, \nMadhapur Hyderabad,\nTelangana \n500084"
-                                    android:textSize="13sp"
-                                    android:textColor="#ED5E5E5E"
-                                    android:textStyle="normal"
-                                    android:textAlignment="textStart"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"/>
                             </LinearLayout>
@@ -289,7 +263,6 @@
                             </LinearLayout>
                         </RelativeLayout>
                         <TextView
-                            android:id="@+id/jamMasukText"
                             android:text="08.00 AM"
                             android:textStyle="bold"
                             android:textColor="@color/black"
@@ -350,7 +323,6 @@
                             </LinearLayout>
                         </RelativeLayout>
                         <TextView
-                            android:id="@+id/JamKeluarText"
                             android:text="08.00 AM"
                             android:textStyle="bold"
                             android:textColor="@color/black"
