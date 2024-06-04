@@ -102,48 +102,88 @@ class CompanyActivity : AppCompatActivity() {
             startActivity(intent)
         }
         setting.setOnClickListener{
-            val powerMenu = PowerMenu.Builder(this)
-                .addItem(PowerMenuItem("Edit Company", false))
-                .addItem(PowerMenuItem("Add Worker", false))
-                .addItem(PowerMenuItem("Delete Company", false))
-                .setAnimation(MenuAnimation.SHOWUP_TOP_RIGHT)
-                .setMenuRadius(10f)
-                .setMenuShadow(10f)
-                .setTextColorResource(R.color.blackTextColor)
-                .setTextSize(12)
-                .setSelectedTextColorResource(R.color.white)
-                .setMenuColor(Color.WHITE)
-                .setOnMenuItemClickListener(object : OnMenuItemClickListener<PowerMenuItem> {
-                    override fun onItemClick(position: Int, item: PowerMenuItem) {
-                        when (position) {
-                            0 -> {
-                                val intent = Intent(this@CompanyActivity, EditCompany::class.java)
-                                val userBundle = Bundle()
-                                userBundle.putParcelable("user", admin)
-                                userBundle.putParcelable("perusahaan", perusahaan)
-                                userBundle.putString("role", "Admin")
-                                intent.putExtra("data", userBundle)
-                                startActivity(intent)
-                            }
-                            1 -> {
-                                // Handle add worker option
-                                val intent = Intent(this@CompanyActivity, RegisterPekerjaActivity::class.java)
-                                val userBundle = Bundle()
-                                userBundle.putParcelable("user", admin)
-                                userBundle.putParcelable("perusahaan", perusahaan)
-                                userBundle.putString("role", "Admin")
-                                intent.putExtra("data", userBundle)
-                                startActivity(intent)
-                            }
-                            2->{
-                                showDialogWithIcon(perusahaan!!.nama)
+            if(admin!= null){
+                val powerMenu = PowerMenu.Builder(this)
+                    .addItem(PowerMenuItem("Edit profile", false))
+                    .addItem(PowerMenuItem("Edit Company", false))
+                    .addItem(PowerMenuItem("Add Worker", false))
+                    .addItem(PowerMenuItem("Delete Company", false))
+                    .setAnimation(MenuAnimation.SHOWUP_TOP_RIGHT)
+                    .setMenuRadius(10f)
+                    .setMenuShadow(10f)
+                    .setTextColorResource(R.color.blackTextColor)
+                    .setTextSize(12)
+                    .setSelectedTextColorResource(R.color.white)
+                    .setMenuColor(Color.WHITE)
+                    .setOnMenuItemClickListener(object : OnMenuItemClickListener<PowerMenuItem> {
+                        override fun onItemClick(position: Int, item: PowerMenuItem) {
+                            when (position) {
+                                0 -> {
+                                    val intent = Intent(this@CompanyActivity, EditUserActivity::class.java)
+                                    val userBundle = Bundle()
+                                    userBundle.putParcelable("user", admin)
+                                    userBundle.putParcelable("perusahaan", perusahaan)
+                                    userBundle.putString("role", "Admin")
+                                    intent.putExtra("data", userBundle)
+                                    startActivity(intent)
+                                }
+                                1 -> {
+                                    val intent = Intent(this@CompanyActivity, EditCompany::class.java)
+                                    val userBundle = Bundle()
+                                    userBundle.putParcelable("user", admin)
+                                    userBundle.putParcelable("perusahaan", perusahaan)
+                                    userBundle.putString("role", "Admin")
+                                    intent.putExtra("data", userBundle)
+                                    startActivity(intent)
+                                }
+                                2 -> {
+                                    // Handle add worker option
+                                    val intent = Intent(this@CompanyActivity, RegisterPekerjaActivity::class.java)
+                                    val userBundle = Bundle()
+                                    userBundle.putParcelable("user", admin)
+                                    userBundle.putParcelable("perusahaan", perusahaan)
+                                    userBundle.putString("role", "Admin")
+                                    intent.putExtra("data", userBundle)
+                                    startActivity(intent)
+                                }
+                                3->{
+                                    showDialogWithIcon(perusahaan!!.nama)
+                                }
                             }
                         }
-                    }
-                })
-                .build()
+                    })
+                    .build()
 
-            powerMenu.showAsDropDown(it)
+                powerMenu.showAsDropDown(it)
+            }else {
+                val powerMenu = PowerMenu.Builder(this)
+                    .addItem(PowerMenuItem("Edit profile", false))
+                    .setAnimation(MenuAnimation.SHOWUP_TOP_RIGHT)
+                    .setMenuRadius(10f)
+                    .setMenuShadow(10f)
+                    .setTextColorResource(R.color.blackTextColor)
+                    .setTextSize(12)
+                    .setSelectedTextColorResource(R.color.white)
+                    .setMenuColor(Color.WHITE)
+                    .setOnMenuItemClickListener(object : OnMenuItemClickListener<PowerMenuItem> {
+                        override fun onItemClick(position: Int, item: PowerMenuItem) {
+                            when (position) {
+                                0 -> {
+                                    val intent = Intent(this@CompanyActivity, EditUserActivity::class.java)
+                                    val userBundle = Bundle()
+                                    userBundle.putParcelable("user", pekerja)
+                                    userBundle.putParcelable("perusahaan", perusahaan)
+                                    userBundle.putString("role", "Pekerja")
+                                    intent.putExtra("data", userBundle)
+                                    startActivity(intent)
+                                }
+                            }
+                        }
+                    })
+                    .build()
+
+                powerMenu.showAsDropDown(it)
+            }
         }
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
@@ -348,11 +388,9 @@ class CompanyActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 role = it.getString("role").toString()
                 if(role == "Admin"){
-                    setting.visibility = View.VISIBLE
                     admin = it.getParcelable("user")
                     addPekerja.visibility = View.VISIBLE
                 }else{
-                    setting.visibility = View.GONE
                     pekerja = it.getParcelable("user")
                     addPekerja.visibility = View.GONE
                 }

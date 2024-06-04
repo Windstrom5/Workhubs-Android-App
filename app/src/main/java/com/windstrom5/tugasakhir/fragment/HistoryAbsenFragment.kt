@@ -19,7 +19,6 @@ import org.json.JSONException
 import java.sql.Date
 
 class HistoryAbsenFragment : Fragment() {
-
     private lateinit var recyclerView: RecyclerView
     private lateinit var absenAdapter: AbsenAdapter
     private var perusahaan: Perusahaan? = null

@@ -78,7 +78,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterPekerjaBinding
     private lateinit var circleImageView: CircleImageView
     private lateinit var selectedImage: ByteArray
-    var selectedDateSqlFormat: String? = null
+    private var selectedDateSqlFormat: String? = null
     private lateinit var selectImage: ImageView
     private lateinit var logo : ImageView
     private val CAMERA_PERMISSION_REQUEST = 124
@@ -159,11 +159,11 @@ class RegisterPekerjaActivity : AppCompatActivity() {
 
             val apiService = retrofit.create(ApiService::class.java)
             val call = apiService.checkEmail(email)
-            call.enqueue(object : Callback<response> {
-                override fun onResponse(call: Call<response>, response: Response<response>) {
+            call.enqueue(object : Callback<Map<String, Any>> {
+                override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {
                     if (response.isSuccessful) {
-                        val apiResponse = response.body()
-                        if (apiResponse?.pekerja == null && apiResponse?.admin == null) {
+                        val responseBody = response.body()
+                        if (responseBody == null) {
                             perusahaan?.let { it1 -> saveData(it1) }
                         } else {
                             runOnUiThread{
@@ -182,7 +182,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                     setLoading(false)
                 }
 
-                override fun onFailure(call: Call<response>, t: Throwable) {
+                override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
                     // Handle failure
                     setLoading(false)
                 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -45,6 +46,24 @@ class ForgotActivity : AppCompatActivity() {
     private var pekerja: Pekerja?= null
     private var code : Int? = null
     private lateinit var loading : LinearLayout
+    private val passwordTextWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        override fun afterTextChanged(s: Editable?) {
+            validatePassword()
+        }
+    }
+    private val retypeTextWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        override fun afterTextChanged(s: Editable?) {
+            validatePassword()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityForgotBinding.inflate(layoutInflater)
@@ -61,6 +80,7 @@ class ForgotActivity : AppCompatActivity() {
         save = binding.cirSaveButton
         email.editText?.addTextChangedListener(emailTextWatcher)
         sendCode.setOnClickListener {
+            code = null
             val url = "http://192.168.1.3:8000/api/"
             val retrofit = Retrofit.Builder()
                 .baseUrl(url)
@@ -69,13 +89,13 @@ class ForgotActivity : AppCompatActivity() {
 
             val apiService = retrofit.create(ApiService::class.java)
             val call = apiService.checkEmail(email.editText?.text.toString())
-            call.enqueue(object : Callback<response> {
-                override fun onResponse(call: Call<response>, response: Response<response>) {
+            call.enqueue(object : Callback<Map<String, Any>> {
+                override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {
                     if (response.isSuccessful) {
                         val apiResponse = response.body()
-                        if (apiResponse?.pekerja == null && apiResponse?.admin == null) {
+                        if (apiResponse == null) {
+                            Log.e("ErrorMassage", email.editText?.text.toString())
                             runOnUiThread {
-                                setLoading(false)
                                 MotionToast.createToast(
                                     this@ForgotActivity, "Error",
                                     "Email Tidak Ada",
@@ -89,29 +109,43 @@ class ForgotActivity : AppCompatActivity() {
                                 )
                             }
                         } else {
-
+                            startTimer()
+                            sendCode.isEnabled = false
+                            code = generateRandomCode()
+                            EmailSender.sendEmail(
+                                email.editText?.text.toString(),
+                                "Reset Password - Workhubs",
+                                "Hello,\n\nYou have requested to reset your password for Workhubs account. " +
+                                        "Your verification code is: $code\n\nIf you did not request this, please ignore this email.\n\n" +
+                                        "Regards,\nWorkhubs Team"
+                            )
+                            runOnUiThread {
+                                MotionToast.createToast(
+                                    this@ForgotActivity, "Successfully Send Email",
+                                    "Check Email at Inbox or In Spam Folder",
+                                    MotionToastStyle.SUCCESS,
+                                    MotionToast.GRAVITY_BOTTOM,
+                                    MotionToast.LONG_DURATION,
+                                    ResourcesCompat.getFont(
+                                        this@ForgotActivity,
+                                        R.font.ralewaybold
+                                    )
+                                )
+                                linear2.visibility = View.VISIBLE
+                            }
                         }
                     } else {
-                        // Handle unsuccessful response
+                        Log.e("ErrorMassage", "WHYYY")
                     }
                     setLoading(false)
                 }
 
-                override fun onFailure(call: Call<response>, t: Throwable) {
+                override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
+                    Log.e("ErrorMassage", "Retrofit failure: ${t.message}", t)
                     // Handle failure
                     setLoading(false)
                 }
             })
-            startTimer()
-            sendCode.isEnabled = false
-            code = generateRandomCode()
-            EmailSender.sendEmail(
-                email.editText?.text.toString(),
-                "Reset Password - Workhubs",
-                "Hello,\n\nYou have requested to reset your password for Workhubs account. " +
-                        "Your verification code is: $code\n\nIf you did not request this, please ignore this email.\n\n" +
-                        "Regards,\nWorkhubs Team"
-            )
         }
         pin.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -171,25 +205,9 @@ class ForgotActivity : AppCompatActivity() {
         // Enable or disable the save button based on password and retype fields
         save.isEnabled = passwordText.isNotEmpty() && retypeText.isNotEmpty() && passwordText == retypeText
     }
-    private val passwordTextWatcher = object : TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
 
-        override fun afterTextChanged(s: Editable?) {
-            validatePassword()
-        }
-    }
 
-    private val retypeTextWatcher = object : TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-        override fun afterTextChanged(s: Editable?) {
-            validatePassword()
-        }
-    }
 
     private fun setLoading(isLoading:Boolean){
         if(isLoading){

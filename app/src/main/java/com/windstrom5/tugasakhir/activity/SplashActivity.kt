@@ -38,13 +38,18 @@ import java.util.Locale
 class SplashActivity : AppCompatActivity() {
     private var perusahaanList: List<Perusahaan> = emptyList()
     private val splashTimeOut: Long = 2000 // 2 seconds
-
+    private lateinit var logoImageView: ImageView
     // Define LOCATION_PERMISSION_REQUEST_CODE here
     private val LOCATION_PERMISSION_REQUEST_CODE = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
+        logoImageView = findViewById(R.id.logoImageView)
+        Glide.with(this)
+            .load(R.drawable.logo)
+            .into(logoImageView)
+        Log.d("Halo","hlao")
         requestLocationPermissions()
 //        val sharedPreferencesManager = SharedPreferencesManager(this)
 //        val savedSession = sharedPreferencesManager.getSession()
@@ -59,8 +64,8 @@ class SplashActivity : AppCompatActivity() {
 //        }
     }
 
-    private fun fetchDataFromApi() {
-        val url = "http://192.168.1.4:8000/api/"
+        private fun fetchDataFromApi() {
+        val url = "http://192.168.1.3:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -121,6 +126,24 @@ class SplashActivity : AppCompatActivity() {
                         }
                     }
                 } else {
+                    runOnUiThread{
+                        MotionToast.createToast(this@SplashActivity,
+                            "Error",
+                            "Gagal Menyambungkan Ke Server",
+                            MotionToastStyle.ERROR,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(this@SplashActivity,
+                                R.font.ralewaybold))
+                    }
+                    Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                // Handle network failures
+                Log.e("FetchDataError", "Failed to fetch data: ${t.message}")
+                runOnUiThread{
                     MotionToast.createToast(this@SplashActivity,
                         "Error",
                         "Gagal Menyambungkan Ke Server",
@@ -129,13 +152,8 @@ class SplashActivity : AppCompatActivity() {
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(this@SplashActivity,
                             R.font.ralewaybold))
-                    Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
+                    finish() // Close the activity
                 }
-            }
-
-            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                // Handle network failures
-                Log.e("FetchDataError", "Failed to fetch data: ${t.message}")
             }
         })
     }
@@ -213,7 +231,7 @@ class SplashActivity : AppCompatActivity() {
             MotionToastStyle.ERROR,
             MotionToast.GRAVITY_BOTTOM,
             MotionToast.LONG_DURATION,
-            ResourcesCompat.getFont(this, www.sanju.motiontoast.R.font.helveticabold)
+            ResourcesCompat.getFont(this,R.font.ralewaybold)
         )
     }
     private fun showToastWithDelay(message: String) {
@@ -230,13 +248,13 @@ class SplashActivity : AppCompatActivity() {
         if (savedAdmin != null || savedPekerja != null) {
             redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja)
         } else {
-            fetchDataFromApi()
+//            fetchDataFromApi()
         }
     }
     private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?) {
         val logoImageView = findViewById<ImageView>(R.id.logoImageView)
         val imageUrl =
-            "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+            "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
         Glide.with(this)
             .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL

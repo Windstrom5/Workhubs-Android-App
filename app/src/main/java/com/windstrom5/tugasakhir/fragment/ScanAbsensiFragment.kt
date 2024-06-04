@@ -60,7 +60,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ScanAbsensiFragment : Fragment() {
-    val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
+    private val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
     private lateinit var requestQueue: RequestQueue // Add this line
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var button : Button
@@ -101,7 +101,7 @@ class ScanAbsensiFragment : Fragment() {
         }
     }
 
-    fun handleResult(result: QRResult) {
+    private fun handleResult(result: QRResult) {
         // handle the QRResult
         val resultString = result.toString()
 
@@ -257,7 +257,7 @@ class ScanAbsensiFragment : Fragment() {
                                     MotionToast.LONG_DURATION,
                                     ResourcesCompat.getFont(
                                         requireContext(),
-                                        www.sanju.motiontoast.R.font.helveticabold
+                                        R.font.ralewaybold
                                     )
                                 )
                             }
@@ -277,7 +277,7 @@ class ScanAbsensiFragment : Fragment() {
                                     MotionToast.LONG_DURATION,
                                     ResourcesCompat.getFont(
                                         requireContext(),
-                                        www.sanju.motiontoast.R.font.helveticabold
+                                        R.font.ralewaybold
                                     )
                                 )
                             }
@@ -294,7 +294,7 @@ class ScanAbsensiFragment : Fragment() {
                                     MotionToast.LONG_DURATION,
                                     ResourcesCompat.getFont(
                                         requireContext(),
-                                        www.sanju.motiontoast.R.font.helveticabold
+                                        R.font.ralewaybold
                                     )
                                 )
                             }

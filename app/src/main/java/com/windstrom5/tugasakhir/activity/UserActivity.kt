@@ -15,7 +15,6 @@ import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.databinding.ActivityUserBinding
-import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import java.util.Calendar
@@ -25,7 +24,7 @@ class UserActivity : AppCompatActivity() {
     private lateinit var tv : TextView
     private var bundle: Bundle? = null
     private var perusahaan : Perusahaan? = null
-    private lateinit var tvnamaAdmin : TextView
+    private lateinit var tvnamaUser : TextView
     private lateinit var tvnamaPerusahaan : TextView
     private lateinit var absen:CardView
     private lateinit var lembur:CardView
@@ -69,12 +68,12 @@ class UserActivity : AppCompatActivity() {
                 .show()
         }
         val nama = pekerja?.nama
-        tvnamaAdmin = binding.textView2
+        tvnamaUser = binding.textView2
         tvnamaPerusahaan = binding.textView3
         val text = "© $currentYear $namaPerusahaan. \nAll rights reserved."
         tv = binding.courtesyNoticeTextView
         tv.setText(text)
-        tvnamaAdmin.setText(nama)
+        tvnamaUser.setText(nama)
         tvnamaPerusahaan.setText(namaPerusahaan)
         absen.setOnTouchListener { _, event -> handleCardTouch(absen, event, "AbsensiActivity") }
         lembur.setOnTouchListener { _, event -> handleCardTouch(lembur, event, "LemburActivity") }

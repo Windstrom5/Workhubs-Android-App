@@ -67,7 +67,7 @@ class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var binding: ActivityRegisterAdminBinding
     private lateinit var circleImageView: CircleImageView
     private lateinit var selectedImage: ByteArray
-    var selectedDateSqlFormat: String? = null
+    private var selectedDateSqlFormat: String? = null
     private lateinit var selectImage: ImageView
     private val CAMERA_PERMISSION_REQUEST = 124
     private val CAMERA_CAPTURE_REQUEST = 126
@@ -147,11 +147,10 @@ class RegisterAdminActivity : AppCompatActivity() {
 
                 val apiService = retrofit.create(ApiService::class.java)
                 val call = apiService.checkEmail(email)
-                call.enqueue(object : Callback<response> {
-                    override fun onResponse(call: Call<response>, response: Response<response>) {
-                        if (response.isSuccessful) {
-                            val apiResponse = response.body()
-                            if (apiResponse?.pekerja == null && apiResponse?.admin == null) {
+                call.enqueue(object : Callback<Map<String, Any>> {
+                    override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {                        if (response.isSuccessful) {
+                            val responseBody = response.body()
+                            if (responseBody == null) {
                                 // Worker not found with the email, proceed to addPerusahaan and saveData
                                 addPerusahaan()
                                 perusahaan?.let { it1 -> saveData(it1) }
@@ -177,7 +176,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                         setLoading(false)
                     }
 
-                    override fun onFailure(call: Call<response>, t: Throwable) {
+                    override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
                         // Handle failure
                         setLoading(false)
                     }

@@ -20,6 +20,9 @@ import com.windstrom5.tugasakhir.databinding.ActivityMapBinding
 import com.windstrom5.tugasakhir.location.CustomInfoWindow
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.model.Admin
+import com.windstrom5.tugasakhir.model.Pekerja
+import com.windstrom5.tugasakhir.model.Perusahaan
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.util.GeoPoint
@@ -54,6 +57,11 @@ class MapActivity : AppCompatActivity(){
     private lateinit var openClose:TextView
     private lateinit var cardview : CardView
     private lateinit var category: String
+    private var role:String ?=null
+    private var admin : Admin? = null
+    private var pekerja : Pekerja? = null
+    private var perusahaan: Perusahaan?= null
+    private var byteArray:ByteArray?= null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
@@ -86,48 +94,94 @@ class MapActivity : AppCompatActivity(){
         myLocationMarker.infoWindow = myLocationInfoWindow
         mapView.overlays.add(myLocationMarker)
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            // Request location updates
-            locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                0,
-                0f,
-                locationListener
+        if (category == "edit") {
+            val perusahaanLatitude = perusahaan?.latitude ?: 0.0
+            val perusahaanLongitude = perusahaan?.longitude ?: 0.0
+
+            // Center the map on the Perusahaan location
+            val perusahaanLocation = GeoPoint(perusahaanLatitude, perusahaanLongitude)
+            mapController.animateTo(perusahaanLocation)
+            val companyMarker = Marker(mapView)
+            companyMarker.position = GeoPoint(perusahaanLatitude, perusahaanLongitude)
+            companyMarker.title = perusahaan?.nama
+            val companyInfoWindow = CustomInfoWindow(
+                R.layout.custom_info_window,
+                mapView,
+                perusahaan?.nama ?: "", // Company name to be displayed
+                companyMarker
             )
+            companyMarker.infoWindow = companyInfoWindow
 
-            // Get last known location
-            val lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-            if (lastKnownLocation != null) {
-                // Center the map on the last known location
-                val userLocation = GeoPoint(lastKnownLocation)
-                mapController.animateTo(userLocation)
+// Add the company marker to the map overlays
+            mapView.overlays.add(companyMarker)
+        } else {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                // Request location updates
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    0,
+                    0f,
+                    locationListener
+                )
 
-                // Add a marker at the user's location
-                myLocationMarker.position = userLocation
-                mapView.invalidate() // Refresh the map to update the marker position
+                // Get last known location
+                val lastKnownLocation =
+                    locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                if (lastKnownLocation != null) {
+                    // Center the map on the last known location
+                    val userLocation = GeoPoint(lastKnownLocation)
+                    mapController.animateTo(userLocation)
 
-                // Get the map center
-                val mapCenter = mapView.mapCenter
-                // Add a marker at the center of the screen
-                selectedLocationMarker.position = GeoPoint(mapCenter.latitude, mapCenter.longitude)
-                mapView.invalidate() // Refresh the map to update the marker position
+                    // Add a marker at the user's location
+                    myLocationMarker.position = userLocation
+                    mapView.invalidate() // Refresh the map to update the marker position
+
+                    // Get the map center
+                    val mapCenter = mapView.mapCenter
+                    // Add a marker at the center of the screen
+                    selectedLocationMarker.position =
+                        GeoPoint(mapCenter.latitude, mapCenter.longitude)
+                    mapView.invalidate() // Refresh the map to update the marker position
+                }
             }
         }
         save.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            val Bundle = Bundle()
-            Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
-            Bundle.putDouble("latitude", latitude)
-            Bundle.putDouble("longitude", longitude)
-            Bundle.putString("address", address)
-            Bundle.putString("openhour", openhour)
-            Bundle.putString("closehour", closehour)
-            intent.putExtra("data", Bundle)
-            startActivity(intent)
+            if(category == "edit"){
+                val intent = Intent(this, EditCompany::class.java)
+                val Bundle = Bundle()
+                Bundle.putParcelable("perusahaan",perusahaan)
+                if(role == "Admin"){
+                    Bundle.putParcelable("user", admin)
+                }else{
+                    Bundle.putParcelable("user", pekerja)
+                }
+                Bundle.putString("role",role)
+                Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
+                Bundle.putDouble("latitude", latitude)
+                Bundle.putDouble("longitude", longitude)
+                Bundle.putString("openhour", openhour)
+                Bundle.putString("closehour", closehour)
+                if(byteArray != null){
+                    Bundle.putByteArray("selectedFile", byteArray)
+                }
+                intent.putExtra("edit", Bundle)
+                startActivity(intent)
+            }else{
+                val intent = Intent(this, RegisterActivity::class.java)
+                val Bundle = Bundle()
+                Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
+                Bundle.putDouble("latitude", latitude)
+                Bundle.putDouble("longitude", longitude)
+                Bundle.putString("openhour", openhour)
+                Bundle.putString("closehour", closehour)
+                intent.putExtra("data", Bundle)
+                startActivity(intent)
+            }
+
 //            finish()
 //            // Handle save button click
 //            // You can retrieve latitude, longitude, and address here
@@ -192,7 +246,28 @@ class MapActivity : AppCompatActivity(){
 
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
     }
-
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if(category == "edit"){
+            val userBundle = Bundle()
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
+        }else{
+            val userBundle = Bundle()
+            val intent = Intent(this, AdminActivity::class.java)
+            if(role == "Admin"){
+                userBundle.putParcelable("user", admin)
+            }else{
+                userBundle.putParcelable("user", pekerja)
+            }
+            if(byteArray != null){
+                userBundle.putByteArray("selectedFile", byteArray)
+            }
+            userBundle.putParcelable("perusahaan", perusahaan)
+            intent.putExtra("data", userBundle)
+            startActivity(intent)
+        }
+    }
     private fun getAddressFromLocation(latitude: Double, longitude: Double) {
         val geocoder = Geocoder(this, Locale.getDefault())
         try {
@@ -260,7 +335,17 @@ class MapActivity : AppCompatActivity(){
             bundle?.let {
                 category = it.getString("edit")?: ""
                 if(category == "edit"){
-
+                    role = it.getString("role")
+                    perusahaan = it.getParcelable("perusahaan")!!
+                    namaPerusahaan = it.getString("namaPerusahaan") ?: ""
+                    openhour = it.getString("openhour") ?: ""
+                    closehour = it.getString("closehour") ?: ""
+                    if(role == "Admin"){
+                        admin = it.getParcelable("user")
+                    }else{
+                        pekerja = it.getParcelable("user")
+                    }
+                    byteArray = intent.getByteArrayExtra("selectedFile")
                 }else{
                     namaPerusahaan = it.getString("namaPerusahaan") ?: ""
                     openhour = it.getString("openhour") ?: ""

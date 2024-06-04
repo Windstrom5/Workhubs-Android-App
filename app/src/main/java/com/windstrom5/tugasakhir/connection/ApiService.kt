@@ -13,8 +13,6 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
-import retrofit2.http.Query
-
 
 interface ApiService {
     @Multipart
@@ -171,19 +169,80 @@ interface ApiService {
         @Part("kegiatan") kegiatan: RequestBody,
         @Part bukti: MultipartBody.Part
     ): Call<ApiResponse>
+    @Multipart
+    @POST("UpdateDataUser/{id}?_method=PUT")
+    fun updatePekerja(
+        @Part("id") id: Int,
+        @Part("email") email: RequestBody,
+        @Part("nama") nama: RequestBody,
+        @Part("tanggal_lahir") tanggal_lahir: RequestBody,
+        @Part profile: MultipartBody.Part
+    ): Call<ApiResponse>
+
+    @Multipart
+    @POST("UpdateDataUser/{id}?_method=PUT")
+    fun updatePekerjaNoFile(
+        @Part("id") id: Int,
+        @Part("email") email: RequestBody,
+        @Part("nama") nama: RequestBody,
+        @Part("tanggal_lahir") tanggal_lahir: RequestBody
+    ): Call<ApiResponse>
+
+    @Multipart
+    @POST("UpdateDataAdmin/{id}?_method=PUT")
+    fun updateAdmin(
+        @Part("id") id: Int,
+        @Part("email") email: RequestBody,
+        @Part("nama") nama: RequestBody,
+        @Part("tanggal_lahir") tanggal_lahir: RequestBody,
+        @Part profile: MultipartBody.Part
+    ): Call<ApiResponse>
+
+    @Multipart
+    @POST("UpdateDataAdmin/{id}?_method=PUT")
+    fun updateAdminNoFile(
+        @Part("id") id: Int,
+        @Part("email") email: RequestBody,
+        @Part("nama") nama: RequestBody,
+        @Part("tanggal_lahir") tanggal_lahir: RequestBody
+    ): Call<ApiResponse>
     @DELETE("DeletePerusahaan/{id}")
     fun deleteCompany(@Path("id") id: Int): Call<Void>
 
     @GET("GetPerusahaan")
     fun getPerusahaan():Call<ResponseBody>
+
     @GET("perusahaan/{nama_perusahaan}")
     fun getPerusahaan(@Path("nama_perusahaan") namaPerusahaan: String): Call<Perusahaan>
-    @GET("checkEmail") // Adjust the endpoint accordingly
-    fun checkEmail(@Query("email") email: String): Call<response>
+
+    @GET("checkEmail/{email}")
+    fun checkEmail(@Path("email") email: String): Call<Map<String, Any>>
+
     @Multipart
     @POST("resetPassword")
     fun resetPassword(
         @Path("email") email: String,
+    ): Call<ApiResponse>
+
+    @POST("EditPerusahaan/{perusahaanId}?_method=PUT")
+    fun updatePerusahaan(
+        @Path("id") id: Int,
+        @Part("nama") nama: RequestBody,
+        @Part("jammasuk") jammasuk: RequestBody,
+        @Part("jamkeluar") jamkeluar: RequestBody,
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part logo: MultipartBody.Part
+    ): Call<ApiResponse>
+
+    @POST("EditPerusahaan/{perusahaanId}?_method=PUT")
+    fun updatePerusahaanNoFile(
+        @Path("id") id: Int,
+        @Part("nama") nama: RequestBody,
+        @Part("jammasuk") jammasuk: RequestBody,
+        @Part("jamkeluar") jamkeluar: RequestBody,
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody
     ): Call<ApiResponse>
 }
 

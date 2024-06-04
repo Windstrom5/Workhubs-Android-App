@@ -314,7 +314,7 @@ class RegisterActivity : AppCompatActivity() {
 
         timePicker.show(supportFragmentManager, "timePicker")
     }
-    fun stringToSqlTime(timeString: String): Time {
+    private fun stringToSqlTime(timeString: String): Time {
         val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val date = dateFormat.parse(timeString)
         return Time(date.time)

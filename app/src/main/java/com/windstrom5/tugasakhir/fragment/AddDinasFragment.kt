@@ -77,6 +77,20 @@ class AddDinasFragment : Fragment() {
     private lateinit var selectedFileName: TextView
     private var perusahaan : Perusahaan? = null
     private var pekerja : Pekerja? = null
+    private val watcher = object : TextWatcher {
+        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
+            // Not needed for this example
+        }
+
+        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+            // Not needed for this example
+        }
+
+        override fun afterTextChanged(editable: Editable?) {
+            // Update the button state whenever a field is changed
+            save.isEnabled = isAllFieldsFilled()
+        }
+    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -186,20 +200,6 @@ class AddDinasFragment : Fragment() {
             nama.isEnabled=false
         } else {
             Log.d("Error","Bundle Not Found")
-        }
-    }
-    private val watcher = object : TextWatcher {
-        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
-            // Not needed for this example
-        }
-
-        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
-            // Not needed for this example
-        }
-
-        override fun afterTextChanged(editable: Editable?) {
-            // Update the button state whenever a field is changed
-            save.isEnabled = isAllFieldsFilled()
         }
     }
 

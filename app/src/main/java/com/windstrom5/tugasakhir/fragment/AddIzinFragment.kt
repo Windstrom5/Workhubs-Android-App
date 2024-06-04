@@ -263,7 +263,7 @@ class AddIzinFragment : Fragment() {
                         Glide.with(this)
                             .load(fileUri)
                             .into(imageView)
-                        val displayName = getRealPdfPathFromUri(fileUri)
+                        val displayName = getRealFilePathFromUri(fileUri)
                         if (displayName != null) {
                             val file = File(requireContext().cacheDir, displayName)
                             try {
@@ -286,7 +286,7 @@ class AddIzinFragment : Fragment() {
                         imageView.visibility = View.GONE
                         pdfView.visibility = View.VISIBLE
                         displayPdf(fileUri)
-                        val displayName = getRealPdfPathFromUri(fileUri)
+                        val displayName = getRealFilePathFromUri(fileUri)
                         if (displayName != null) {
                             val file = File(requireContext().cacheDir, displayName)
                             try {
@@ -344,7 +344,7 @@ class AddIzinFragment : Fragment() {
         }
         return null
     }
-    private fun getRealPdfPathFromUri(uri: Uri): String? {
+    private fun getRealFilePathFromUri(uri: Uri): String? {
         val projection = arrayOf(MediaStore.Files.FileColumns.DISPLAY_NAME)
         val cursor = requireActivity().contentResolver.query(uri, projection, null, null, null)
         cursor?.use {

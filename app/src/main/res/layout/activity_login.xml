@@ -66,21 +66,21 @@
                             android:textSize="20sp" />
 
                     </RelativeLayout>
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/textInputperusahaan"
-                        android:layout_height="match_parent"
-                        android:layout_width="match_parent"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                        android:layout_marginTop="@dimen/loginViewsMargin">
-                        <AutoCompleteTextView
-                            android:id="@+id/ACperusahaan"
-                            android:layout_height="match_parent"
-                            android:layout_width="match_parent"
-                            android:textSize="@dimen/newsMoreTextSize"
-                            android:background="@color/primaryTextColor"
-                            android:hint="Nama Perusahaan"
-                            android:maxLines="1" />
-                    </com.google.android.material.textfield.TextInputLayout>
+<!--                    <com.google.android.material.textfield.TextInputLayout-->
+<!--                        android:id="@+id/textInputperusahaan"-->
+<!--                        android:layout_height="match_parent"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"-->
+<!--                        android:layout_marginTop="@dimen/loginViewsMargin">-->
+<!--                        <AutoCompleteTextView-->
+<!--                            android:id="@+id/ACperusahaan"-->
+<!--                            android:layout_height="match_parent"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:textSize="@dimen/newsMoreTextSize"-->
+<!--                            android:background="@color/primaryTextColor"-->
+<!--                            android:hint="Nama Perusahaan"-->
+<!--                            android:maxLines="1" />-->
+<!--                    </com.google.android.material.textfield.TextInputLayout>-->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputEmail"
                         style="@style/parent"
@@ -147,7 +147,10 @@
                             android:textSize="@dimen/newsMoreTextSize" />
 
                     </LinearLayout>
-
+<!--                    <WebView-->
+<!--                        android:id="@+id/recaptchaWebView"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content" />-->
                     <Button
                         android:id="@+id/cirLoginButton"
                         style="@style/loginButton"

@@ -214,7 +214,7 @@ class HistoryLemburFragment : Fragment(){
             }
         })
     }
-    fun parseDate(dateString: String): Date {
+    private fun parseDate(dateString: String): Date {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         return dateFormat.parse(dateString) ?: Date()
     }
