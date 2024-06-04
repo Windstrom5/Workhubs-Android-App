@@ -365,7 +365,11 @@ class AdminActivity : AppCompatActivity() {
     }
 
     private fun fetchHolidayData() {
-        val url = "https://dayoffapi.vercel.app/api?year=2024"
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+
+        // Construct the URL with the current year
+        val url = "https://dayoffapi.vercel.app/api?year=$currentYear"
+
         val jsonArrayRequest = JsonArrayRequest(
             Request.Method.GET, url, null,
             { response ->

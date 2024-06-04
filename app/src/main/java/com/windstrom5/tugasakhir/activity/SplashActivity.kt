@@ -248,7 +248,9 @@ class SplashActivity : AppCompatActivity() {
         if (savedAdmin != null || savedPekerja != null) {
             redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja)
         } else {
-//            fetchDataFromApi()
+            val intent = Intent(this@SplashActivity, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
         }
     }
     private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?) {
