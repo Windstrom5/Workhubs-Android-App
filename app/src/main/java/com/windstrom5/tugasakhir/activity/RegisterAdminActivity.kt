@@ -19,6 +19,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isEmpty
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.connection.ApiService
@@ -27,6 +28,7 @@ import com.windstrom5.tugasakhir.model.Admin
 import com.google.android.material.textfield.TextInputLayout
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiResponse
+import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import com.windstrom5.tugasakhir.model.perusahaancreate
@@ -62,7 +64,7 @@ class RegisterAdminActivity : AppCompatActivity() {
     private lateinit var edTanggal: EditText
     private lateinit var save : Button
     private var bundle: Bundle? = null
-    private lateinit var selectedFile: File
+    private var selectedFile: File? = null
     private lateinit var admin: Admin
     private lateinit var binding: ActivityRegisterAdminBinding
     private lateinit var circleImageView: CircleImageView
@@ -129,17 +131,20 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
         save = binding.cirsaveButton
         save.setOnClickListener {
+            Log.d("RegisterDebug", "Save button clicked")
             val email = binding.textInputEmail.editText?.text.toString().trim()
-            if(TINama == null || TIEmail == null || TIPassword == null || TITanggal == null){
+            if (TINama.editText?.text.isNullOrEmpty() || TIEmail.editText?.text.isNullOrEmpty() || TIPassword.editText?.text.isNullOrEmpty() || TITanggal.editText?.text.isNullOrEmpty()) {
                 MotionToast.createToast(this@RegisterAdminActivity, "Error",
                     "Ada Form Yang belum Terisi",
                     MotionToastStyle.ERROR,
                     MotionToast.GRAVITY_BOTTOM,
                     MotionToast.LONG_DURATION,
                     ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
-            }else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Log.d("RegisterDebug", "Form not filled completely")
+            } else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Log.d("RegisterDebug", "Email format is correct")
                 setLoading(true)
-                val url = "http://192.168.1.4:8000/api/"
+                val url = "http://192.168.1.5:8000/api/"
                 val retrofit = Retrofit.Builder()
                     .baseUrl(url)
                     .addConverterFactory(GsonConverterFactory.create())
@@ -148,12 +153,14 @@ class RegisterAdminActivity : AppCompatActivity() {
                 val apiService = retrofit.create(ApiService::class.java)
                 val call = apiService.checkEmail(email)
                 call.enqueue(object : Callback<Map<String, Any>> {
-                    override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {                        if (response.isSuccessful) {
+                    override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {
+                        Log.d("RegisterDebug", "API call responded")
+                        if (response.isSuccessful) {
                             val responseBody = response.body()
-                            if (responseBody == null) {
-                                // Worker not found with the email, proceed to addPerusahaan and saveData
+                            Log.d("RegisterDebug", "Response body: $responseBody")
+                            if (responseBody == null || responseBody.isEmpty()) {
+                                Log.d("RegisterDebug", "Email not found, proceeding with registration")
                                 addPerusahaan()
-                                perusahaan?.let { it1 -> saveData(it1) }
                             } else {
                                 runOnUiThread {
                                     setLoading(false)
@@ -163,28 +170,40 @@ class RegisterAdminActivity : AppCompatActivity() {
                                         MotionToastStyle.ERROR,
                                         MotionToast.GRAVITY_BOTTOM,
                                         MotionToast.LONG_DURATION,
-                                        ResourcesCompat.getFont(
-                                            this@RegisterAdminActivity,
-                                            R.font.ralewaybold
-                                        )
+                                        ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold)
                                     )
+                                    Log.d("RegisterDebug", "Email already used")
                                 }
                             }
                         } else {
-                            // Handle unsuccessful response
+                            Log.d("RegisterDebug", "Unsuccessful response: ${response.errorBody()?.string()}")
+                            if (response.code() == 404) {
+                                // Proceed with registration if email is not found (404 status)
+                                Log.d("RegisterDebug", "Email not found, proceeding with registration")
+                                addPerusahaan()
+                                Log.d("RegisterFailed3", "Tidak Dapat Menyimpan Data. Response Code: ${response.code()}")
+//                                perusahaan?.let { saveData(it) }
+                            } else {
+                                setLoading(false)
+                            }
                         }
-                        setLoading(false)
                     }
 
                     override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
-                        // Handle failure
+                        Log.e("RegisterDebug", "API call failed", t)
                         setLoading(false)
                     }
                 })
-
             } else {
-                // Email format is incorrect
-                // Handle accordingly
+                MotionToast.createToast(
+                    this@RegisterAdminActivity, "Error",
+                    "Format Email Salah",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold)
+                )
+                Log.d("RegisterDebug", "Invalid email format")
             }
         }
     }
@@ -201,7 +220,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         }
     }
     private fun saveData(perusahaan: Perusahaan){
-        val url = "http://192.168.1.4:8000/api/"
+        val url = "http://192.168.1.5:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -213,14 +232,19 @@ class RegisterAdminActivity : AppCompatActivity() {
         val nama = createPartFromString(TINama.editText?.text.toString())
         val tanggalRequestBody = createPartFromString(selectedDateSqlFormat.toString())
         val profilePath = selectedFile
-        val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
-        val profilepath = MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
+        val profilePart = if (profilePath != null) {
+            val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
+            MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
+        } else {
+            null
+        }
         val call = apiService.uploadAdmin(nama_perusahaan, emailRequestBody, passwordRequestBody, nama,tanggalRequestBody,
-            profilepath)
-
+            profilePart)
+        val sharedPreferencesManager = SharedPreferencesManager(this)
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
+                    Log.d("RegisterFailed8","RegisterFailed")
                     val apiResponse = response.body()
                     val path = apiResponse?.profile_path ?: ""
                     val id_Admin = apiResponse?.id ?: 0
@@ -232,7 +256,6 @@ class RegisterAdminActivity : AppCompatActivity() {
                             MotionToast.LONG_DURATION,
                             ResourcesCompat.getFont(this@RegisterAdminActivity,
                                 R.font.ralewaybold))
-                    val intent = Intent(this@RegisterAdminActivity, SplashActivity::class.java)
                     val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
                     val formattedDate = TITanggal.editText?.text.toString()
                     try {
@@ -240,29 +263,34 @@ class RegisterAdminActivity : AppCompatActivity() {
                         val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         val formattedDateSql = dateFormatSql.format(parsedDate)
                         val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
-//                        perusahaan.id?.let {
-//                            if (parsedDateSql != null) {
-//                                admin = Admin(
-//                                    id_Admin,
-//                                    it,
-//                                    TIEmail.editText?.text.toString(),
-//                                    TIPassword.editText?.text.toString(),
-//                                    TINama.editText?.text.toString(),
-//                                    parsedDateSql,
-//                                    path
-//                                )
-//                            }
-//                        }
+                        perusahaan.id?.let {
+                            if (parsedDateSql != null) {
+                                admin = Admin(
+                                    id_Admin,
+                                    it,
+                                    TIEmail.editText?.text.toString(),
+                                    TIPassword.editText?.text.toString(),
+                                    TINama.editText?.text.toString(),
+                                    parsedDateSql,
+                                    path
+                                )
+                            }
+                        }
+                        sharedPreferencesManager.saveAdmin(admin)
+                        sharedPreferencesManager.savePerusahaan(perusahaan)
+                        Log.d("RegisterFailed10","RegisterFailed")
                         setLoading(false)
-                        MotionToast.createToast(this@RegisterAdminActivity, "Error",
+                        MotionToast.createToast(this@RegisterAdminActivity, "Success",
                             "Berhasil Menyimpan Data. Restarting APP....",
                             MotionToastStyle.SUCCESS,
                             MotionToast.GRAVITY_BOTTOM,
                             MotionToast.LONG_DURATION,
                             ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
+                        val intent = Intent(this@RegisterAdminActivity, LoginActivity::class.java)
                         startActivity(intent)
                     } catch (e: ParseException) {
                         e.printStackTrace()
+                        Log.d("RegisterFailed9","RegisterFailed")
                         // Handle parsing exception
                     }
 
@@ -273,6 +301,7 @@ class RegisterAdminActivity : AppCompatActivity() {
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold))
+                    Log.d("RegisterFailed1","Tidak Dapat Menyimpan Data")
                 }
             }
 
@@ -286,11 +315,12 @@ class RegisterAdminActivity : AppCompatActivity() {
                     MotionToast.LONG_DURATION,
                     ResourcesCompat.getFont(this@RegisterAdminActivity, R.font.ralewaybold)
                 )
+                Log.d("RegisterFailed2","Tidak Dapat Menyimpan Data")
             }
         })
     }
     private fun addPerusahaan() {
-        val url = "http://192.168.1.4:8000/api/"
+        val url = "http://192.168.1.5:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -300,7 +330,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         val apiService = retrofit.create(ApiService::class.java)
 
         // Convert values to RequestBody
-        val nama =  createPartFromString(perusahaancreate!!.nama)
+        val nama = createPartFromString(perusahaancreate!!.nama)
         val latitude = createPartFromString(perusahaancreate!!.latitude.toString())
         val longitude = createPartFromString(perusahaancreate!!.longitude.toString())
         val jamMasuk = createPartFromString(perusahaancreate!!.jam_masuk.toString())
@@ -308,10 +338,14 @@ class RegisterAdminActivity : AppCompatActivity() {
         val batasAktif = createPartFromString(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().apply { add(Calendar.YEAR, 1) }.time))
         val secretKeyPart = createPartFromString(perusahaancreate!!.secret_key)
 
-        val logoFile = perusahaancreate!!.logo
-        val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
-        val logoPart = MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
-
+        val logoFile = perusahaancreate?.logo
+        val logoPart = if (logoFile != null && logoFile.exists()) {
+            val requestFile = RequestBody.create(MediaType.parse("image/*"), logoFile)
+            MultipartBody.Part.createFormData("logo", logoFile.name, requestFile)
+        } else {
+            null
+        }
+        Log.d("RegisterFailed",logoPart.toString())
         // Make the API call
         val call = apiService.uploadPerusahaan(nama, latitude, longitude, jamMasuk, jamKeluar, batasAktif, secretKeyPart, logoPart)
 
@@ -322,43 +356,43 @@ class RegisterAdminActivity : AppCompatActivity() {
                     val apiResponse = response.body()
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
                     Log.d("path", " ${apiResponse?.profile_path}")
-                    // Assuming path is a global variable
+
                     val path = apiResponse?.profile_path ?: ""
                     val id_perusahaan = apiResponse?.id ?: 0
-                    // Continue with other actions after API response
+
                     val calendar = Calendar.getInstance()
                     calendar.add(Calendar.YEAR, 1)
                     val futureDate = calendar.time
                     val sqlDate = java.sql.Date(futureDate.time)
-//                    perusahaan = Perusahaan(
-//                        id_perusahaan,
-//                        perusahaancreate!!.nama,
-//                        perusahaancreate!!.latitude,
-//                        perusahaancreate!!.longitude,
-//                        perusahaancreate!!.jam_masuk,
-//                        perusahaancreate!!.jam_keluar,
-//                        sqlDate,
-//                        path,
-//                        perusahaancreate!!.secret_key,
-//                    )
-                    setLoading(false)
-                    Log.d("Perusahaan", perusahaan?.toString() ?: "Perusahaan is null")
-                    val intent = Intent(this@RegisterAdminActivity, RegisterAdminActivity::class.java)
-                    val bundle = Bundle()
-                    bundle.putParcelable("perusahaan", perusahaan)
-                    intent.putExtra("data", bundle)
-                    startActivity(intent)
+
+                    perusahaan = Perusahaan(
+                        id_perusahaan,
+                        perusahaancreate!!.nama,
+                        perusahaancreate!!.latitude,
+                        perusahaancreate!!.longitude,
+                        perusahaancreate!!.jam_masuk,
+                        perusahaancreate!!.jam_keluar,
+                        sqlDate,
+                        path,
+                        perusahaancreate!!.secret_key
+                    )
+                    Log.d("RegisterFailed3", "Tidak Dapat Menyimpan Data. Response Code: ${perusahaan?.id}")
+                    Log.d("RegisterDebug", perusahaan.toString())
+                    perusahaan?.let {
+                        Log.d("RegisterDebug", "Adding Admin")
+                        saveData(it) }
                 } else {
-                    Log.e("ApiResponse", "Error: ${response.code()}")
+                    Log.d("RegisterFailed3", "Error Body: ${response.errorBody()?.string()}")
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
                 setLoading(false)
-                Log.e("ApiResponse", "Request failed: ${t.message}")
+                Log.d("RegisterFailed4", "Tidak Dapat Menyimpan Data. Error: ${t.message}")
             }
         })
     }
+
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)
     }
@@ -444,7 +478,7 @@ class RegisterAdminActivity : AppCompatActivity() {
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
-                perusahaan = it.getParcelable("perusahaan")
+                perusahaancreate = it.getParcelable("perusahaan")
             }
         } else {
             Log.d("Error","Bundle Not Found")

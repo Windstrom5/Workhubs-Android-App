@@ -188,7 +188,7 @@ class CompanyActivity : AppCompatActivity() {
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.3:8000/api/") // Replace with your base URL
+            .baseUrl("http://192.168.1.5:8000/api/") // Replace with your base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -257,7 +257,8 @@ class CompanyActivity : AppCompatActivity() {
             .show()
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.5:8000/api/"
+        Log.d("FetchDataError", "Nama: ${namaPerusahaan}")
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -287,6 +288,7 @@ class CompanyActivity : AppCompatActivity() {
                                         } else {
                                             address.text = "Address information not available"
                                         }
+                                        Log.d("FetchDataError", "Nama: ${nama}")
                                         val jamMasukString = perusahaanObject.getString("jam_masuk")
                                         val jamKeluarString = perusahaanObject.getString("jam_keluar")
                                         val jamMasuk = Time.valueOf(jamMasukString)
@@ -394,14 +396,23 @@ class CompanyActivity : AppCompatActivity() {
                     pekerja = it.getParcelable("user")
                     addPekerja.visibility = View.GONE
                 }
-                val imageUrl =
-                    "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
-                val profileImageView = binding.circleImageView
-                val text = binding.tvName
-                text.setText(perusahaan?.nama)
-                Glide.with(this)
-                    .load(imageUrl)
-                    .into(profileImageView)
+                if (perusahaan?.logo != "null") {
+                    val imageUrl =
+                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    val profileImageView = binding.circleImageView
+                    val text = binding.tvName
+                    text.setText(perusahaan?.nama)
+                    Glide.with(this)
+                        .load(imageUrl)
+                        .into(profileImageView)
+                }else{
+                    val profileImageView = binding.circleImageView
+                    Glide.with(this)
+                        .load(R.drawable.logo)
+                        .into(profileImageView)
+                    val text = binding.tvName
+                    text.setText(perusahaan?.nama)
+                }
             }
         } else {
             Log.d("Error","Bundle Not Found")

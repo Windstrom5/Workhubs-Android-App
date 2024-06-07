@@ -8,11 +8,13 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
+import androidx.preference.PreferenceManager
 import org.osmdroid.api.IMapController
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.views.MapView
@@ -66,6 +68,8 @@ class MapActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+        Configuration.getInstance().setUserAgentValue("MyCustomApp/1.0");
         save = binding.saveButton
         tvLatitudeLongitude = binding.tvLatitudeLongitude
         tvAddress = binding.tvAddress
@@ -165,6 +169,7 @@ class MapActivity : AppCompatActivity(){
                 Bundle.putDouble("longitude", longitude)
                 Bundle.putString("openhour", openhour)
                 Bundle.putString("closehour", closehour)
+                Bundle.putString("address", address)
                 if(byteArray != null){
                     Bundle.putByteArray("selectedFile", byteArray)
                 }
@@ -175,9 +180,14 @@ class MapActivity : AppCompatActivity(){
                 val Bundle = Bundle()
                 Bundle.putString("namaPerusahaan", namaPerusahaan?: "")
                 Bundle.putDouble("latitude", latitude)
+                Log.d("Editor",latitude.toString())
                 Bundle.putDouble("longitude", longitude)
                 Bundle.putString("openhour", openhour)
                 Bundle.putString("closehour", closehour)
+                Bundle.putString("address", address)
+                if(byteArray != null){
+                    Bundle.putByteArray("selectedFile", byteArray)
+                }
                 intent.putExtra("data", Bundle)
                 startActivity(intent)
             }
@@ -333,7 +343,8 @@ class MapActivity : AppCompatActivity(){
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
-                category = it.getString("edit")?: ""
+                category = it.getString("edit").toString()
+                Log.d("editor",category)
                 if(category == "edit"){
                     role = it.getString("role")
                     perusahaan = it.getParcelable("perusahaan")!!
@@ -350,6 +361,7 @@ class MapActivity : AppCompatActivity(){
                     namaPerusahaan = it.getString("namaPerusahaan") ?: ""
                     openhour = it.getString("openhour") ?: ""
                     closehour = it.getString("closehour") ?: ""
+                    byteArray = intent.getByteArrayExtra("selectedFile")
                 }
             }
         } else {

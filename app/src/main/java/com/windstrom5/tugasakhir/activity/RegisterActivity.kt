@@ -51,34 +51,36 @@ import java.util.Locale
 import retrofit2.Response as RetrofitResponse
 
 class RegisterActivity : AppCompatActivity() {
-    private lateinit var location : Button
-    private lateinit var TINamaPerusahaan:TextInputLayout
-    private lateinit var TIJammasuk:TextInputLayout
-    private lateinit var TIJamkeluar:TextInputLayout
-    private lateinit var tvaddress : TextView
-    private lateinit var Tvlongitude:TextView
+    private lateinit var location: Button
+    private lateinit var TINamaPerusahaan: TextInputLayout
+    private lateinit var TIJammasuk: TextInputLayout
+    private lateinit var TIJamkeluar: TextInputLayout
+    private lateinit var tvaddress: TextView
+    private lateinit var Tvlongitude: TextView
     private lateinit var requestQueue: RequestQueue
-    private lateinit var Tvlatitude:TextView
-    private lateinit var edNamaPerusahaan:EditText
-    private lateinit var selectedFileName : TextView
-    private var perusahaan : Perusahaan? = null
+    private lateinit var Tvlatitude: TextView
+    private lateinit var edNamaPerusahaan: EditText
+    private lateinit var selectedFileName: TextView
+    private var perusahaan: Perusahaan? = null
     private var bundle: Bundle? = null
-    private lateinit var information:CardView
+    private lateinit var information: CardView
     private lateinit var binding: ActivityRegisterBinding
-    private lateinit var upload:Button
-    private lateinit var createnow:Button
+    private lateinit var upload: Button
+    private lateinit var createnow: Button
     private var selectedImageByteArray: ByteArray? = null
-    private lateinit var selectedFile: File
-    private lateinit var progressBar:ProgressBar
+    private var selectedFile: File? = null
+    private lateinit var progressBar: ProgressBar
     private lateinit var textViewProgress: TextView
-    private lateinit var textViewCustom:TextView
+    private lateinit var textViewCustom: TextView
     private val boundary = "*****"
     private lateinit var imageView: ImageView
-    private lateinit var loading : LinearLayout
-    private lateinit var path : String
+    private lateinit var loading: LinearLayout
+    private lateinit var path: String
+
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 123
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterBinding.inflate(layoutInflater)
@@ -99,38 +101,40 @@ class RegisterActivity : AppCompatActivity() {
         upload = binding.uploadfile
         createnow = binding.cirLoginButton
         getBundle()
-        location.setOnClickListener{
-            if (edNamaPerusahaan.text.isNotEmpty()) {
-                val intent = Intent(this, MapActivity::class.java)
-                val bundle = Bundle()
-                bundle.putString("namaPerusahaan", TINamaPerusahaan.editText?.text.toString())
-                bundle.putString("openhour", TIJammasuk.editText?.text.toString())
-                bundle.putString("closehour", TIJamkeluar.editText?.text.toString())
-                bundle.putString("category","edit")
-                intent.putExtra("data", bundle)
-                startActivity(intent)
-            } else {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
+        location.setOnClickListener {
+//            if (edNamaPerusahaan.text.isNotEmpty()) {
+            val intent = Intent(this, MapActivity::class.java)
+            val bundle = Bundle()
+            bundle.putString("namaPerusahaan", TINamaPerusahaan.editText?.text.toString())
+            bundle.putString("openhour", TIJammasuk.editText?.text.toString())
+            bundle.putString("closehour", TIJamkeluar.editText?.text.toString())
+            bundle.putString("category", "edit")
+            intent.putExtra("data", bundle)
+            startActivity(intent)
+//            } else {
+//                startActivity(Intent(this, MapActivity::class.java))
+//            }
         }
-        TIJammasuk.setEndIconOnClickListener{
+        TIJammasuk.setEndIconOnClickListener {
             showTimePicker(TIJammasuk)
         }
-        TIJamkeluar.setEndIconOnClickListener{
+        TIJamkeluar.setEndIconOnClickListener {
             showTimePicker(TIJamkeluar)
         }
-        upload.setOnClickListener{
+        upload.setOnClickListener {
             pickImageFromGallery()
         }
         createnow.setOnClickListener {
             setLoading(true)
-            if(TINamaPerusahaan == null || TIJammasuk == null || TIJamkeluar == null || imageView.visibility == View.GONE || information.visibility == View.GONE){
-                MotionToast.createToast(this@RegisterActivity, "Error",
+            if (TINamaPerusahaan == null || TIJammasuk == null || TIJamkeluar == null || information.visibility == View.GONE) {
+                MotionToast.createToast(
+                    this@RegisterActivity, "Error",
                     "Ada Form Yang belum Terisi",
                     MotionToastStyle.ERROR,
                     MotionToast.GRAVITY_BOTTOM,
                     MotionToast.LONG_DURATION,
-                    ResourcesCompat.getFont(this@RegisterActivity, R.font.ralewaybold))
+                    ResourcesCompat.getFont(this@RegisterActivity, R.font.ralewaybold)
+                )
             }
             val secretKey = generateRandomString()
             val calendar = Calendar.getInstance()
@@ -145,8 +149,9 @@ class RegisterActivity : AppCompatActivity() {
                 stringToSqlTime(TIJamkeluar.editText?.text.toString()),
                 sqlDate,
                 selectedFile,
-                secretKey)
-            val url = "http://192.168.1.4:8000/api/"
+                secretKey
+            )
+            val url = "http://192.168.1.5:8000/api/"
             val retrofit = Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -156,22 +161,16 @@ class RegisterActivity : AppCompatActivity() {
             val call = apiService.getPerusahaan()
 
             call.enqueue(object : Callback<ResponseBody> {
-                override fun onResponse(call: Call<ResponseBody>, response: RetrofitResponse<ResponseBody>) {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: RetrofitResponse<ResponseBody>
+                ) {
                     if (response.isSuccessful) {
                         val responseBody = response.body()?.string()
-                        val json = JSONObject(responseBody)
-                        if (json.has("error")) {
-                            // Perusahaan not found
-                            runOnUiThread {
-                                setLoading(false)
-                                val intent =
-                                    Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
-                                val bundle = Bundle()
-                                bundle.putParcelable("perusahaan", register)
-                                intent.putExtra("data", bundle)
-                                startActivity(intent)
-                            }
-                        } else {
+                        val json = responseBody?.let { it1 -> JSONObject(it1) }
+                        val perusahaanArray = json?.optJSONArray("perusahaan")
+                        if (perusahaanArray != null && perusahaanArray.length() > 0) {
+                            // Handle case where perusahaan array is not empty
                             runOnUiThread {
                                 setLoading(false)
                                 MotionToast.createToast(
@@ -185,6 +184,18 @@ class RegisterActivity : AppCompatActivity() {
                                         R.font.ralewaybold
                                     )
                                 )
+                            }
+                        } else {
+                            // Handle case where perusahaan array is empty
+                            runOnUiThread {
+                                setLoading(false)
+                                val intent =
+                                    Intent(this@RegisterActivity, RegisterAdminActivity::class.java)
+                                val bundle = Bundle()
+                                bundle.putParcelable("perusahaan", register)
+                                Log.d("perusahaan",register.toString())
+                                intent.putExtra("data", bundle)
+                                startActivity(intent)
                             }
                         }
                     } else {
@@ -201,23 +212,26 @@ class RegisterActivity : AppCompatActivity() {
 
         }
     }
-    private fun setLoading(isLoading:Boolean){
-        if(isLoading){
+
+    private fun setLoading(isLoading: Boolean) {
+        if (isLoading) {
             window.setFlags(
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             )
             loading!!.visibility = View.VISIBLE
-        }else{
+        } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             loading!!.visibility = View.INVISIBLE
         }
     }
+
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         startActivityForResult(intent, PICK_IMAGE_REQUEST_CODE)
     }
+
     private fun generateRandomString(): String {
         // Fetch existing secret keys from the server
         val existingSecretKeys = getSecretKeysFromApi()
@@ -238,8 +252,9 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "http://192.168.1.4:8000/api/GetPerusahaan"
+        val apiUrl = "http://192.168.1.5:8000/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -314,6 +329,7 @@ class RegisterActivity : AppCompatActivity() {
 
         timePicker.show(supportFragmentManager, "timePicker")
     }
+
     private fun stringToSqlTime(timeString: String): Time {
         val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val date = dateFormat.parse(timeString)
@@ -321,7 +337,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
 //    private fun makeApiRequest(secretKey: String) {
-//        val url = "http://192.168.1.4:8000/api/"
+//        val url = "http://192.168.1.5:8000/api/"
 //
 //        val retrofit = Retrofit.Builder()
 //            .baseUrl(url)
@@ -405,10 +421,11 @@ class RegisterActivity : AppCompatActivity() {
                 val openHours = it.getString("openhour") ?: ""
                 val closeHours = it.getString("closehour") ?: ""
                 val latitude = it.getDouble("latitude")
+                Log.d("Editor", latitude.toString())
                 val longitude = it.getDouble("longitude")
                 val address = it.getString("address")
                 if (address != null) {
-                    information.visibility= View.VISIBLE
+                    information.visibility = View.VISIBLE
                     tvaddress.text = address.toString()
                     Tvlatitude.text = latitude.toString()
                     Tvlongitude.text = longitude.toString()
@@ -418,7 +435,7 @@ class RegisterActivity : AppCompatActivity() {
                 }
             }
         } else {
-            Log.d("Error","Bundle Not Found")
+            Log.d("Error", "Bundle Not Found")
         }
     }
 }

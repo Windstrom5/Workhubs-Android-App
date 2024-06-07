@@ -45,9 +45,15 @@ class ListAnggotaAdapter(
 
         fun bind(currentPekerja: Pekerja) {
             // Set data to views for Pekerja
-            Glide.with(binding.profileImageView.context)
-                .load("http://192.168.1.4:8000/storage/${currentPekerja.profile}")
-                .into(binding.profileImageView)
+            if(currentPekerja.profile!= "null"){
+                Glide.with(binding.profileImageView.context)
+                    .load("http://192.168.1.5:8000/storage/${currentPekerja.profile}")
+                    .into(binding.profileImageView)
+            }else{
+                Glide.with(binding.profileImageView.context)
+                    .load(R.drawable.profile)
+                    .into(binding.profileImageView)
+            }
             binding.nameTextView.text = currentPekerja.nama
             binding.roleTextView.text = "Pekerja"
         }
@@ -71,9 +77,15 @@ class ListAnggotaAdapter(
 
         fun bind(currentAdmin: Admin) {
             // Set data to views for Admin
-            Glide.with(binding.profileImageView.context)
-                .load("http://192.168.1.4:8000/storage/${currentAdmin.profile}")
-                .into(binding.profileImageView)
+            if (currentAdmin.profile!= "null") {
+                Glide.with(binding.profileImageView.context)
+                    .load("http://192.168.1.5:8000/storage/${currentAdmin.profile}")
+                    .into(binding.profileImageView)
+            } else {
+                Glide.with(binding.profileImageView.context)
+                    .load(R.drawable.profile)
+                    .into(binding.profileImageView)
+            }
             binding.nameTextView.text = currentAdmin.nama
             binding.roleTextView.text = "Admin"
             Log.d("AdminAdapter", "Admin name: ${currentAdmin.nama}")

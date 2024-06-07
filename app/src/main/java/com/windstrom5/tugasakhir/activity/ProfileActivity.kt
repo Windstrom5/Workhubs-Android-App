@@ -92,7 +92,7 @@ class ProfileActivity : AppCompatActivity() {
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
                         val imageUrl =
-                            "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.5:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
@@ -113,7 +113,7 @@ class ProfileActivity : AppCompatActivity() {
                         email.setText(admin?.email)
                         tanggalLahir.setText(admin?.tanggal_lahir.toString())
                         val imageUrl =
-                            "http://192.168.1.4:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.5:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
@@ -124,7 +124,7 @@ class ProfileActivity : AppCompatActivity() {
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
                         val imageUrl =
-                            "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.5:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)
@@ -141,7 +141,7 @@ class ProfileActivity : AppCompatActivity() {
                         email.setText(admin?.email)
                         tanggalLahir.setText(admin?.tanggal_lahir.toString())
                         val imageUrl =
-                            "http://192.168.1.4:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            "http://192.168.1.5:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
                         Glide.with(this@ProfileActivity)
                             .load(imageUrl)
                             .into(profile)

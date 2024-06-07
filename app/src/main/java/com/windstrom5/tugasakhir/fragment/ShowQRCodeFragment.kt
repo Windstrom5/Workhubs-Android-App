@@ -66,7 +66,37 @@ class ShowQRCodeFragment : Fragment() {
             imageViewQRCode.setImageBitmap(qrCodeBitmap)
 
             // Add logo as a smaller watermark to the center of the QR code
-            addLogoAsWatermark(qrCodeBitmap, perusahaan.logo, 100) // Pass qrCodeBitmap to the function
+            val logo2 = perusahaan.logo
+            Log.d("Logo",logo2.toString())
+            if (logo2 == "null") {
+                // Load the logo from drawable
+                Glide.with(this)
+                    .asBitmap()
+                    .load(R.drawable.logo) // Load the logo from drawable
+                    .into(object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            addLogoAsWatermark(qrCodeBitmap, resource, 100)
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            // Handle when the image loading is cleared
+                        }
+                    })
+            } else {
+                Glide.with(this)
+                    .asBitmap()
+                    .load("http://192.168.1.5:8000/storage/$logo2")
+                    .into(object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                            addLogoAsWatermark(qrCodeBitmap, resource, 100)
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            // Handle when the image loading is cleared
+                        }
+                    })
+            }
+
         } catch (e: WriterException) {
             e.printStackTrace()
         }
@@ -113,41 +143,30 @@ class ShowQRCodeFragment : Fragment() {
         return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
     }
 
-    private fun addLogoAsWatermark(qrCodeBitmap: Bitmap, logoLink: String, logoSize: Int) {
-        Glide.with(this)
-            .asBitmap()
-            .load("http://192.168.1.4:8000/storage/${logoLink}")
-            .into(object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                    val resizedLogo = Bitmap.createScaledBitmap(
-                        resource,
-                        logoSize,
-                        logoSize,
-                        false
-                    )
+    private fun addLogoAsWatermark(qrCodeBitmap: Bitmap, logoBitmap: Bitmap, logoSize: Int) {
+        val resizedLogo = Bitmap.createScaledBitmap(
+            logoBitmap,
+            logoSize,
+            logoSize,
+            false
+        )
 
-                    // Set the logo watermark to the center of the QR code
-                    val centerX = (qrCodeBitmap.width - resizedLogo.width) / 2
-                    val centerY = (qrCodeBitmap.height - resizedLogo.height) / 2
+        // Set the logo watermark to the center of the QR code
+        val centerX = (qrCodeBitmap.width - resizedLogo.width) / 2
+        val centerY = (qrCodeBitmap.height - resizedLogo.height) / 2
 
-                    // Create a new bitmap with the QR code and the logo at the center
-                    val finalBitmap = Bitmap.createBitmap(
-                        qrCodeBitmap.width,
-                        qrCodeBitmap.height,
-                        qrCodeBitmap.config // Access config through Bitmap.Config
-                    )
+        // Create a new bitmap with the QR code and the logo at the center
+        val finalBitmap = Bitmap.createBitmap(
+            qrCodeBitmap.width,
+            qrCodeBitmap.height,
+            qrCodeBitmap.config // Access config through Bitmap.Config
+        )
 
-                    val canvas = android.graphics.Canvas(finalBitmap)
-                    canvas.drawBitmap(qrCodeBitmap, 0f, 0f, null)
-                    canvas.drawBitmap(resizedLogo, centerX.toFloat(), centerY.toFloat(), null)
+        val canvas = android.graphics.Canvas(finalBitmap)
+        canvas.drawBitmap(qrCodeBitmap, 0f, 0f, null)
+        canvas.drawBitmap(resizedLogo, centerX.toFloat(), centerY.toFloat(), null)
 
-                    imageViewQRCode.setImageBitmap(finalBitmap)
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    // Handle when the image loading is cleared
-                }
-            })
+        imageViewQRCode.setImageBitmap(finalBitmap)
     }
 
     private fun md5(input: String): String {

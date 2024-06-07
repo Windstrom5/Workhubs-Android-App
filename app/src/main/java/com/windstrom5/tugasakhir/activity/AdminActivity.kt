@@ -202,14 +202,12 @@ class AdminActivity : AppCompatActivity() {
 
         // Preprocess kabupatenKota string to remove prefixes
         val preprocessedKabupatenKota = kabupatenKota.replace("Kabupaten ", "").replace("Kota ", "")
-        Log.d("Location1",preprocessedKabupatenKota)
         for (i in 0 until wilayahArray.length()) {
             val wilayahObject: JSONObject = wilayahArray.getJSONObject(i)
             val propinsi = wilayahObject.getString("propinsi")
             // Calculate similarity scores
             val kota = wilayahObject.getString("kota")
             val preprocessedKota = kota.replace("Kab. ", "").replace("Kota ", "")
-            Log.d("Location1",preprocessedKota)
             val kecamatanMatchScore = similarityScore(kecamatan, wilayahObject.getString("kecamatan"))
             val kabupatenKotaMatchScore = similarityScore(preprocessedKabupatenKota, preprocessedKota)
             val provinceMatchScore = similarityScore(province, propinsi)
@@ -456,7 +454,7 @@ class AdminActivity : AppCompatActivity() {
                         startActivityWithExtras(intent)
                     }
                     "CsActivity" -> {
-                        val intent = Intent(this, LemburActivity::class.java)
+                        val intent = Intent(this, CustomerServiceActivity::class.java)
                         startActivityWithExtras(intent)
                     }
                 }

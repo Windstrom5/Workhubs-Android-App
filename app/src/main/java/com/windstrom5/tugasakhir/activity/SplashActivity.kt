@@ -248,19 +248,29 @@ class SplashActivity : AppCompatActivity() {
         if (savedAdmin != null || savedPekerja != null) {
             redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja)
         } else {
-            val intent = Intent(this@SplashActivity, LoginActivity::class.java)
-            startActivity(intent)
-            finish()
+            Handler().postDelayed({
+                val intent = Intent(this@SplashActivity, LoginActivity::class.java)
+                startActivity(intent)
+                finish()
+            }, splashTimeOut)
         }
     }
     private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?) {
         val logoImageView = findViewById<ImageView>(R.id.logoImageView)
-        val imageUrl =
-            "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+        val logo = perusahaan?.logo
+        if (logo == "null") {
+            Glide.with(this)
+                .load(R.drawable.logo) // Assuming savedPerusahaan has a 'logo' field containing the URL
+                .into(logoImageView)
+        }else{
+            Log.d("CompanyActivity", "Logo is blank")
+            val imageUrl =
+                "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
-        Glide.with(this)
-            .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL
-            .into(logoImageView)
+            Glide.with(this)
+                .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL
+                .into(logoImageView)
+        }
 
         if (admin != null) {
             Handler().postDelayed({

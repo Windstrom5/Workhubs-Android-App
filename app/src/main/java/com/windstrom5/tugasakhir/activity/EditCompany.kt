@@ -281,8 +281,18 @@ class EditCompany : AppCompatActivity() {
                 }else{
                     pekerja = it.getParcelable("user")
                 }
-                val imageUrl =
-                    "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                if(perusahaan?.logo == "null"){
+                    val imageUrl =
+                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}"
+                    Glide.with(this)
+                        .load(imageUrl)
+                        .into(profile)
+                }else{
+                    Glide.with(this)
+                        .load(R.drawable.logo)
+                        .into(profile)
+                }
+                 // Replace with your Laravel image URL
                 textNama.setText(perusahaan?.nama)
                 textJamMasuk.setText(perusahaan?.jam_masuk.toString())
                 textJamKeluar.setText(perusahaan?.jam_keluar.toString())
@@ -290,9 +300,6 @@ class EditCompany : AppCompatActivity() {
                 longitude = perusahaan!!.longitude
                 val addressInfo = ReverseGeocoder.getFullAddressFromLocation(this@EditCompany, GeoPoint(perusahaan!!.latitude, perusahaan!!.longitude))
                 textalamat.text = addressInfo
-                Glide.with(this)
-                    .load(imageUrl)
-                    .into(profile)
             }
         } else {
             bundle = intent?.getBundleExtra("edit")
@@ -313,7 +320,7 @@ class EditCompany : AppCompatActivity() {
                     latitude = it.getDouble("latitude")
                     longitude = it.getDouble("longitude")
                     val imageUrl =
-                        "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     textNama.setText(it.getString("namaPerusahaan"))
                     textJamMasuk.setText(it.getString("openhour"))
                     textJamKeluar.setText(it.getString("closehour"))

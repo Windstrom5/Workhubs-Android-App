@@ -7,8 +7,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
+import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.databinding.ActivityCustomerServiceBinding
+import com.windstrom5.tugasakhir.feature.DiscordOAuth2
 import com.windstrom5.tugasakhir.fragment.AddLemburFragment
 import com.windstrom5.tugasakhir.fragment.HistoryLemburFragment
 import com.windstrom5.tugasakhir.model.Admin
@@ -20,6 +23,7 @@ class CustomerServiceActivity : AppCompatActivity() {
     private lateinit var steam : ImageView
     private var bundle: Bundle? = null
     private var admin : Admin? = null
+    private lateinit var discordOAuth2: DiscordOAuth2
     private var pekerja : Pekerja? = null
     private var perusahaan : Perusahaan? = null
     private lateinit var discord : ImageView
@@ -35,6 +39,9 @@ class CustomerServiceActivity : AppCompatActivity() {
         steam = binding.steam
         discord = binding.discord
         github = binding.github
+        discordOAuth2 = DiscordOAuth2()
+        // Start the OAuth2 flow
+//        authenticate()
         steam.setOnClickListener {
             openLink(steamlink)
         }
@@ -47,6 +54,60 @@ class CustomerServiceActivity : AppCompatActivity() {
             openLink(githublink)
         }
     }
+//    private fun authenticate() {
+//        discordOAuth2.authenticate() { user, error ->
+//            if (user != null) {
+//                val bannerImageView = findViewById<ImageView>(R.id.bannerImageView)
+//                val avatarImageView = findViewById<ImageView>(R.id.avatarImageView)
+//                val globalNameTextView = findViewById<TextView>(R.id.globalNameTextView)
+//                val avatarUrl2 = "https://cdn.discordapp.com/banners/${user.id}/${user.banner}.png?size=4096"
+//                discordOAuth2.fetchAvatar(avatarUrl2) { bitmap, error2 ->
+//                    if (bitmap != null) {
+//                        runOnUiThread {// Set the bitmap to your ImageView or wherever you want to display the avatar
+//                            bannerImageView.setImageBitmap(bitmap)
+//                        }
+//                    } else {
+//                        Log.e("AvatarError", "Failed to fetch avatar: $error")
+//                    }
+//                }
+//                val avatarUrl = "https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=4096"
+//                discordOAuth2.fetchAvatar(avatarUrl) { bitmap, error ->
+//                    if (bitmap != null) {
+//                        runOnUiThread {// Set the bitmap to your ImageView or wherever you want to display the avatar
+//                            avatarImageView.setImageBitmap(bitmap)
+//                        }
+//                    } else {
+//                        Log.e("AvatarError", "Failed to fetch avatar: $error")
+//                    }
+//                }
+                //                val isGif = avatarUrl.endsWith(".gif", ignoreCase = true)
+//                if (isGif) {
+//                    // Load GIF image using Glide
+//                    runOnUiThread {
+//                        Glide.with(this)
+//                            .asGif()
+//                            .load(avatarUrl)
+//                            .into(avatarImageView)
+//                    }
+//                } else {
+//                    // Load PNG image using Glide
+//                    runOnUiThread {
+//                        Glide.with(this)
+//                            .load(avatarUrl)
+//                            .into(avatarImageView)
+//                    }
+//                }
+//                runOnUiThread {
+//                    globalNameTextView.text = user.globalName
+//                }
+//                // Authentication successful, handle user data
+//                Log.d("DiscordUser", "Username: ${user.globalName}, Nick: ${user.avatar}")
+//            } else {
+//                // Authentication failed, handle error
+//                Log.e("DiscordAuth", "Authentication error: $error")
+//            }
+//        }
+//    }
     private fun openLink(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         startActivity(intent)

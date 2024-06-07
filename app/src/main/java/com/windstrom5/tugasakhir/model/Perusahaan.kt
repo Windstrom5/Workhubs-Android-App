@@ -13,7 +13,7 @@ data class Perusahaan(
     val jam_masuk: Time,
     val jam_keluar: Time,
     val batasAktif: Date,
-    val logo: String,
+    val logo: String?,
     val secret_key: String,
 ): Parcelable {
     constructor(parcel: Parcel) : this(

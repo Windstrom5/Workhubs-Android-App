@@ -25,7 +25,7 @@ interface ApiService {
         @Part("jam_keluar") jamKeluar: RequestBody,
         @Part("batas_aktif") batasAktif: RequestBody,
         @Part("secret_key") secretKey: RequestBody,
-        @Part logo: MultipartBody.Part
+        @Part logo: MultipartBody.Part?
     ): Call<ApiResponse>
 
     @Multipart
@@ -36,7 +36,7 @@ interface ApiService {
         @Part("password") password: RequestBody,
         @Part("nama") nama: RequestBody,
         @Part("tanggal_lahir") tanggal_lahir: RequestBody,
-        @Part profile: MultipartBody.Part
+        @Part profilePart: MultipartBody.Part?
     ): Call<ApiResponse>
 
     @Multipart
@@ -47,7 +47,7 @@ interface ApiService {
         @Part("password") password: RequestBody,
         @Part("nama") nama: RequestBody,
         @Part("tanggal_lahir") tanggal_lahir: RequestBody,
-        @Part profile: MultipartBody.Part
+        @Part profile: MultipartBody.Part?
     ): Call<ApiResponse>
 
     @Multipart
@@ -176,7 +176,7 @@ interface ApiService {
         @Part("email") email: RequestBody,
         @Part("nama") nama: RequestBody,
         @Part("tanggal_lahir") tanggal_lahir: RequestBody,
-        @Part profile: MultipartBody.Part
+        @Part profile: MultipartBody.Part?
     ): Call<ApiResponse>
 
     @Multipart
@@ -195,7 +195,7 @@ interface ApiService {
         @Part("email") email: RequestBody,
         @Part("nama") nama: RequestBody,
         @Part("tanggal_lahir") tanggal_lahir: RequestBody,
-        @Part profile: MultipartBody.Part
+        @Part profile: MultipartBody.Part?
     ): Call<ApiResponse>
 
     @Multipart

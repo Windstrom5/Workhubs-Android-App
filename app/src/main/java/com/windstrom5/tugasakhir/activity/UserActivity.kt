@@ -113,7 +113,7 @@ class UserActivity : AppCompatActivity() {
                         startActivityWithExtras(intent)
                     }
                     "CsActivity"-> {
-                        val intent = Intent(this, LemburActivity::class.java)
+                        val intent = Intent(this, CustomerServiceActivity::class.java)
                         startActivityWithExtras(intent)
                     }
                     // Add more cases for other activities
@@ -153,7 +153,7 @@ class UserActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 pekerja = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.4:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                    "http://192.168.1.5:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
                 val profileImageView = binding.profileB
 
                 Glide.with(this)

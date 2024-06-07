@@ -13,7 +13,7 @@ data class perusahaancreate(
     val jam_masuk: Time,
     val jam_keluar: Time,
     val batasAktif: Date,
-    val logo: File,
+    val logo: File?,
     val secret_key: String,
 ): Parcelable {
     constructor(parcel: Parcel) : this(
@@ -34,7 +34,7 @@ data class perusahaancreate(
         parcel.writeString(jam_masuk.toString())
         parcel.writeString(jam_keluar.toString())
         parcel.writeSerializable(batasAktif)
-        parcel.writeString(logo.path)
+        parcel.writeString(logo?.path)
         parcel.writeString(secret_key)
     }
 
@@ -42,12 +42,12 @@ data class perusahaancreate(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<Perusahaan> {
-        override fun createFromParcel(parcel: Parcel): Perusahaan {
-            return Perusahaan(parcel)
+    companion object CREATOR : Parcelable.Creator<perusahaancreate> {
+        override fun createFromParcel(parcel: Parcel): perusahaancreate {
+            return perusahaancreate(parcel)
         }
 
-        override fun newArray(size: Int): Array<Perusahaan?> {
+        override fun newArray(size: Int): Array<perusahaancreate?> {
             return arrayOfNulls(size)
         }
     }

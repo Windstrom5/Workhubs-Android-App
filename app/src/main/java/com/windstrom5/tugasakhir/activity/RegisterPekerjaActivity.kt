@@ -22,6 +22,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isEmpty
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
@@ -37,6 +38,7 @@ import com.windstrom5.tugasakhir.databinding.ActivityRegisterPekerjaBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.perusahaancreate
 import com.windstrom5.tugasakhir.model.response
 import de.hdodenhof.circleimageview.CircleImageView
 import okhttp3.MediaType
@@ -64,33 +66,33 @@ class RegisterPekerjaActivity : AppCompatActivity() {
     private lateinit var alertDialog: AlertDialog
     private lateinit var TIEmail: TextInputLayout
     private lateinit var edEmail: EditText
-    private lateinit var TIPassword: TextInputLayout
-    private lateinit var edPassword: EditText
     private lateinit var TITanggal: TextInputLayout
     private lateinit var edTanggal: EditText
-    private lateinit var save : Button
+    private lateinit var save: Button
     private var bundle: Bundle? = null
     private lateinit var pekerja: Pekerja
-    private var perusahaan : Perusahaan? = null
-    private lateinit var selectedFile: File
-    private var admin : Admin? = null
-    private lateinit var acKategori : AutoCompleteTextView
+    private var perusahaan: Perusahaan? = null
+    private var perusahaancreate: perusahaancreate? = null
+    private var selectedFile: File? = null
+    private var admin: Admin? = null
+    private lateinit var acKategori: AutoCompleteTextView
     private lateinit var binding: ActivityRegisterPekerjaBinding
     private lateinit var circleImageView: CircleImageView
     private lateinit var selectedImage: ByteArray
     private var selectedDateSqlFormat: String? = null
     private lateinit var selectImage: ImageView
-    private lateinit var logo : ImageView
+    private lateinit var logo: ImageView
     private val CAMERA_PERMISSION_REQUEST = 124
     private val CAMERA_CAPTURE_REQUEST = 126
     private var idPerusahaan: Int? = null
     private var tempImageFile: File? = null
-    private lateinit var loading : LinearLayout
+    private lateinit var loading: LinearLayout
     private lateinit var namaPerusahaan: String
     private val PICK_IMAGE_REQUEST_CODE = 1
     private lateinit var requestQueue: RequestQueue
     private var kategoriPekerja: List<String> =
-        mutableListOf("Admin","Pekerja");
+        mutableListOf("Admin", "Pekerja");
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterPekerjaBinding.inflate(layoutInflater)
@@ -102,17 +104,16 @@ class RegisterPekerjaActivity : AppCompatActivity() {
         selectImage = binding.selectImage
         loading = findViewById(R.id.layout_loading)
         TIEmail = binding.textInputEmail
-        TIPassword = binding.textInputPassword
         TITanggal = binding.textInputTanggal
         TITanggal.editText?.apply {
             inputType = InputType.TYPE_NULL
             isFocusable = false
             isClickable = true
         }
-        selectImage.setOnClickListener{
+        selectImage.setOnClickListener {
             showImagePickerDialog()
         }
-        TITanggal.setEndIconOnClickListener{
+        TITanggal.setEndIconOnClickListener {
             val calendar = Calendar.getInstance()
 
             val datePicker = DatePickerDialog(
@@ -141,74 +142,100 @@ class RegisterPekerjaActivity : AppCompatActivity() {
             datePicker.show()
         }
         save = binding.cirsaveButton
-        val email = binding.textInputEmail.editText?.text.toString().trim()
-        if(TINama == null || TIEmail == null || TIPassword == null || TITanggal == null){
-            MotionToast.createToast(this@RegisterPekerjaActivity, "Error",
-                "Ada Form Yang belum Terisi",
-                MotionToastStyle.ERROR,
-                MotionToast.GRAVITY_BOTTOM,
-                MotionToast.LONG_DURATION,
-                ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold))
-        }else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            setLoading(true)
-            val url = "http://192.168.1.4:8000/api/"
-            val retrofit = Retrofit.Builder()
-                .baseUrl(url)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val apiService = retrofit.create(ApiService::class.java)
-            val call = apiService.checkEmail(email)
-            call.enqueue(object : Callback<Map<String, Any>> {
-                override fun onResponse(call: Call<Map<String, Any>>, response: Response<Map<String, Any>>) {
-                    if (response.isSuccessful) {
-                        val responseBody = response.body()
-                        if (responseBody == null) {
-                            perusahaan?.let { it1 -> saveData(it1) }
+        save.setOnClickListener{
+            val email = binding.textInputEmail.editText?.text.toString().trim()
+            if (TINama.isEmpty()|| TIEmail.isEmpty() || TITanggal.isEmpty()) {
+                MotionToast.createToast(
+                    this@RegisterPekerjaActivity, "Error",
+                    "Ada Form Yang belum Terisi",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold)
+                )
+            } else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                setLoading(true)
+                val url = "http://192.168.1.5:8000/api/"
+                val retrofit = Retrofit.Builder()
+                    .baseUrl(url)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+                Log.d("RegisterPekerjaActivity", "Email value: $email") // Add this line to log the email value
+                val apiService = retrofit.create(ApiService::class.java)
+                val call = apiService.checkEmail(email)
+                call.enqueue(object : Callback<Map<String, Any>> {
+                    override fun onResponse(
+                        call: Call<Map<String, Any>>,
+                        response: Response<Map<String, Any>>
+                    ) {
+                        if (response.isSuccessful) {
+                            val responseBody = response.body()
+                            if (responseBody == null) {
+                                perusahaan?.let { it1 -> saveData(it1) }
+                            } else {
+                                runOnUiThread {
+                                    setLoading(false)
+                                    MotionToast.createToast(
+                                        this@RegisterPekerjaActivity, "Error",
+                                        "Email Sudah Digunakan",
+                                        MotionToastStyle.ERROR,
+                                        MotionToast.GRAVITY_BOTTOM,
+                                        MotionToast.LONG_DURATION,
+                                        ResourcesCompat.getFont(
+                                            this@RegisterPekerjaActivity,
+                                            R.font.ralewaybold
+                                        )
+                                    )
+                                }
+                            }
                         } else {
-                            runOnUiThread{
+                            Log.d("RegisterDebug", "Unsuccessful response: ${response.errorBody()?.string()}")
+                            if (response.code() == 404) {
+                                // Proceed with registration if email is not found (404 status)
+                                Log.d("RegisterDebug", "Email not found, proceeding with registration")
+                                perusahaan?.let { it1 -> saveData(it1) }
+                            } else {
                                 setLoading(false)
-                                MotionToast.createToast(this@RegisterPekerjaActivity, "Error",
-                                    "Email Sudah Digunakan",
-                                    MotionToastStyle.ERROR,
-                                    MotionToast.GRAVITY_BOTTOM,
-                                    MotionToast.LONG_DURATION,
-                                    ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold))
                             }
                         }
-                    } else {
-                        // Handle unsuccessful response
+                        setLoading(false)
                     }
-                    setLoading(false)
-                }
 
-                override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
-                    // Handle failure
-                    setLoading(false)
-                }
-            })
+                    override fun onFailure(call: Call<Map<String, Any>>, t: Throwable) {
+                        // Handle failure
+                        Log.d("RegisterPekerjaActivity", "Email value: $email") // Add this line to log the email value
+                        setLoading(false)
+                    }
+                })
 
-        } else {
-            // Email format is incorrect
-            // Handle accordingly
+            } else {
+                MotionToast.createToast(
+                    this@RegisterPekerjaActivity, "Error",
+                    "Format Email Salah",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold)
+                )
+            }
         }
     }
 
-    private fun setLoading(isLoading:Boolean){
-        if(isLoading){
+    private fun setLoading(isLoading: Boolean) {
+        if (isLoading) {
             window.setFlags(
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             )
             loading!!.visibility = View.VISIBLE
-        }else{
+        } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             loading!!.visibility = View.INVISIBLE
         }
     }
 
-    private fun saveData(perusahaan: Perusahaan){
-        val url = "http://192.168.1.4:8000/api/"
+    private fun saveData(perusahaan: Perusahaan) {
+        val url = "http://192.168.1.5:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -216,69 +243,96 @@ class RegisterPekerjaActivity : AppCompatActivity() {
         val apiService = retrofit.create(ApiService::class.java)
         val nama_perusahaan = createPartFromString(perusahaan.nama.toString())
         val emailRequestBody = createPartFromString(TIEmail.editText?.text.toString())
-        val passwordRequestBody = createPartFromString(TIPassword.editText?.text.toString())
+        val passwordRequestBody = createPartFromString("123")
         val nama = createPartFromString(TINama.editText?.text.toString())
         val tanggalRequestBody = createPartFromString(selectedDateSqlFormat.toString())
         val profilePath = selectedFile
-        val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
-        val profilepath = MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
-        val call = apiService.uploadPekerja(nama_perusahaan, emailRequestBody, passwordRequestBody, nama,tanggalRequestBody,
-            profilepath)
-
+        val profilePart = if (profilePath != null) {
+            val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
+            MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
+        } else {
+            null
+        }
+        val call = apiService.uploadPekerja(
+            nama_perusahaan, emailRequestBody, passwordRequestBody, nama, tanggalRequestBody,
+            profilePart
+        )
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     val path = apiResponse?.profile_path ?: ""
                     val id_Pekerja = apiResponse?.id ?: 0
-                    MotionToast.createToast(this@RegisterPekerjaActivity,
+                    MotionToast.createToast(
+                        this@RegisterPekerjaActivity,
                         "Success",
                         "Berhasil Menyimpan Data",
                         MotionToastStyle.SUCCESS,
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
-                        ResourcesCompat.getFont(this@RegisterPekerjaActivity,
-                            R.font.ralewaybold))
-                    val intent = Intent(this@RegisterPekerjaActivity, CompanyActivity::class.java)
-                    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-                    val formattedDate = TITanggal.editText?.text.toString()
-                    try {
-                        val parsedDate: Date? = dateFormat.parse(formattedDate)
-                        val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val formattedDateSql = dateFormatSql.format(parsedDate)
-                        val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
-                        perusahaan.id?.let {
-                            if (parsedDateSql != null) {
-                                pekerja = Pekerja(
-                                    id_Pekerja,
-                                    it,
-                                    TIEmail.editText?.text.toString(),
-                                    TIPassword.editText?.text.toString(),
-                                    TINama.editText?.text.toString(),
-                                    parsedDateSql,
-                                    path
-                                )
+                        ResourcesCompat.getFont(
+                            this@RegisterPekerjaActivity,
+                            R.font.ralewaybold
+                        )
+                    )
+                    setLoading(false)
+                    val dialogBuilder = AlertDialog.Builder(this@RegisterPekerjaActivity)
+                    dialogBuilder.setTitle("Registration Successful")
+                    dialogBuilder.setMessage(
+                        "Your account has been created successfully.\n\n" +
+                                "\tUsername: ${TINama.editText?.text}\n" +
+                                "\tPassword: 123\n\n" +
+                                "Welcome To THe Company"
+                    ) // You might want to replace "123" with the actual password
+                    dialogBuilder.setPositiveButton("OK") { dialog, _ ->
+                        // Handle OK button click if needed
+                        dialog.dismiss()
+                        val intent =
+                            Intent(this@RegisterPekerjaActivity, CompanyActivity::class.java)
+                        val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                        val formattedDate = TITanggal.editText?.text.toString()
+                        try {
+                            val parsedDate: Date? = dateFormat.parse(formattedDate)
+                            val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val formattedDateSql = dateFormatSql.format(parsedDate)
+                            val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
+                            perusahaan.id?.let {
+                                if (parsedDateSql != null) {
+                                    pekerja = Pekerja(
+                                        id_Pekerja,
+                                        it,
+                                        TIEmail.editText?.text.toString(),
+                                        "123",
+                                        TINama.editText?.text.toString(),
+                                        parsedDateSql,
+                                        path
+                                    )
+                                }
                             }
+                            val sharedPreferencesManager =
+                                SharedPreferencesManager(this@RegisterPekerjaActivity)
+                            sharedPreferencesManager.savePekerja(pekerja)
+                            val userBundle = Bundle()
+                            userBundle.putParcelable("user", admin)
+                            userBundle.putParcelable("perusahaan", perusahaan)
+                            userBundle.putString("role", "Admin")
+                            intent.putExtra("data", userBundle)
+                            startActivity(intent)
+                        } catch (e: ParseException) {
+                            e.printStackTrace()
                         }
-                        val sharedPreferencesManager = SharedPreferencesManager(this@RegisterPekerjaActivity)
-                        sharedPreferencesManager.savePekerja(pekerja)
-                        val userBundle = Bundle()
-                        userBundle.putParcelable("user", admin)
-                        userBundle.putParcelable("perusahaan", perusahaan)
-                        intent.putExtra("data", userBundle)
-                        startActivity(intent)
-                    } catch (e: ParseException) {
-                        e.printStackTrace()
-                        // Handle parsing exception
                     }
-
+                    val dialog = dialogBuilder.create()
+                    dialog.show()
                 } else {
-                    MotionToast.createToast(this@RegisterPekerjaActivity, "Error",
+                    MotionToast.createToast(
+                        this@RegisterPekerjaActivity, "Error",
                         "Tidak Dapat Menyimpan Data",
                         MotionToastStyle.ERROR,
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
-                        ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold))
+                        ResourcesCompat.getFont(this@RegisterPekerjaActivity, R.font.ralewaybold)
+                    )
                 }
             }
 
@@ -320,6 +374,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                     }
                 }
             }
+
             PICK_IMAGE_REQUEST_CODE -> {
                 if (resultCode == RESULT_OK) {
                     data?.data?.let { imageUri: Uri ->
@@ -333,6 +388,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun getRealPathFromUri(uri: Uri): String? {
         val projection = arrayOf(MediaStore.Images.Media.DATA)
         val cursor = contentResolver.query(uri, projection, null, null, null)
@@ -355,6 +411,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
 
         return tempFile
     }
+
     private fun showImagePickerDialog() {
         val options = arrayOf("Capture from Camera", "Select from File")
         val builder = AlertDialog.Builder(this)
@@ -368,6 +425,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
         alertDialog = builder.create()
         alertDialog.show()
     }
+
     private fun openCamera() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (intent.resolveActivity(packageManager) != null) {
@@ -385,14 +443,14 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.logo
                 Glide.with(this)
                     .load(imageUrl)
                     .into(profileImageView)
             }
         } else {
-            Log.d("Error","Bundle Not Found")
+            Log.d("Error", "Bundle Not Found")
         }
     }
 }

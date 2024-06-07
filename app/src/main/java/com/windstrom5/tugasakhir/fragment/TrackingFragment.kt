@@ -78,7 +78,7 @@ class TrackingFragment : Fragment() {
         return view
     }
     private fun fetchDataFromApi(perusahaan: Perusahaan) {
-        val url = "http://192.168.1.4:8000/api/"
+        val url = "http://192.168.1.5:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -137,7 +137,7 @@ class TrackingFragment : Fragment() {
         }
     }
 //    private fun getPekerja(perusahaan: Perusahaan) {
-//        val apiUrl = "http://192.168.1.4:8000/api/getPekerja/${perusahaan.nama}"
+//        val apiUrl = "http://192.168.1.5:8000/api/getPekerja/${perusahaan.nama}"
 //
 //        val jsonObjectRequest = JsonObjectRequest(
 //            Request.Method.GET, apiUrl, null,

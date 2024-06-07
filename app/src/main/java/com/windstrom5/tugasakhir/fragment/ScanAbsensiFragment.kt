@@ -85,13 +85,20 @@ class ScanAbsensiFragment : Fragment() {
         logo = view.findViewById(R.id.logoImage)
         requestQueue = Volley.newRequestQueue(requireContext())
         getBundle()
-        val imageUrl =
-            "http://192.168.1.4:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+        val logo2 = perusahaan?.logo
+        Log.d("Logo",logo2.toString())
+        if(logo2 == "null"){
+            Glide.with(this)
+                .load(R.drawable.logo)
+                .into(logo)
+        }else{
+            val imageUrl =
+                "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
-        Glide.with(this)
-            .load(imageUrl)
-            .into(logo)
-
+            Glide.with(this)
+                .load(imageUrl)
+                .into(logo)
+        }
         button.setOnClickListener{
             scanCustomCode.launch(
                 ScannerConfig.build {
@@ -170,7 +177,7 @@ class ScanAbsensiFragment : Fragment() {
     }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "http://192.168.1.4:8000/api/getAllSecretKeys"
+        val apiUrl = "http://192.168.1.5:8000/api/getAllSecretKeys"
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
@@ -220,7 +227,7 @@ class ScanAbsensiFragment : Fragment() {
 
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
-        val url = "http://192.168.1.4:8000/api/Absensi"
+        val url = "http://192.168.1.5:8000/api/Absensi"
         Log.d("testing",url)
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)

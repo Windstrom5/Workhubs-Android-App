@@ -16,7 +16,15 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
+        // Use def inside the block to define variables
+        def client_id = project.hasProperty("CLIENT_ID") ? project.property("CLIENT_ID") : ""
+        def CLIENT_SECRET = project.hasProperty("CLIENT_SECRET") ? project.property("CLIENT_SECRET") : ""
+        def Redirects = project.hasProperty("Redirects") ? project.property("Redirects") : ""
 
+        // Add buildConfigField definitions within the block
+        buildConfigField "String", "Discord_Client_Id", "\"${client_id}\""
+        buildConfigField "String", "Discord_Client_Secret", "\"${CLIENT_SECRET}\""
+        buildConfigField "String", "Discord_Client_Redirects", "\"${Redirects}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -39,6 +47,7 @@ android {
     buildFeatures {
         compose true
         viewBinding true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.1'

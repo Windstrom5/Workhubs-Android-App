@@ -138,21 +138,26 @@ class EditUserActivity : AppCompatActivity() {
         val tanggal = createPartFromString(tanggal.toString())
         val email = createPartFromString(email.toString())
         val call: Call<ApiResponse>
-        if (selectedFile != null) {
-            val requestFile = RequestBody.create(MediaType.parse("application/pdf"), selectedFile!!)
-            val profilePart = MultipartBody.Part.createFormData("bukti", selectedFile!!.name, requestFile)
+//        if (selectedFile != null) {
+        val profilePath = selectedFile
+            val profilePart = if (profilePath != null) {
+                val requestFile = RequestBody.create(MediaType.parse("image/*"), profilePath)
+                MultipartBody.Part.createFormData("profile", profilePath.name, requestFile)
+            } else {
+                null
+            }
             call = if (admin != null) {
                 apiService.updateAdmin(Id, nama, tanggal, email, profilePart)
             } else {
                 apiService.updatePekerja(Id, nama, tanggal, email, profilePart)
             }
-        } else {
-            call = if (admin != null) {
-                apiService.updateAdminNoFile(Id, nama, tanggal, email)
-            } else {
-                apiService.updatePekerjaNoFile(Id, nama, tanggal, email)
-            }
-        }
+//        }else {
+//            call = if (admin != null) {
+//                apiService.updateAdminNoFile(Id, nama, tanggal, email)
+//            } else {
+//                apiService.updatePekerjaNoFile(Id, nama, tanggal, email)
+//            }
+//        }
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
@@ -346,22 +351,34 @@ class EditUserActivity : AppCompatActivity() {
                     val formattedDate = admin?.tanggal_lahir?.let { it1 -> dateFormat.format(it1) }
                     tanggal.setText(formattedDate.toString())
                     email.setText(admin?.email)
-                    val imageUrl =
-                        "http://192.168.1.3:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
-                    Glide.with(this)
-                        .load(imageUrl)
-                        .into(profilePicture)
+                    if(admin?.profile == "null"){
+                        val imageUrl =
+                            "http://192.168.1.5:8000/storage/${admin?.profile}"
+                        Glide.with(this)
+                            .load(imageUrl)
+                            .into(profilePicture)
+                    }else{
+                        Glide.with(this)
+                            .load(R.drawable.profile)
+                            .into(profilePicture)
+                    }
                 }else{
                     pekerja = it.getParcelable("user")
                     nama.setText(pekerja?.nama)
                     val formattedDate = pekerja?.tanggal_lahir?.let { it1 -> dateFormat.format(it1) }
                     tanggal.setText(formattedDate.toString())
                     email.setText(pekerja?.email)
-                    val imageUrl =
-                        "http://192.168.1.3:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
-                    Glide.with(this)
-                        .load(imageUrl)
-                        .into(profilePicture)
+                    if(pekerja?.profile == "null"){
+                        val imageUrl =
+                            "http://192.168.1.5:8000/storage/${pekerja?.profile}"
+                        Glide.with(this)
+                            .load(imageUrl)
+                            .into(profilePicture)
+                    }else{
+                        Glide.with(this)
+                            .load(R.drawable.profile)
+                            .into(profilePicture)
+                    }
                 }
             }
         } else {
