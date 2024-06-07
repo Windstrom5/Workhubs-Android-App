@@ -20,10 +20,13 @@ android {
         def client_id = project.hasProperty("CLIENT_ID") ? project.property("CLIENT_ID") : ""
         def CLIENT_SECRET = project.hasProperty("CLIENT_SECRET") ? project.property("CLIENT_SECRET") : ""
         def Redirects = project.hasProperty("Redirects") ? project.property("Redirects") : ""
-
+        def Email = project.hasProperty("Email") ? project.property("Email") : ""
+        def Email_Password = project.hasProperty("Email_Password") ? project.property("Email_Password") : ""
         // Add buildConfigField definitions within the block
         buildConfigField "String", "Discord_Client_Id", "\"${client_id}\""
         buildConfigField "String", "Discord_Client_Secret", "\"${CLIENT_SECRET}\""
+        buildConfigField "String", "Email", "\"${Email}\""
+        buildConfigField "String", "Email_Password", "\"${Email_Password}\""
         buildConfigField "String", "Discord_Client_Redirects", "\"${Redirects}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

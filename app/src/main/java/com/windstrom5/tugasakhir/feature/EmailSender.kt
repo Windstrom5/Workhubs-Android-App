@@ -1,5 +1,6 @@
 package com.windstrom5.tugasakhir.feature
 
+import com.windstrom5.tugasakhir.BuildConfig
 import java.util.Properties
 import javax.mail.*
 import javax.mail.internet.AddressException
@@ -10,8 +11,8 @@ class EmailSender {
     companion object {
         fun sendEmail(receiverEmail: String, subject: String, message: String) {
             try {
-                val senderEmail = "anggagant@gmail.com"
-                val senderPassword = "fwnl dkky skyq ljkb"
+                val senderEmail = BuildConfig.Email
+                val senderPassword = BuildConfig.Email_Password
                 val properties: Properties = System.getProperties()
                 properties.setProperty("mail.transport.protocol", "smtp")
                 properties.setProperty("mail.host", "smtp.gmail.com")
