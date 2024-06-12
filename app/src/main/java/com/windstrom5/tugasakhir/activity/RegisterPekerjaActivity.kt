@@ -155,7 +155,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 )
             } else if (Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 setLoading(true)
-                val url = "http://192.168.1.5:8000/api/"
+                val url = "http://192.168.1.6:8000/api/"
                 val retrofit = Retrofit.Builder()
                     .baseUrl(url)
                     .addConverterFactory(GsonConverterFactory.create())
@@ -227,15 +227,15 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             )
-            loading!!.visibility = View.VISIBLE
+            loading.visibility = View.VISIBLE
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
-            loading!!.visibility = View.INVISIBLE
+            loading.visibility = View.INVISIBLE
         }
     }
 
     private fun saveData(perusahaan: Perusahaan) {
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -263,67 +263,72 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                     val apiResponse = response.body()
                     val path = apiResponse?.profile_path ?: ""
                     val id_Pekerja = apiResponse?.id ?: 0
-                    MotionToast.createToast(
-                        this@RegisterPekerjaActivity,
-                        "Success",
-                        "Berhasil Menyimpan Data",
-                        MotionToastStyle.SUCCESS,
-                        MotionToast.GRAVITY_BOTTOM,
-                        MotionToast.LONG_DURATION,
-                        ResourcesCompat.getFont(
+                    runOnUiThread {
+                        MotionToast.createToast(
                             this@RegisterPekerjaActivity,
-                            R.font.ralewaybold
+                            "Success",
+                            "Berhasil Menyimpan Data",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(
+                                this@RegisterPekerjaActivity,
+                                R.font.ralewaybold
+                            )
                         )
-                    )
-                    setLoading(false)
-                    val dialogBuilder = AlertDialog.Builder(this@RegisterPekerjaActivity)
-                    dialogBuilder.setTitle("Registration Successful")
-                    dialogBuilder.setMessage(
-                        "Your account has been created successfully.\n\n" +
-                                "\tUsername: ${TINama.editText?.text}\n" +
-                                "\tPassword: 123\n\n" +
-                                "Welcome To THe Company"
-                    ) // You might want to replace "123" with the actual password
-                    dialogBuilder.setPositiveButton("OK") { dialog, _ ->
-                        // Handle OK button click if needed
-                        dialog.dismiss()
-                        val intent =
-                            Intent(this@RegisterPekerjaActivity, CompanyActivity::class.java)
-                        val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-                        val formattedDate = TITanggal.editText?.text.toString()
-                        try {
-                            val parsedDate: Date? = dateFormat.parse(formattedDate)
-                            val dateFormatSql = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val formattedDateSql = dateFormatSql.format(parsedDate)
-                            val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
-                            perusahaan.id?.let {
-                                if (parsedDateSql != null) {
-                                    pekerja = Pekerja(
-                                        id_Pekerja,
-                                        it,
-                                        TIEmail.editText?.text.toString(),
-                                        "123",
-                                        TINama.editText?.text.toString(),
-                                        parsedDateSql,
-                                        path
-                                    )
-                                }
-                            }
-                            val sharedPreferencesManager =
-                                SharedPreferencesManager(this@RegisterPekerjaActivity)
-                            sharedPreferencesManager.savePekerja(pekerja)
-                            val userBundle = Bundle()
-                            userBundle.putParcelable("user", admin)
-                            userBundle.putParcelable("perusahaan", perusahaan)
-                            userBundle.putString("role", "Admin")
-                            intent.putExtra("data", userBundle)
-                            startActivity(intent)
-                        } catch (e: ParseException) {
-                            e.printStackTrace()
-                        }
                     }
-                    val dialog = dialogBuilder.create()
-                    dialog.show()
+                    setLoading(false)
+                    runOnUiThread {
+                        val dialogBuilder = AlertDialog.Builder(this@RegisterPekerjaActivity)
+                        dialogBuilder.setTitle("Registration Successful")
+                        dialogBuilder.setMessage(
+                            "Your account has been created successfully.\n\n" +
+                                    "\tUsername: ${TINama.editText?.text}\n" +
+                                    "\tPassword: 123\n\n" +
+                                    "Welcome To THe Company"
+                        ) // You might want to replace "123" with the actual password
+                        dialogBuilder.setPositiveButton("OK") { dialog, _ ->
+                            // Handle OK button click if needed
+                            dialog.dismiss()
+                            val intent =
+                                Intent(this@RegisterPekerjaActivity, CompanyActivity::class.java)
+                            val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                            val formattedDate = TITanggal.editText?.text.toString()
+                            try {
+                                val parsedDate: Date? = dateFormat.parse(formattedDate)
+                                val dateFormatSql =
+                                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                                val formattedDateSql = dateFormatSql.format(parsedDate)
+                                val parsedDateSql: Date? = dateFormatSql.parse(formattedDateSql)
+                                perusahaan.id?.let {
+                                    if (parsedDateSql != null) {
+                                        pekerja = Pekerja(
+                                            id_Pekerja,
+                                            it,
+                                            TIEmail.editText?.text.toString(),
+                                            "123",
+                                            TINama.editText?.text.toString(),
+                                            parsedDateSql,
+                                            path
+                                        )
+                                    }
+                                }
+                                val sharedPreferencesManager =
+                                    SharedPreferencesManager(this@RegisterPekerjaActivity)
+                                sharedPreferencesManager.savePekerja(pekerja)
+                                val userBundle = Bundle()
+                                userBundle.putParcelable("user", admin)
+                                userBundle.putParcelable("perusahaan", perusahaan)
+                                userBundle.putString("role", "Admin")
+                                intent.putExtra("data", userBundle)
+                                startActivity(intent)
+                            } catch (e: ParseException) {
+                                e.printStackTrace()
+                            }
+                        }
+                        val dialog = dialogBuilder.create()
+                        dialog.show()
+                    }
                 } else {
                     MotionToast.createToast(
                         this@RegisterPekerjaActivity, "Error",
@@ -443,7 +448,7 @@ class RegisterPekerjaActivity : AppCompatActivity() {
                 perusahaan = it.getParcelable("perusahaan")
                 admin = it.getParcelable("user")
                 val imageUrl =
-                    "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                    "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                 val profileImageView = binding.logo
                 Glide.with(this)
                     .load(imageUrl)

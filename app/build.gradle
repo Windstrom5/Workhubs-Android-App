@@ -8,6 +8,14 @@ android {
     namespace 'com.windstrom5.tugasakhir'
     compileSdk 34
     packagingOptions {
+        resources {
+            excludes += ['META-INF/**']
+        }
+        jniLibs {
+            excludes += ['META-INF/**']
+        }
+    }
+    packagingOptions {
         resources.excludes.add("META-INF/*")
     }
     defaultConfig {
@@ -87,6 +95,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.7'
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'androidx.activity:activity:1.9.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -131,7 +140,7 @@ dependencies {
     implementation ("com.wdullaer:materialdatetimepicker:4.2.3")
     implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.24")
     implementation ("com.itextpdf:itext7-core:7.2.1")
-    implementation ("com.itextpdf:html2pdf:3.0.0")
+    implementation "com.itextpdf:html2pdf:5.0.4"
     implementation "com.github.kittinunf.fuel:fuel:2.3.1"
     implementation "com.github.skydoves:powermenu:2.2.4"
     implementation 'com.github.droidbyme:DroidDialog:1d3d30d4ef'
@@ -141,6 +150,12 @@ dependencies {
     implementation 'io.github.chaosleung:pinview:1.4.4'
     implementation 'com.google.android.gms:play-services-safetynet:18.1.0'
     implementation 'org.apache.commons:commons-text:1.10.0'
-    implementation 'org.slf4j:slf4j-api:1.7.30'
-    implementation 'org.slf4j:slf4j-simple:1.7.30'
+    implementation 'com.google.zxing:core:3.4.1'
+    implementation 'com.github.yuriy-budiyev:code-scanner:2.1.2'
+    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+    implementation 'com.github.Ferfalk:SimpleSearchView:0.2.1'
+    implementation 'com.afollestad.material-dialogs:core:3.3.0'
+    implementation 'com.afollestad.material-dialogs:input:3.3.0'
+    implementation 'com.saadahmedev.popup-dialog:popup-dialog:2.0.0'
+    implementation 'com.airbnb.android:lottie:6.4.0'
 }

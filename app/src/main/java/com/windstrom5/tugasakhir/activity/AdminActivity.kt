@@ -1,15 +1,13 @@
 package com.windstrom5.tugasakhir.activity
 
+import android.app.Dialog
 import android.content.Intent
-import org.apache.commons.text.similarity.LevenshteinDistance
 import android.content.pm.PackageManager
-import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -20,11 +18,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.saadahmedev.popupdialog.PopupDialog
+import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.databinding.ActivityAdminBinding
@@ -36,6 +35,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+
 
 class AdminActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdminBinding
@@ -80,17 +80,25 @@ class AdminActivity : AppCompatActivity() {
         izin = binding.IzinCard
         back = binding.backB
         back.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setMessage("Are you sure you want to Log Out?")
-                .setPositiveButton("Yes") { _, _ ->
-                    super.onBackPressed()
-                    val sharedPreferencesManager = SharedPreferencesManager(this)
-                    sharedPreferencesManager.clearUserData()
-                    startActivity(Intent(this, LoginActivity::class.java))
-                }
-                .setNegativeButton("No") { dialog, _ ->
-                    dialog.dismiss()
-                }
+            PopupDialog.getInstance(this@AdminActivity)
+                .standardDialogBuilder()
+                .createIOSDialog()
+                .setHeading("Logout")
+                .setDescription(
+                    "Are you sure you want to logout?" +
+                            " This action cannot be undone"
+                )
+                .build(object : StandardDialogActionListener {
+                    override fun onPositiveButtonClicked(dialog: Dialog) {
+                        val sharedPreferencesManager = SharedPreferencesManager(this@AdminActivity)
+                        sharedPreferencesManager.clearUserData()
+                        startActivity(Intent(this@AdminActivity, LoginActivity::class.java))
+                    }
+
+                    override fun onNegativeButtonClicked(dialog: Dialog) {
+                        dialog.dismiss()
+                    }
+                })
                 .show()
         }
         company = binding.CompanyCard
@@ -411,18 +419,31 @@ class AdminActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        AlertDialog.Builder(this)
-            .setMessage("Are you sure you want to Log Out?")
-            .setPositiveButton("Yes") { _, _ ->
-                super.onBackPressed()
-                val sharedPreferencesManager = SharedPreferencesManager(this)
-                sharedPreferencesManager.clearUserData()
-                startActivity(Intent(this, LoginActivity::class.java))
+        super.onBackPressed()
+        PopupDialog.getInstance(this@AdminActivity)
+            .standardDialogBuilder()
+            .createIOSDialog()
+            .setHeading("Logout")
+            .setDescription(
+                "Are you sure you want to logout?" +
+                        " This action cannot be undone"
+            )
+            .build(object : StandardDialogActionListener {
+                override fun onPositiveButtonClicked(dialog: Dialog) {
+                    val sharedPreferencesManager = SharedPreferencesManager(this@AdminActivity)
+                    sharedPreferencesManager.clearUserData()
+                    startActivity(Intent(this@AdminActivity, LoginActivity::class.java))
+                }
+
+                override fun onNegativeButtonClicked(dialog: Dialog) {
+                    dialog.dismiss()
+                }
+            })
+            .let { dialog ->
+                if (!isFinishing) { // Check if the Activity is finishing or destroyed
+                    dialog.show()
+                }
             }
-            .setNegativeButton("No") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
     }
 
     private fun handleCardTouch(cardView: CardView, event: MotionEvent, activityName: String): Boolean {

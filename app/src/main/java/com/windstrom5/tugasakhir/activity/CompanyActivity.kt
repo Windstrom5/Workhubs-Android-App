@@ -76,6 +76,7 @@ class CompanyActivity : AppCompatActivity() {
         setContentView(binding.root)
         addPekerja = binding.addPekerja
         setting = binding.setting
+        address = binding.tvAddress
         getBundle()
         recyclerView = findViewById(R.id.recyclerViewPekerja)
         adapter =
@@ -86,8 +87,7 @@ class CompanyActivity : AppCompatActivity() {
         requestQueue = Volley.newRequestQueue(this)
         countpekerja = binding.countpekerja
         countadmin = binding.countadmin
-        address = binding.tvAddress
-        perusahaan?.let { fetchDataFromApi(it.nama) }
+//        perusahaan?.let { fetchDataFromApi(it.nama) }
         swipeRefreshLayout = binding.swipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener {
             perusahaan?.let { fetchDataFromApi(it.nama) }
@@ -188,7 +188,7 @@ class CompanyActivity : AppCompatActivity() {
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.5:8000/api/") // Replace with your base URL
+            .baseUrl("http://192.168.1.6:8000/api/") // Replace with your base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -257,7 +257,7 @@ class CompanyActivity : AppCompatActivity() {
             .show()
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         Log.d("FetchDataError", "Nama: ${namaPerusahaan}")
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -276,7 +276,7 @@ class CompanyActivity : AppCompatActivity() {
                                     val adminArray = responseData.getJSONArray("admin")
                                     val perusahaanObject = responseData.optJSONObject("perusahaan")
 
-                                    val perusahaan: Perusahaan? = if (perusahaanObject != null) {
+                                    if (perusahaanObject != null) {
                                         val id = perusahaanObject.optInt("id")
                                         val nama = perusahaanObject.getString("nama")
                                         val latitude = perusahaanObject.getDouble("latitude")
@@ -396,9 +396,20 @@ class CompanyActivity : AppCompatActivity() {
                     pekerja = it.getParcelable("user")
                     addPekerja.visibility = View.GONE
                 }
+                val latitude = perusahaan?.latitude
+                val longitude = perusahaan?.longitude
+                val addressInfo = ReverseGeocoder.getAddressFromLocation(this@CompanyActivity, GeoPoint(
+                    latitude!!, longitude!!
+                ))
+                if (addressInfo != null) {
+                    val addressText = "${addressInfo.province}\n${addressInfo.country}"
+                    address.text = addressText
+                } else {
+                    address.text = "Address information not available"
+                }
                 if (perusahaan?.logo != "null") {
                     val imageUrl =
-                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     val profileImageView = binding.circleImageView
                     val text = binding.tvName
                     text.setText(perusahaan?.nama)

@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.BaseExpandableListAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.itextpdf.html2pdf.ConverterProperties
 import com.itextpdf.html2pdf.HtmlConverter
@@ -25,12 +27,32 @@ import java.util.Date
 import java.util.Locale
 
 class DinasAdapter(
+    private val perusahaan: Perusahaan,
     private val context: Context,
-    private val statusWithDinasList: List<historyDinas>,
-    private val Role:String
+    private var statusWithDinasList: List<historyDinas>,
+    private val Role: String
 ) : BaseExpandableListAdapter() {
     private val rotationAngleExpanded = 180f
     private val rotationAngleCollapsed = 0f
+    private var originalStatusWithDinasList: List<historyDinas> = statusWithDinasList.toList()
+
+    fun filterData(query: String) {
+        val lowerCaseQuery = query.toLowerCase()
+
+        statusWithDinasList = if (lowerCaseQuery.isEmpty()) {
+            originalStatusWithDinasList
+        } else {
+            originalStatusWithDinasList.filter { historyDinas ->
+                historyDinas.dinasList.any { dinas ->
+                    dinas.id.toString().contains(lowerCaseQuery)
+                }
+            }
+        }
+
+        // Notify the adapter with the filtered data
+        notifyDataSetChanged()
+    }
+
     override fun getGroupCount(): Int {
         return statusWithDinasList.size
     }
@@ -59,9 +81,15 @@ class DinasAdapter(
         return true
     }
 
-    override fun getGroupView(groupPosition: Int, isExpanded: Boolean, convertView: View?, parent: ViewGroup?): View {
+    override fun getGroupView(
+        groupPosition: Int,
+        isExpanded: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
         val status = getGroup(groupPosition) as String
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_group, parent, false)
+        val view =
+            convertView ?: LayoutInflater.from(context).inflate(R.layout.list_group, parent, false)
         view.findViewById<TextView>(R.id.title).text = status
         val arrowLogo = view.findViewById<ImageView>(R.id.arrowLogo)
         if (isExpanded) {
@@ -72,9 +100,16 @@ class DinasAdapter(
         return view
     }
 
-    override fun getChildView(groupPosition: Int, childPosition: Int, isLastChild: Boolean, convertView: View?, parent: ViewGroup?): View {
+    override fun getChildView(
+        groupPosition: Int,
+        childPosition: Int,
+        isLastChild: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
         val dinas = getChild(groupPosition, childPosition) as DinasItem
-        val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.history_dinas, parent, false)
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.history_dinas, parent, false)
         val tanggal = view.findViewById<TextView>(R.id.tanggal)
         val tujuan = view.findViewById<TextView>(R.id.tujuan)
         val actionButton = view.findViewById<Button>(R.id.actionButton)
@@ -83,47 +118,49 @@ class DinasAdapter(
         val tanggalPulangFormatted = dateFormatter.format(dinas.tanggal_pulang)
         tanggal.text = "$tanggalBerangkatFormatted - $tanggalPulangFormatted"
         tujuan.text = dinas.tujuan
+        Role.let { Log.d("Role3", it) }
         if (Role == "Admin" && dinas.status == "Pending") {
             actionButton.visibility = View.VISIBLE
-            actionButton.text =  "Respond \nIzin"
+            actionButton.text = "Respond \nDinas"
         } else if (Role == "Admin" && dinas.status == "Accept") {
             actionButton.visibility = View.VISIBLE
-            actionButton.text =  "View \nData"
+            actionButton.text = "View \nData"
         } else if (Role != "Admin" && dinas.status == "Pending") {
             actionButton.visibility = View.VISIBLE
-            actionButton.text =  "Edit \nData"
+            actionButton.text = "Edit \nData"
         } else if (Role != "Admin" && dinas.status == "Accept") {
             actionButton.visibility = View.VISIBLE
-            actionButton.text =  "Download \nReceipt"
+            actionButton.text = "Download \nReceipt"
         } else {
             actionButton.visibility = View.GONE
-            actionButton.text =  "View \nData"
+            actionButton.text = "View \nData"
         }
         actionButton.setOnClickListener {
             when (actionButton.text) {
-                "Download Receipt" -> {
+                "Download \nReceipt" -> {
+                    Log.d("izin", "clicked")
                     val htmlContent = getHtmlTemplate(dinas)
                     generatePdfFromHtml(htmlContent)
                 }
-                "Respond \nIzin" -> {
-                    Log.d("izin", "clicked")
+                "Respond \nDinas" -> {
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
                     bundle.putParcelable("dinas", dinas) // Pass different object for izin
                     bundle.putString("layoutType", "dinas_layout") // Add layout type here
-                    bundle.putString("category","Respond")
+                    bundle.putString("category", "Respond")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
-                "Edit \nData" ->{
+
+                "Edit \nData" -> {
                     Log.d("izin", "clicked")
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
                     bundle.putParcelable("dinas", dinas) // Pass different object for izin
                     bundle.putString("layoutType", "dinas_layout") // Add layout type here
-                    bundle.putString("category","Edit")
+                    bundle.putString("category", "Edit")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
@@ -136,7 +173,10 @@ class DinasAdapter(
     override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
         return true
     }
+
     private fun getHtmlTemplate(dinas: DinasItem): String {
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
         val template = """
             <!DOCTYPE html>
                 <html lang="en">
@@ -181,17 +221,18 @@ class DinasAdapter(
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="[URL to Perusahaan Logo]" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
                         <p><strong>Date Printed:</strong> ${
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                Date()
-            )}</p>
-                <p><strong>Company Name:</strong> ${dinas.nama_perusahaan}</p>
+                    dateFormatter.format(
+                        Date()
+                    )
+                }</p>
+                <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
                 <p><strong>Worker Name:</strong> ${dinas.nama_pekerja}</p>
                 <p><strong>Date of Assignment:</strong></p>
-                <p><strong>Departure Time:</strong> ${dinas.tanggal_berangkat}</p>
-                <p><strong>Return Time:</strong> ${dinas.tanggal_pulang}</p>
+                <p><strong>Departure Time:</strong> ${dateFormatter.format(dinas.tanggal_berangkat)}</p>
+                <p><strong>Return Time:</strong> ${dateFormatter.format(dinas.tanggal_pulang)}</p>
                 <p><strong>Assigned Activity:</strong> ${dinas.kegiatan}</p>
                     </div>
                     <footer>
@@ -207,16 +248,17 @@ class DinasAdapter(
     }
 
     private fun generatePdfFromHtml(htmlContent: String) {
-        val outputPdfFile = File(context.getExternalFilesDir(null), "receipt.pdf")
-        val outputStream = FileOutputStream(outputPdfFile)
-        val converterProperties = ConverterProperties()
-        HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
-        outputStream.close()
-
-        // PDF is generated, you can now save it or share it as needed
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val outputPdfFile = File(downloadsDir, "receipt.pdf")
+            val outputStream = FileOutputStream(outputPdfFile)
+            val converterProperties = ConverterProperties()
+            HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+            outputStream.close()
+            Toast.makeText(context, "Receipt downloaded at ${outputPdfFile.absolutePath}", Toast.LENGTH_SHORT).show()
+            // PDF is generated, you can now save it or share it as needed
+        } catch (e: Exception) {
+            Log.e("PDFGeneration", "Error generating PDF: ${e.message}", e)
+        }
     }
 }
-
-
-
-

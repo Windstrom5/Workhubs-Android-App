@@ -74,6 +74,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+
 class PreviewDialogFragment: DialogFragment() {
     private val PICK_PDF_OR_IMAGE_REQUEST_CODE = 100
     private lateinit var selectedFile: File
@@ -638,7 +639,7 @@ class PreviewDialogFragment: DialogFragment() {
                         )
                     }
                 } else {
-                    Log.e("ApiResponse", "Error: ${response.code()}")
+                    Log.e("ApiResponse", "Error: ${response.message()}")
                 }
             }
 
@@ -896,47 +897,81 @@ class PreviewDialogFragment: DialogFragment() {
     }
 
     private fun updateStatus(status: String,category:String) {
-        val id = arguments?.getInt("id") // Assuming you have an ID associated with the item
-        if (id != null) {
-            // Call your API to update the status
-            val url = "http://192.168.1.6:8000/api/"
-            // Make a network request using Retrofit
-            val retrofit = Retrofit.Builder()
-                .baseUrl(url)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-            val idRequestBody = RequestBody.create(MediaType.parse("text/plain"), id.toString())
-            val statusRequestBody = RequestBody.create(MediaType.parse("text/plain"), status)
-            val apiService = retrofit.create(ApiService::class.java)
-            val call: Call<ApiResponse> // Declare the call variable outside the if-else statement
-            if (category == "Izin") {
-                call = apiService.updatestatusIzin(idRequestBody, statusRequestBody)
-            } else if (category == "Lembur") {
-                call = apiService.updatestatusLembur(idRequestBody, statusRequestBody)
-            } else {
-                call = apiService.updatestatusDinas(idRequestBody, statusRequestBody)
-            }
-            call.enqueue(object : Callback<ApiResponse> {
-                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    if (response.isSuccessful) {
-                        // Handle successful response
-                        dismiss() // Dismiss the dialog after updating the status
-                    } else {
-                        // Handle unsuccessful response
-                        Log.e("UpdateStatusError", "Failed to update status: ${response.code()}")
-                        dismiss() // Dismiss the dialog even if the status update fails
-                    }
-                }
+        val id: Int?
+        if (category == "Izin") {
+            id = izin?.id!!
+        } else if (category == "Lembur") {
+            id = lembur?.id!!
+        } else {
+            id = dinas?.id!!
+        }// Assuming you have an ID associated with the item
+        // Call your API to update the status
+        val url = "http://192.168.1.6:8000/api/"
+        // Make a network request using Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                    // Handle network failures
-                    Log.e("UpdateStatusError", "Failed to update status: ${t.message}")
+        val apiService = retrofit.create(ApiService::class.java)
+        val call: Call<ApiResponse> // Declare the call variable outside the if-else statement
+        if (category == "Izin") {
+            call = apiService.updatestatusIzin(id, status)
+        } else if (category == "Lembur") {
+            call = apiService.updatestatusLembur(id, status)
+        } else {
+            call = apiService.updatestatusDinas(id, status)
+        }
+        call.enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    if (category == "Izin") {
+                        MotionToast.createToast(
+                            requireActivity(),
+                            "Update Izin Success",
+                            "Silahkan Refresh Halaman",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(requireContext(), R.font.ralewaybold)
+                        )
+                    } else if (category == "Lembur") {
+                        MotionToast.createToast(
+                            requireActivity(),
+                            "Update Lembur Success",
+                            "Silahkan Refresh Halaman",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(requireContext(), R.font.ralewaybold)
+                        )
+                    } else {
+                        MotionToast.createToast(
+                            requireActivity(),
+                            "Update Dinas Success",
+                            "Silahkan Refresh Halaman",
+                            MotionToastStyle.SUCCESS,
+                            MotionToast.GRAVITY_BOTTOM,
+                            MotionToast.LONG_DURATION,
+                            ResourcesCompat.getFont(requireContext(), R.font.ralewaybold)
+                        )
+                    }
+                    dismiss() // Dismiss the dialog after updating the status
+                } else {
+                    // Handle unsuccessful response
+                    val errorMessage = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("UpdateStatusError", "Failed to update status: $errorMessage")
+                    Log.e("UpdateStatusError", "Id: $id")
+
                     dismiss() // Dismiss the dialog even if the status update fails
                 }
-            })
-        } else {
-            Log.e("UpdateStatusError", "Item ID is null")
-            dismiss() // Dismiss the dialog if the item ID is null
-        }
+            }
+
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                // Handle network failures
+                Log.e("UpdateStatusError", "Failed to update status: ${t.message}")
+                dismiss()
+            }
+        })
     }
 }

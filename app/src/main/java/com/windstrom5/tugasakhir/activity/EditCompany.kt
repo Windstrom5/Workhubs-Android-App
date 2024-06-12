@@ -10,11 +10,14 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.res.ResourcesCompat
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.input.input
 import com.bumptech.glide.Glide
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.timepicker.MaterialTimePicker
@@ -68,6 +71,7 @@ class EditCompany : AppCompatActivity() {
     private lateinit var changeProfile : ImageView
     private lateinit var profile:CircleImageView
     private var latitude:Double? = null
+    private lateinit var id:TextView
     private var longitude:Double? = null
     companion object {
         private const val PICK_IMAGE_REQUEST_CODE = 123
@@ -78,8 +82,10 @@ class EditCompany : AppCompatActivity() {
         binding = ActivityEditCompanyBinding.inflate(layoutInflater)
         setContentView(binding.root)
         textNama = binding.companyNameTextView
+        id = binding.idperusahaan
         textJamKeluar = binding.JamKeluarText
         textJamMasuk = binding.jamMasukText
+        textalamat = binding.alamat
         changeProfile = binding.selectImage
         profile = binding.logo
         getBundle()
@@ -247,43 +253,38 @@ class EditCompany : AppCompatActivity() {
         return null
     }
     private fun showNamaTextDialog() {
-        val textInputLayout = TextInputLayout(this@EditCompany)
-        val editText = EditText(this@EditCompany)
-        textInputLayout.hint = "Nama Perusahaan"
-        editText.setText(perusahaan?.nama)
-        textInputLayout.addView(editText)
-
-        val dialogBuilder = AlertDialog.Builder(this@EditCompany)
-            .setView(textInputLayout)
-            .setTitle("Enter Text")
-            .setPositiveButton("OK") { dialog, which ->
+        MaterialDialog(this).show {
+            title(text = "Enter New Company Name")
+            input(hint = "Nama Perusahaan", prefill = textNama.text.toString()) { dialog, text ->
                 // Handle the text input when the user clicks OK
-                enteredText = editText.text.toString()
+                val enteredText = text.toString()
                 textNama.setText(enteredText)
                 // Do something with the entered text
             }
-            .setNegativeButton("Cancel") { dialog, which ->
+            positiveButton(text = "OK")
+            negativeButton(text = "Cancel") { dialog ->
                 // Handle the cancellation if needed
                 dialog.dismiss()
             }
-
-        val dialog = dialogBuilder.create()
-        dialog.show()
+        }
     }
+
+
     private fun getBundle() {
         bundle = intent?.getBundleExtra("data")
         if (bundle != null) {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
+                val logo = perusahaan?.logo
                 role = it.getString("role").toString()
                 if(role == "Admin"){
                     admin = it.getParcelable("user")
                 }else{
                     pekerja = it.getParcelable("user")
                 }
-                if(perusahaan?.logo == "null"){
+                if(logo == null){
                     val imageUrl =
-                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}"
+                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}"
                     Glide.with(this)
                         .load(imageUrl)
                         .into(profile)
@@ -292,10 +293,17 @@ class EditCompany : AppCompatActivity() {
                         .load(R.drawable.logo)
                         .into(profile)
                 }
-                 // Replace with your Laravel image URL
+                id.setText("ID : ${perusahaan?.id}")
                 textNama.setText(perusahaan?.nama)
-                textJamMasuk.setText(perusahaan?.jam_masuk.toString())
-                textJamKeluar.setText(perusahaan?.jam_keluar.toString())
+                val inputFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                val jamMasukDate = inputFormat.parse(perusahaan?.jam_masuk.toString())
+                val jamKeluarDate = inputFormat.parse(perusahaan?.jam_keluar.toString())
+
+                val jamMasukFormatted = outputFormat.format(jamMasukDate)
+                val jamKeluarFormatted = outputFormat.format(jamKeluarDate)
+                textJamMasuk.setText(jamMasukFormatted.toString())
+                textJamKeluar.setText(jamKeluarFormatted.toString())
                 latitude = perusahaan!!.latitude
                 longitude = perusahaan!!.longitude
                 val addressInfo = ReverseGeocoder.getFullAddressFromLocation(this@EditCompany, GeoPoint(perusahaan!!.latitude, perusahaan!!.longitude))
@@ -320,7 +328,7 @@ class EditCompany : AppCompatActivity() {
                     latitude = it.getDouble("latitude")
                     longitude = it.getDouble("longitude")
                     val imageUrl =
-                        "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     textNama.setText(it.getString("namaPerusahaan"))
                     textJamMasuk.setText(it.getString("openhour"))
                     textJamKeluar.setText(it.getString("closehour"))

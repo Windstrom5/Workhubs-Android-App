@@ -353,7 +353,7 @@ class EditUserActivity : AppCompatActivity() {
                     email.setText(admin?.email)
                     if(admin?.profile == "null"){
                         val imageUrl =
-                            "http://192.168.1.5:8000/storage/${admin?.profile}"
+                            "http://192.168.1.6:8000/storage/${admin?.profile}"
                         Glide.with(this)
                             .load(imageUrl)
                             .into(profilePicture)
@@ -370,7 +370,7 @@ class EditUserActivity : AppCompatActivity() {
                     email.setText(pekerja?.email)
                     if(pekerja?.profile == "null"){
                         val imageUrl =
-                            "http://192.168.1.5:8000/storage/${pekerja?.profile}"
+                            "http://192.168.1.6:8000/storage/${pekerja?.profile}"
                         Glide.with(this)
                             .load(imageUrl)
                             .into(profilePicture)

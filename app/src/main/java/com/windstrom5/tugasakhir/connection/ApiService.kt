@@ -7,12 +7,15 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.DELETE
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
     @Multipart
@@ -108,7 +111,15 @@ interface ApiService {
     fun getDataDinasPerusahaan(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
-
+    @GET("getDataAbsenPekerja/{nama_perusahaan}/{nama_pekerja}")
+    fun getDataAbsenPekerja(
+        @Path("nama_perusahaan") nama_perusahaan: String,
+        @Path("nama_pekerja") nama_pekerja: String
+    ): Call<ResponseBody>
+    @GET("getDataAbsenPerusahaan/{nama_perusahaan}")
+    fun getDataAbsenPerusahaan(
+        @Path("nama_perusahaan") nama_perusahaan: String
+    ): Call<ResponseBody>
     @GET("getDataDinasPekerja/{nama_perusahaan}/{nama_pekerja}")
     fun getDataDinasPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String,
@@ -125,20 +136,23 @@ interface ApiService {
         @Path("nama_perusahaan") nama_perusahaan: String,
         @Path("nama_pekerja") nama_pekerja: String
     ): Call<ResponseBody>
-    @PUT("UpdateStatusIzin")
+
+    @POST("UpdateStatusIzin?_method=PUT")
     fun updatestatusIzin(
-        @Part("id") id: RequestBody,
-        @Part("status") status: RequestBody
+        @Query("id") id: Int,
+        @Query("status") status: String
     ): Call<ApiResponse>
-    @PUT("UpdateStatusDinas")
+
+    @POST("UpdateStatusDinas?_method=PUT")
     fun updatestatusDinas(
-        @Part("id") id: RequestBody,
-        @Part("status") status: RequestBody
+        @Query("id") id: Int,
+        @Query("status") status: String
     ): Call<ApiResponse>
+
     @PUT("UpdateStatusLembur")
     fun updatestatusLembur(
-        @Part("id") id: RequestBody,
-        @Part("status") status: RequestBody
+        @Query("id") id: Int,
+        @Query("status") status: String
     ): Call<ApiResponse>
     @Multipart
     @POST("UpdateDataIzin/{izinId}?_method=PUT")

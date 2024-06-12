@@ -265,7 +265,7 @@ class SplashActivity : AppCompatActivity() {
         }else{
             Log.d("CompanyActivity", "Logo is blank")
             val imageUrl =
-                "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
             Glide.with(this)
                 .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL

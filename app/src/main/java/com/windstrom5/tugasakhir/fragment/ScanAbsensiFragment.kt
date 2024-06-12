@@ -1,5 +1,6 @@
 package com.windstrom5.tugasakhir.fragment
 
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -18,16 +19,21 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.budiyev.android.codescanner.AutoFocusMode
+import com.budiyev.android.codescanner.CodeScanner
+import com.budiyev.android.codescanner.CodeScannerView
+import com.budiyev.android.codescanner.DecodeCallback
+import com.budiyev.android.codescanner.ScanMode
 import com.bumptech.glide.Glide
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.PlanarYUVLuminanceSource
@@ -43,6 +49,7 @@ import com.windstrom5.tugasakhir.model.SecretKeyInfo
 import org.json.JSONException
 import org.json.JSONObject
 import com.windstrom5.tugasakhir.connection.Tracking
+import com.windstrom5.tugasakhir.databinding.FragmentScanAbsensiBinding
 import com.windstrom5.tugasakhir.feature.QRCodeAnalyzer
 import com.windstrom5.tugasakhir.model.Absen
 import io.github.g00fy2.quickie.QRResult
@@ -60,7 +67,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class ScanAbsensiFragment : Fragment() {
-    private val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
+//    private val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
     private lateinit var requestQueue: RequestQueue // Add this line
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var button : Button
@@ -70,6 +77,8 @@ class ScanAbsensiFragment : Fragment() {
     private var pekerja: Pekerja? = null
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
+    private var codeScanner: CodeScanner? = null
+    private lateinit var binding: FragmentScanAbsensiBinding
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -80,7 +89,8 @@ class ScanAbsensiFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkLocationPermission()
-        button = view.findViewById(R.id.absen)
+        val scannerView = view.findViewById<CodeScannerView>(R.id.scanner_view)
+        codeScanner = CodeScanner(requireActivity(), scannerView)
         cameraExecutor = Executors.newSingleThreadExecutor()
         logo = view.findViewById(R.id.logoImage)
         requestQueue = Volley.newRequestQueue(requireContext())
@@ -93,37 +103,31 @@ class ScanAbsensiFragment : Fragment() {
                 .into(logo)
         }else{
             val imageUrl =
-                "http://192.168.1.5:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
             Glide.with(this)
                 .load(imageUrl)
                 .into(logo)
         }
-        button.setOnClickListener{
-            scanCustomCode.launch(
-                ScannerConfig.build {
-                    setOverlayStringRes(R.string.scan) // string resource used for the scanner overlay
-                }
-            )
+        codeScanner?.apply {
+            camera = CodeScanner.CAMERA_BACK
+            formats = CodeScanner.ALL_FORMATS
+            autoFocusMode = AutoFocusMode.SAFE
+            scanMode = ScanMode.SINGLE
+            isAutoFocusEnabled = true
+            isFlashEnabled = false
         }
+        codeScanner?.decodeCallback = DecodeCallback {
+            activity?.runOnUiThread {
+                Log.d(TAG, "Result: ${it.text}")
+                Log.d(TAG, "format: ${it.barcodeFormat.name}")
+                Log.d(TAG, "rawbytes: ${it.rawBytes }")
+                getAllSecretKeysFromApi(it.text)
+            }
+        }
+        codeScanner?.startPreview()
     }
 
-    private fun handleResult(result: QRResult) {
-        // handle the QRResult
-        val resultString = result.toString()
-
-        // Extract rawValue using a simple substring or regex
-        val rawValue = extractRawValue(resultString)
-        // Use the extracted rawValue in your further processing
-        getAllSecretKeysFromApi(rawValue)
-    }
-
-    private fun extractRawValue(resultString: String): String {
-        // Example: QRSuccess(content=Plain(rawBytes=[...], rawValue=...))
-        val regex = Regex("rawValue=(\\w+)\\)")
-        val matchResult = regex.find(resultString)
-        return matchResult?.groups?.get(1)?.value ?: ""
-    }
     private fun checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
@@ -152,8 +156,19 @@ class ScanAbsensiFragment : Fragment() {
                 // Permission granted, get user's location
                 getUserLocation()
             } else {
-                // Permission denied, handle accordingly
-                // You can show a message or request the permission again
+                MotionToast.createToast(
+                    requireActivity(),
+                    "Absen Failed",
+                    "Pls Enabled The Location.",
+                    MotionToastStyle.ERROR,
+                    MotionToast.GRAVITY_BOTTOM,
+                    MotionToast.LONG_DURATION,
+                    ResourcesCompat.getFont(
+                        requireContext(),
+                        R.font.ralewaybold
+                    )
+                )
+                codeScanner?.startPreview()
             }
         }
     }
@@ -177,7 +192,7 @@ class ScanAbsensiFragment : Fragment() {
     }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "http://192.168.1.5:8000/api/getAllSecretKeys"
+        val apiUrl = "http://192.168.1.6:8000/api/getAllSecretKeys"
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
@@ -203,6 +218,7 @@ class ScanAbsensiFragment : Fragment() {
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
+                    codeScanner?.startPreview()
                 }
             },
             { error ->
@@ -227,7 +243,7 @@ class ScanAbsensiFragment : Fragment() {
 
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
-        val url = "http://192.168.1.5:8000/api/Absensi"
+        val url = "http://192.168.1.6:8000/api/Absensi"
         Log.d("testing",url)
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
@@ -239,7 +255,7 @@ class ScanAbsensiFragment : Fragment() {
         params.put("jam", currentTime)
         params.put("latitude", latitude)
         params.put("longitude", longitude)
-        Log.d("testing",url)
+        Log.d("testing",params.toString())
         val request = JsonObjectRequest(
             Request.Method.POST, url, params,
             { response ->
@@ -267,6 +283,7 @@ class ScanAbsensiFragment : Fragment() {
                                         R.font.ralewaybold
                                     )
                                 )
+                                codeScanner?.startPreview()
                             }
                         }
 
@@ -287,6 +304,7 @@ class ScanAbsensiFragment : Fragment() {
                                         R.font.ralewaybold
                                     )
                                 )
+                                codeScanner?.startPreview()
                             }
                         }
                         else -> {
@@ -304,18 +322,20 @@ class ScanAbsensiFragment : Fragment() {
                                         R.font.ralewaybold
                                     )
                                 )
+                                codeScanner?.startPreview()
                             }
                         }
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
                     Log.d("testing",url)
+                    codeScanner?.startPreview()
                 }
             },
             { error ->
                 // Handle error
                 error.printStackTrace()
-
+                codeScanner?.startPreview()
             }
         )
         requestQueue.add(request)
@@ -380,35 +400,3 @@ class ScanAbsensiFragment : Fragment() {
         return template
     }
 }
-
-//    private fun startCamera() {
-//        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-//
-//        cameraProviderFuture.addListener({
-//            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-//
-//            val preview = Preview.Builder().build().also {
-//                it.setSurfaceProvider(previewView.surfaceProvider)
-//            }
-//
-//            val imageAnalysis = ImageAnalysis.Builder()
-//                .setTargetResolution(Size(1920, 1080))
-//                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                .build()
-//
-//            imageAnalysis.setAnalyzer(cameraExecutor, QRCodeAnalyzer(scanningSquare) { qrCode ->
-//                getAllSecretKeysFromApi(qrCode)
-//            })
-//
-//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-//
-//            try {
-//                cameraProvider.unbindAll()
-//                cameraProvider.bindToLifecycle(
-//                    this, cameraSelector, preview, imageAnalysis
-//                )
-//            } catch (exc: Exception) {
-//                // Handle exceptions
-//            }
-//        }, ContextCompat.getMainExecutor(requireContext()))
-//    }

@@ -3,18 +3,30 @@ package com.windstrom5.tugasakhir.adapter
 import android.content.Context
 import android.content.Intent
 import android.graphics.pdf.PdfDocument
+import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import android.widget.BaseExpandableListAdapter
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.RecyclerView
+import com.itextpdf.html2pdf.ConverterProperties
+import com.itextpdf.html2pdf.HtmlConverter
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
 import com.windstrom5.tugasakhir.model.Absen
+import com.windstrom5.tugasakhir.model.AbsenItem
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.historyAbsen
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -25,84 +37,131 @@ import java.util.Date
 import java.util.Locale
 
 class AbsenAdapter(
-    private val absenList: List<Absen>,
     private val perusahaan: Perusahaan,
-    private val pekerja: Pekerja
-) : RecyclerView.Adapter<AbsenAdapter.ViewHolder>() {
+    private val context: Context,
+    private var statusWithAbsenList: List<historyAbsen>,
+    private val Role: String
+) : BaseExpandableListAdapter() {
+    private val rotationAngleExpanded = 180f
+    private val rotationAngleCollapsed = 0f
+    private var originalStatusWithAbsenList: List<historyAbsen> = statusWithAbsenList.toList()
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tanggalTextView: TextView = view.findViewById(R.id.tanggal)
-        val jamTextView: TextView = view.findViewById(R.id.jam)
-        val actionButton: Button = view.findViewById(R.id.actionButton)
-    }
+    fun filterData(query: String) {
+        val lowerCaseQuery = query.toLowerCase()
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.history_absen, parent, false)
-
-        return ViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val absen = absenList[position]
-
-        // Bind data to views
-        holder.tanggalTextView.text = absen.tanggal.toString()
-        holder.jamTextView.text = absen.jamMasuk
-
-        // Set click listener for the action button
-        holder.actionButton.setOnClickListener {
-            // Handle button click, e.g., initiate download
-            val pdfHtml = getHtmlTemplate(absen, perusahaan, pekerja)
-            generateAndDownloadPdf(holder.actionButton.context, pdfHtml)
+        statusWithAbsenList = if (lowerCaseQuery.isEmpty()) {
+            originalStatusWithAbsenList
+        } else {
+            originalStatusWithAbsenList.filter { historyAbsen ->
+                historyAbsen.absenList.any { Absen ->
+                    Absen.id.toString().contains(lowerCaseQuery)
+                }
+            }
         }
+
+        // Notify the adapter with the filtered data
+        notifyDataSetChanged()
     }
 
-    override fun getItemCount(): Int {
-        return absenList.size
+    override fun getGroupCount(): Int {
+        return statusWithAbsenList.size
     }
 
-    private fun generateAndDownloadPdf(context: Context, htmlContent: String) {
-        val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas = page.canvas
-
-        val webView = WebView(context)
-        webView.layout(0, 0, webView.width, webView.height)
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "utf-8", null)
-        webView.draw(canvas)
-
-        pdfDocument.finishPage(page)
-
-        // Save the PDF file
-        val file = File(context.cacheDir, "absen_pdf.pdf")
-        val fileOutputStream = FileOutputStream(file)
-        pdfDocument.writeTo(fileOutputStream)
-        pdfDocument.close()
-        fileOutputStream.close()
-
-        // Open the PDF file using an Intent
-        val uri = FileProvider.getUriForFile(
-            context,
-            "your.package.name.provider",
-            file
-        )
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(uri, "application/pdf")
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        context.startActivity(intent)
+    override fun getChildrenCount(groupPosition: Int): Int {
+        return statusWithAbsenList[groupPosition].absenList.size
     }
 
-    private fun getHtmlTemplate(absen: Absen, perusahaan: Perusahaan, pekerja: Pekerja): String {
-        // Define your HTML template with placeholders for data
+    override fun getGroup(groupPosition: Int): Any {
+        return statusWithAbsenList[groupPosition].status
+    }
+
+    override fun getChild(groupPosition: Int, childPosition: Int): Any {
+        return statusWithAbsenList[groupPosition].absenList[childPosition]
+    }
+
+    override fun getGroupId(groupPosition: Int): Long {
+        return groupPosition.toLong()
+    }
+
+    override fun getChildId(groupPosition: Int, childPosition: Int): Long {
+        return childPosition.toLong()
+    }
+
+    override fun hasStableIds(): Boolean {
+        return true
+    }
+
+    override fun getGroupView(
+        groupPosition: Int,
+        isExpanded: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
+        val status = getGroup(groupPosition) as String
+        val view =
+            convertView ?: LayoutInflater.from(context).inflate(R.layout.list_group, parent, false)
+        view.findViewById<TextView>(R.id.title).text = status
+        val arrowLogo = view.findViewById<ImageView>(R.id.arrowLogo)
+        if (isExpanded) {
+            arrowLogo.rotation = rotationAngleExpanded
+        } else {
+            arrowLogo.rotation = rotationAngleCollapsed
+        }
+        return view
+    }
+
+    override fun getChildView(
+        groupPosition: Int,
+        childPosition: Int,
+        isLastChild: Boolean,
+        convertView: View?,
+        parent: ViewGroup?
+    ): View {
+        val Absen = getChild(groupPosition, childPosition) as AbsenItem
+        val view = convertView ?: LayoutInflater.from(context)
+            .inflate(R.layout.history_absen, parent, false)
+        val tanggalview = view.findViewById<TextView>(R.id.tanggal)
+        val jam = view.findViewById<TextView>(R.id.jam)
+        val actionButton = view.findViewById<Button>(R.id.actionButton)
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val tanggal = dateFormatter.format(Absen.tanggal)
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
+        val jammasuk = timeFormatter.format(Absen.masuk)
+        tanggalview.text = tanggal
+        if(Absen.keluar == null){
+            jam.text = "${jammasuk} - NOW"
+            actionButton.visibility = View.INVISIBLE
+        }else{
+            val jamkeluar = timeFormatter.format(Absen.masuk)
+            jam.text = "${jammasuk} - ${jamkeluar}"
+            actionButton.visibility = View.VISIBLE
+            actionButton.text = "Download \nReceipt"
+        }
+
+        actionButton.setOnClickListener {
+            val htmlContent = getHtmlTemplate(Absen)
+            generatePdfFromHtml(htmlContent)
+        }
+        return view
+    }
+
+    override fun isChildSelectable(groupPosition: Int, childPosition: Int): Boolean {
+        return true
+    }
+
+    private fun getHtmlTemplate(Absen: AbsenItem): String {
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
+        val tanggal = dateFormatter.format(Absen.tanggal)
+        val jammasuk = timeFormatter.format(Absen.masuk)
+        val jamkeluar = timeFormatter.format(Absen.masuk)
         val template = """
             <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Absence Receipt for Employee</title>
+                    <title>Work Assignment Receipt for Employee</title>
                     <style>
                         body {
                             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -140,15 +199,19 @@ class AbsenAdapter(
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="[URL to Perusahaan Logo]" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
-                        <p><strong>Date Printed:</strong> ${SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())}</p>
-                        <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
-                        <p><strong>Worker Name:</strong> ${pekerja.nama}</p>
-                        <p><strong>Date Worked:</strong> [absen Date]</p>
-                        <p><strong>Check-in Time:</strong> ${absen.jamMasuk}</p>
-                        <p><strong>Check-out Time:</strong> ${absen.jamKeluar}</p>
-                        <p><strong>Total Hours Worked:</strong> ${calculateTotalHours(absen.jamMasuk,absen.jamKeluar)}</p>
+                        <p><strong>Date Printed:</strong> ${
+                        dateFormatter.format(
+                            Date()
+                        )
+                 }</p>
+                <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
+                <p><strong>Worker Name:</strong> ${Absen.nama_pekerja}</p>
+                <p><strong>Date of Assignment:</strong></p>
+                <p><strong>Date:</strong> ${tanggal}</p>
+                <p><strong>Start Time:</strong> ${jammasuk}</p>
+                <p><strong>End Time:</strong> ${jamkeluar}</p>
                     </div>
                     <footer>
                         <p>Powered by Workhubs</p>
@@ -162,16 +225,19 @@ class AbsenAdapter(
         return template
     }
 
-    private fun calculateTotalHours(startTime: String, endTime: String): String {
-        val format = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val start = format.parse(startTime)
-        val end = format.parse(endTime)
-
-        val diff = end.time - start.time
-        val hours = diff / (60 * 60 * 1000)
-        val minutes = (diff % (60 * 60 * 1000)) / (60 * 1000)
-
-        return String.format(Locale.getDefault(), "%d hours %02d minutes", hours, minutes)
+    private fun generatePdfFromHtml(htmlContent: String) {
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val outputPdfFile = File(downloadsDir, "receipt.pdf")
+            val outputStream = FileOutputStream(outputPdfFile)
+            val converterProperties = ConverterProperties()
+            HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+            outputStream.close()
+            Toast.makeText(context, "Receipt downloaded at ${outputPdfFile.absolutePath}", Toast.LENGTH_SHORT).show()
+            // PDF is generated, you can now save it or share it as needed
+        } catch (e: Exception) {
+            Log.e("PDFGeneration", "Error generating PDF: ${e.message}", e)
+        }
     }
 }
 

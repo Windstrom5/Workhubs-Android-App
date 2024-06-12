@@ -151,7 +151,7 @@ class RegisterActivity : AppCompatActivity() {
                 selectedFile,
                 secretKey
             )
-            val url = "http://192.168.1.5:8000/api/"
+            val url = "http://192.168.1.6:8000/api/"
             val retrofit = Retrofit.Builder()
                 .baseUrl(url)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -254,7 +254,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun getSecretKeysFromApi(): List<String> {
-        val apiUrl = "http://192.168.1.5:8000/api/GetPerusahaan"
+        val apiUrl = "http://192.168.1.6:8000/api/GetPerusahaan"
 
         val secretKeysList = mutableListOf<String>()
 
@@ -337,7 +337,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
 //    private fun makeApiRequest(secretKey: String) {
-//        val url = "http://192.168.1.5:8000/api/"
+//        val url = "http://192.168.1.6:8000/api/"
 //
 //        val retrofit = Retrofit.Builder()
 //            .baseUrl(url)

@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.BaseExpandableListAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
@@ -27,11 +29,28 @@ import com.windstrom5.tugasakhir.model.Perusahaan
 class LemburAdapter(
     private val perusahaan: Perusahaan,
     private val context: Context,
-    private val statusWithLemburList: List<historyLembur>,
+    private var statusWithLemburList: List<historyLembur>,
     private val Role:String
 ) : BaseExpandableListAdapter() {
     private val rotationAngleExpanded = 180f
     private val rotationAngleCollapsed = 0f
+    private var originalStatusWithLemburList: List<historyLembur> = statusWithLemburList.toList()
+
+    fun filterData(query: String) {
+        val lowerCaseQuery = query.toLowerCase()
+        statusWithLemburList = if (lowerCaseQuery.isEmpty()) {
+            originalStatusWithLemburList
+        } else {
+            originalStatusWithLemburList.filter { historyDinas ->
+                historyDinas.lemburList.any { dinas ->
+                    dinas.id.toString().contains(lowerCaseQuery)
+                }
+            }
+        }
+
+        // Notify the adapter with the filtered data
+        notifyDataSetChanged()
+    }
     override fun getGroupCount(): Int {
         return statusWithLemburList.size
     }
@@ -103,7 +122,7 @@ class LemburAdapter(
         jam.text = "$jammasuk - $jamkeluar"
         if (Role == "Admin" && lembur.status == "Pending") {
             actionButton.visibility = View.VISIBLE
-            actionButton.text =  "Respond \nIzin"
+            actionButton.text =  "Respond \nLembur"
         } else if (Role == "Admin" && lembur.status == "Accept") {
             actionButton.visibility = View.VISIBLE
             actionButton.text =  "View \nData"
@@ -119,30 +138,29 @@ class LemburAdapter(
         }
         actionButton.setOnClickListener {
             when (actionButton.text) {
-                "Download Receipt" -> {
+                "Download \nReceipt" -> {
                     val htmlContent = getHtmlTemplate(lembur)
                     generatePdfFromHtml(htmlContent)
                 }
-                "Respond \nIzin" -> {
-                    Log.d("izin", "clicked")
+                "Respond \nLembur" -> {
+                    Log.d("Lembur", "clicked")
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
-                    bundle.putParcelable("lembur", lembur) // Pass different object for izin
+                    bundle.putParcelable("lembur", lembur) // Pass different object for Lembur
                     bundle.putString("layoutType", "lembur_layout") // Add layout type here
                     bundle.putString("category","Respond")
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
                 "Edit \nData" ->{
-                    Log.d("izin", "clicked")
+                    Log.d("Lembur", "clicked")
                     val fragmentManager = (context as AppCompatActivity).supportFragmentManager
                     val previewDialogFragment = PreviewDialogFragment()
                     val bundle = Bundle()
-                    bundle.putParcelable("lembur", lembur) // Pass different object for izin
+                    bundle.putParcelable("lembur", lembur) // Pass different object for Lembur
                     bundle.putString("layoutType", "lembur_layout") // Add layout type here
                     bundle.putString("category","Edit")
-                    bundle.putParcelable("perusahaan",perusahaan)
                     previewDialogFragment.arguments = bundle
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
@@ -153,7 +171,11 @@ class LemburAdapter(
     }
 
     private fun getHtmlTemplate(lembur: LemburItem): String {
-        // Define your HTML template with placeholders for data
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
+        val tanggal = dateFormatter.format(lembur.tanggal)
+        val jammasuk = timeFormatter.format(lembur.waktu_masuk)
+        val jamkeluar = timeFormatter.format(lembur.waktu_pulang)
         val template = """
             <!DOCTYPE html>
                 <html lang="en">
@@ -198,18 +220,18 @@ class LemburAdapter(
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="[URL to Perusahaan Logo]" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
                         <p><strong>Date Printed:</strong> ${
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                Date()
-            )
-        }</p>
-                    <p><strong>Company Name:</strong> ${lembur.nama_perusahaan}</p>
+                        dateFormatter.format(
+                            Date()
+                        )
+                    }</p>
+                    <p><strong>Company Name:</strong> ${perusahaan.nama}</p>
                     <p><strong>Worker Name:</strong> ${lembur.nama_pekerja}</p>
-                    <p><strong>Date Worked:</strong> ${lembur.tanggal}</p>
-                    <p><strong>Check-in Time:</strong> ${lembur.waktu_masuk}</p>
-                    <p><strong>Check-out Time:</strong> ${lembur.waktu_pulang}</p>
+                    <p><strong>Date Worked:</strong> ${tanggal}</p>
+                    <p><strong>Check-in Time:</strong> ${jammasuk}</p>
+                    <p><strong>Check-out Time:</strong> ${jamkeluar}</p>
                     <p><strong>Work Description:</strong> ${lembur.pekerjaan}</p>
                     </div>
                     <footer>
@@ -224,12 +246,17 @@ class LemburAdapter(
         return template
     }
     private fun generatePdfFromHtml(htmlContent: String) {
-        val outputPdfFile = File(context.getExternalFilesDir(null), "receipt.pdf")
-        val outputStream = FileOutputStream(outputPdfFile)
-        val converterProperties = ConverterProperties()
-        HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
-        outputStream.close()
-
-        // PDF is generated, you can now save it or share it as needed
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val outputPdfFile = File(downloadsDir, "receipt.pdf")
+            val outputStream = FileOutputStream(outputPdfFile)
+            val converterProperties = ConverterProperties()
+            HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+            outputStream.close()
+            Toast.makeText(context, "Receipt downloaded at ${outputPdfFile.absolutePath}", Toast.LENGTH_SHORT).show()
+            // PDF is generated, you can now save it or share it as needed
+        } catch (e: Exception) {
+            Log.e("PDFGeneration", "Error generating PDF: ${e.message}", e)
+        }
     }
 }

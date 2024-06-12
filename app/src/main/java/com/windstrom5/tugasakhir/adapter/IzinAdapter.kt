@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.adapter
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.BaseExpandableListAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.itextpdf.html2pdf.ConverterProperties
 import com.itextpdf.html2pdf.HtmlConverter
@@ -20,6 +22,7 @@ import com.windstrom5.tugasakhir.model.IzinItem
 import com.windstrom5.tugasakhir.model.LemburItem
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.historyDinas
 import com.windstrom5.tugasakhir.model.historyIzin
 import com.windstrom5.tugasakhir.model.historyLembur
 import java.io.File
@@ -29,12 +32,29 @@ import java.util.Date
 import java.util.Locale
 
 class IzinAdapter (
+    private val perusahaan: Perusahaan,
     private val context: Context,
-    private val statusWithIzinList: List<historyIzin>,
+    private var statusWithIzinList: List<historyIzin>,
     private val Role:String
 ) : BaseExpandableListAdapter() {
     private val rotationAngleExpanded = 180f
     private val rotationAngleCollapsed = 0f
+    private var originalStatusWithIzinList: List<historyIzin> = statusWithIzinList.toList()
+    fun filterData(query: String) {
+        val lowerCaseQuery = query.toLowerCase()
+        statusWithIzinList = if (lowerCaseQuery.isEmpty()) {
+            originalStatusWithIzinList
+        } else {
+            originalStatusWithIzinList.filter { historyDinas ->
+                historyDinas.izinList.any { dinas ->
+                    dinas.id.toString().contains(lowerCaseQuery)
+                }
+            }
+        }
+
+        // Notify the adapter with the filtered data
+        notifyDataSetChanged()
+    }
     override fun getGroupCount(): Int {
         return statusWithIzinList.size
     }
@@ -102,7 +122,7 @@ class IzinAdapter (
         val tanggalFormatted = dateFormatter.format(izin.tanggal)
         tanggal.text = tanggalFormatted
         alasan.text = izin.kategori
-        Role?.let { Log.d("Role3", it) }
+        Role.let { Log.d("Role3", it) }
         if (Role == "Admin" && izin.status == "Pending") {
             actionButton.visibility = View.VISIBLE
             actionButton.text =  "Respond \nIzin"
@@ -122,7 +142,7 @@ class IzinAdapter (
 
         actionButton.setOnClickListener {
             when (actionButton.text) {
-                "Download Receipt" -> {
+                "Download \nReceipt" -> {
                     val htmlContent = getHtmlTemplate(izin)
                     generatePdfFromHtml(htmlContent)
                 }
@@ -155,7 +175,8 @@ class IzinAdapter (
     }
 
     private fun getHtmlTemplate(izin: IzinItem): String {
-        // Define your HTML template with placeholders for data
+        val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val timeFormatter = SimpleDateFormat("HH:mm", Locale("id", "ID")) // Use "HH:mm" for 24-hour format
         val template = """
             <!DOCTYPE html>
                 <html lang="en">
@@ -200,15 +221,15 @@ class IzinAdapter (
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="[URL to Perusahaan Logo]" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
                         <p><strong>Date Printed:</strong> ${
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
-                Date()
-            )}</p>
+                dateFormatter.format(
+                    Date()
+                )}</p>
                 <p><strong>Company Name:</strong> ${izin.nama_perusahaan}</p>
                 <p><strong>Worker Name:</strong> ${izin.nama_pekerja}</p>
-                <p><strong>Date Requested:</strong> ${izin.tanggal}</p>
+                <p><strong>Date Requested:</strong> ${dateFormatter.format(izin.tanggal)}</p>
                 <p><strong>Izin Category:</strong> ${izin.kategori}</p>
                 <p><strong>Reason:</strong> ${izin.alasan}</p>
                     </div>
@@ -224,12 +245,17 @@ class IzinAdapter (
         return template
     }
     private fun generatePdfFromHtml(htmlContent: String) {
-        val outputPdfFile = File(context.getExternalFilesDir(null), "receipt.pdf")
-        val outputStream = FileOutputStream(outputPdfFile)
-        val converterProperties = ConverterProperties()
-        HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
-        outputStream.close()
-
-        // PDF is generated, you can now save it or share it as needed
+        try {
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val outputPdfFile = File(downloadsDir, "receipt.pdf")
+            val outputStream = FileOutputStream(outputPdfFile)
+            val converterProperties = ConverterProperties()
+            HtmlConverter.convertToPdf(htmlContent, outputStream, converterProperties)
+            outputStream.close()
+            Toast.makeText(context, "Receipt downloaded at ${outputPdfFile.absolutePath}", Toast.LENGTH_SHORT).show()
+            // PDF is generated, you can now save it or share it as needed
+        } catch (e: Exception) {
+            Log.e("PDFGeneration", "Error generating PDF: ${e.message}", e)
+        }
     }
 }

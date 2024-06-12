@@ -2,11 +2,14 @@ package com.windstrom5.tugasakhir.fragment
 
 import android.os.Bundle
 import android.os.Handler
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ExpandableListView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.windstrom5.tugasakhir.R
@@ -16,6 +19,7 @@ import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.IzinItem
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
+import com.windstrom5.tugasakhir.model.historyDinas
 import com.windstrom5.tugasakhir.model.historyIzin
 import okhttp3.ResponseBody
 import org.json.JSONException
@@ -40,7 +44,8 @@ class HistoryIzinFragment : Fragment() {
     private var fetchRunnable: Runnable? = null
     private val handler = Handler()
     private val pollingInterval = 2000L
-    private val statusWithIzinList = mutableListOf<historyIzin>()
+    private val filteredList = mutableListOf<historyIzin>() // For storing filtered data
+    private lateinit var searchEditText: EditText
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -48,6 +53,8 @@ class HistoryIzinFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_history_izin, container, false)
         getBundle()
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        adapter = perusahaan?.let { IzinAdapter(it, requireContext(), filteredList, role ?: "") }!!
+        expandableListView.setAdapter(adapter)
         if(admin != null){
             perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
             swipeRefreshLayout.setOnRefreshListener {
@@ -61,12 +68,23 @@ class HistoryIzinFragment : Fragment() {
                 perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
             }
         }
+        searchEditText = view.findViewById(R.id.searchEditText)
+        searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString().trim()
+                // Filter the data in the adapter based on the query
+                adapter.filterData(query)
+            }
+        })
         return view
     }
     private fun fetchDataPekerjaFromApi(namaPerusahaan: String,nama_pekerja: String) {
         Log.d("perusahaaan2",namaPerusahaan)
 
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -110,11 +128,14 @@ class HistoryIzinFragment : Fragment() {
                             // Populate ExpandableListView with data
                             val expandableListView =
                                 view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                            val adapter = IzinAdapter(
-                                requireContext(),
-                                statusWithIzinList,
-                                "Pekerja"
-                            )
+                            adapter = perusahaan?.let {
+                                IzinAdapter(
+                                    it,
+                                    requireContext(),
+                                    statusWithIzinList,
+                                    "Pekerja"
+                                )
+                            }!!
                             expandableListView?.setAdapter(adapter)
                             swipeRefreshLayout.isRefreshing = false
                         } catch (e: JSONException) {
@@ -135,7 +156,7 @@ class HistoryIzinFragment : Fragment() {
     }
 
     private fun fetchDataPerusahaanFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -181,11 +202,14 @@ class HistoryIzinFragment : Fragment() {
                             // Populate ExpandableListView with data
                             val expandableListView =
                                 view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                            val adapter = IzinAdapter(
-                                requireContext(),
-                                statusWithIzinList,
-                                "Admin"
-                            )
+                            adapter = perusahaan?.let {
+                                IzinAdapter(
+                                    it,
+                                    requireContext(),
+                                    statusWithIzinList,
+                                    "Admin"
+                                )
+                            }!!
                             expandableListView?.setAdapter(adapter)
                             swipeRefreshLayout.isRefreshing = false
                         } catch (e: JSONException) {

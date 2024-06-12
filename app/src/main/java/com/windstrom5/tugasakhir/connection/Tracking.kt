@@ -20,6 +20,7 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.activity.AbsensiActivity
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import org.json.JSONObject
@@ -28,67 +29,58 @@ class Tracking : Service() {
     private lateinit var locationManager: LocationManager
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            // Handle location updates
             val latitude = location.latitude
             val longitude = location.longitude
+            Log.d("latitude2", latitude.toString())
             sendLocationUpdateHandler(latitude, longitude, perusahaan, pekerja)
         }
-
     }
 
     private lateinit var handler: Handler
     private lateinit var locationUpdateRunnable: Runnable
-    private lateinit var perusahaan: Perusahaan // Declare Perusahaan variable
-    private lateinit var pekerja: Pekerja // Declare Pekerja variable
+    private lateinit var perusahaan: Perusahaan
+    private lateinit var pekerja: Pekerja
+
     override fun onBind(intent: Intent?): IBinder? {
-        // Return null because we don't intend to allow binding to this service
         return null
     }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Extract Perusahaan and Pekerja objects from the intent
         perusahaan = intent?.getParcelableExtra("perusahaan")!!
         pekerja = intent.getParcelableExtra("pekerja")!!
 
-        // Start listening for location updates
         startLocationUpdates()
-        // Make the service a foreground service
         startForegroundService()
 
-        // Return START_STICKY to ensure the service restarts if it's killed by the system
         return START_STICKY
     }
+
     override fun onCreate() {
         super.onCreate()
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
-        // Initialize Handler and Runnable for periodic location updates
         handler = Handler(Looper.getMainLooper())
         locationUpdateRunnable = Runnable { startLocationUpdates() }
-//        // Start listening for location updates
-//        startLocationUpdates()
-//        // Make the service a foreground service
-//        startForegroundService()
     }
+
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun startForegroundService() {
-        // Create a notification channel (for Android Oreo and higher)
         createNotificationChannel()
 
-        // Create a notification intent
-        val notificationIntent: Intent? = null
-        val pendingIntent = notificationIntent?.let {
-            PendingIntent.getActivity(this, 0, it, 0)
-        }
+        val notificationIntent = Intent(this, AbsensiActivity::class.java)
+        val pendingIntent =
+            PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
-        // Create a notification
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Your App is running")
             .setContentText("Tracking location in the background")
             .setSmallIcon(R.mipmap.ic_logo)
             .setContentIntent(pendingIntent)
             .build()
+
         startForeground(NOTIFICATION_ID, notification)
     }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -96,15 +88,13 @@ class Tracking : Service() {
                 "Your App Notification Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
-            val notificationManager =
-                getSystemService(NotificationManager::class.java)
+            val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
     }
 
     private fun startLocationUpdates() {
         try {
-            // Request location updates from the GPS provider with a specified interval and distance criteria
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,
                 LOCATION_UPDATE_INTERVAL,
@@ -112,7 +102,6 @@ class Tracking : Service() {
                 locationListener
             )
 
-            // Schedule the next location update after the specified interval
             handler.postDelayed(locationUpdateRunnable, LOCATION_UPDATE_INTERVAL)
         } catch (ex: SecurityException) {
             Log.e(TAG, "Location permission not granted")
@@ -120,24 +109,20 @@ class Tracking : Service() {
     }
 
     private fun sendLocationUpdateHandler(latitude: Double, longitude: Double, perusahaan: Perusahaan, pekerja: Pekerja) {
-        val url = "https://b184-36-73-110-50.ngrok-free.app/api/UpdateLocation"
-        val params = JSONObject()
-        try {
-            params.put("perusahaan", perusahaan.nama)
-            params.put("nama", pekerja.nama)
-            params.put("latitude", latitude)
-            params.put("longitude", longitude)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val url = "http://192.168.1.6:8000/api/UpdateLocation"
+        val params = JSONObject().apply {
+            put("perusahaan", perusahaan.nama)
+            put("nama", pekerja.nama)
+            put("latitude", latitude)
+            put("longitude", longitude)
         }
 
-        val request = JsonObjectRequest(
-            Request.Method.PUT, url, params,
+        val request = JsonObjectRequest(Request.Method.PUT, url, params,
             { response ->
                 try {
                     val status = response.getString("status")
                     val message = response.getString("message")
-                    if ("success" == status) {
+                    if (status == "success") {
                         // Handle success
                     } else {
                         // Handle error
@@ -156,14 +141,9 @@ class Tracking : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Stop location updates when the service is destroyed
         locationManager.removeUpdates(locationListener)
-
-        // Remove any pending callbacks to avoid leaks
         handler.removeCallbacks(locationUpdateRunnable)
     }
-
-    // Other Service lifecycle methods...
 
     companion object {
         private const val TAG = "BackgroundService"

@@ -2,16 +2,20 @@ package com.windstrom5.tugasakhir.fragment
 
 import android.os.Bundle
 import android.os.Handler
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ExpandableListView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.adapter.DinasAdapter
 import com.windstrom5.tugasakhir.connection.ApiService
+import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.DinasItem
 import com.windstrom5.tugasakhir.model.Pekerja
@@ -40,7 +44,9 @@ class HistoryDinasFragment : Fragment() {
     private var fetchRunnable: Runnable? = null
     private val handler = Handler()
     private val pollingInterval = 2000L
-    private val statusWithDinasList = mutableListOf<historyDinas>()
+    private lateinit var searchEditText:EditText
+    private var statusWithDinasList: List<historyDinas>? = null
+    private val filteredList = mutableListOf<historyDinas>() // For storing filtered data
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -48,6 +54,9 @@ class HistoryDinasFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_history_dinas, container, false)
         getBundle()
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        expandableListView = view.findViewById(R.id.expandableListView)
+        adapter = perusahaan?.let { DinasAdapter(it,requireContext(), filteredList, role ?: "") }!!
+        expandableListView.setAdapter(adapter)
         if(admin != null){
             perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
             swipeRefreshLayout.setOnRefreshListener {
@@ -59,10 +68,22 @@ class HistoryDinasFragment : Fragment() {
                 perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
             }
         }
+        searchEditText = view.findViewById(R.id.searchEditText)
+        searchEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            }
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString().trim()
+                // Filter the data in the adapter based on the query
+                adapter.filterData(query)
+            }
+        })
         return view
     }
+
     private fun fetchDataPekerjaFromApi(namaPerusahaan: String,nama_pekerja: String) {
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -109,19 +130,20 @@ class HistoryDinasFragment : Fragment() {
                             }
 
                             // Convert the map to a list of StatusWithDinas objects
-                            val statusWithDinasList = statusWithDinasMap.map { entry ->
+                            statusWithDinasList = statusWithDinasMap.map { entry ->
                                 historyDinas(entry.key, entry.value)
                             }
 
                             // Populate ExpandableListView with data
-                            val expandableListView =
-                                view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                            val adapter = DinasAdapter(
-                                requireContext(),
-                                statusWithDinasList,
-                                "Pekerja"
-                            )
-                            expandableListView?.setAdapter(adapter)
+                            adapter = perusahaan?.let {
+                                DinasAdapter(
+                                    it,
+                                    requireContext(),
+                                    statusWithDinasList!!,
+                                    "Pekerja"
+                                )
+                            }!!
+                            expandableListView.setAdapter(adapter)
                             swipeRefreshLayout.isRefreshing = false
                         } catch (e: JSONException) {
                             Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
@@ -141,7 +163,7 @@ class HistoryDinasFragment : Fragment() {
     }
 
     private fun fetchDataPerusahaanFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.5:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -191,18 +213,20 @@ class HistoryDinasFragment : Fragment() {
                                     }
 
                                     // Convert the map to a list of StatusWithDinas objects
-                                    val statusWithDinasList = statusWithDinasMap.map { entry ->
+                                    statusWithDinasList = statusWithDinasMap.map { entry ->
                                         historyDinas(entry.key, entry.value)
                                     }
 
                                     // Populate ExpandableListView with data
-                                    val expandableListView = view?.findViewById<ExpandableListView>(R.id.expandableListView)
-                                    val adapter = DinasAdapter(
-                                        requireContext(),
-                                        statusWithDinasList,
-                                        "Admin"
-                                    )
-                                    expandableListView?.setAdapter(adapter)
+                                    adapter = perusahaan?.let {
+                                        DinasAdapter(
+                                            it,
+                                            requireContext(),
+                                            statusWithDinasList!!,
+                                            "Pekerja"
+                                        )
+                                    }!!
+                                    expandableListView.setAdapter(adapter)
                                     swipeRefreshLayout.isRefreshing = false
                                 } catch (e: JSONException) {
                                     Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
@@ -248,4 +272,17 @@ class HistoryDinasFragment : Fragment() {
             Log.d("Error","Bundle Not Found")
         }
     }
+//    override fun onDataUpdated() {
+//        if(admin != null){
+//            perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
+//            swipeRefreshLayout.setOnRefreshListener {
+//                perusahaan?.let { fetchDataPerusahaanFromApi(it.nama) }
+//            }
+//        }else{
+//            perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
+//            swipeRefreshLayout.setOnRefreshListener {
+//                perusahaan?.let { pekerja?.let { it1 -> fetchDataPekerjaFromApi(it.nama, it1.nama) } }
+//            }
+//        }
+//    }
 }
