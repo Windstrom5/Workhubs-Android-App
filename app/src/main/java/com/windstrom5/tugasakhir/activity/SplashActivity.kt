@@ -6,11 +6,13 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.widget.ImageView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
+import com.blogspot.atifsoftwares.animatoolib.Animatoo
 import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiService
@@ -56,7 +58,7 @@ class SplashActivity : AppCompatActivity() {
 //        if(savedSession!= null && checkSession(savedSession) == true){
 //            redirectToActivity(savedSession)
 //        }else{
-//            Handler().postDelayed({
+//            Handler(Looper.getMainLooper()).postDelayed({
 //                val intent = Intent(this@SplashActivity, LoginActivity::class.java)
 //                startActivity(intent)
 //                finish()
@@ -118,7 +120,7 @@ class SplashActivity : AppCompatActivity() {
                             val intent = Intent(this@SplashActivity, LoginActivity::class.java)
                             intent.putExtra("perusahaanList", ArrayList(newPerusahaanList))
                             startActivity(intent)
-
+                            Animatoo.animateCard(this@SplashActivity)
                         } catch (e: JSONException) {
                             Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
                         } catch (e: ParseException) {
@@ -236,7 +238,7 @@ class SplashActivity : AppCompatActivity() {
     }
     private fun showToastWithDelay(message: String) {
         showToast(message)
-        Handler().postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             openAppSettings()
         }, MotionToast.LONG_DURATION)
     }
@@ -248,7 +250,7 @@ class SplashActivity : AppCompatActivity() {
         if (savedAdmin != null || savedPekerja != null) {
             redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja)
         } else {
-            Handler().postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed({
                 val intent = Intent(this@SplashActivity, LoginActivity::class.java)
                 startActivity(intent)
                 finish()
@@ -265,7 +267,7 @@ class SplashActivity : AppCompatActivity() {
         }else{
             Log.d("CompanyActivity", "Logo is blank")
             val imageUrl =
-                "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
             Glide.with(this)
                 .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL
@@ -273,7 +275,7 @@ class SplashActivity : AppCompatActivity() {
         }
 
         if (admin != null) {
-            Handler().postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed({
                 val intent = Intent(this@SplashActivity, AdminActivity::class.java)
                 val userBundle = Bundle()
                 userBundle.putParcelable("user", admin)
@@ -283,13 +285,14 @@ class SplashActivity : AppCompatActivity() {
                 finish()
             }, splashTimeOut)
         } else {
-            Handler().postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed({
                 val intent = Intent(this@SplashActivity, UserActivity::class.java)
                 val userBundle = Bundle()
                 userBundle.putParcelable("user", pekerja)
                 userBundle.putParcelable("perusahaan", perusahaan)
                 intent.putExtra("data", userBundle)
                 startActivity(intent)
+                Animatoo.animateCard(this@SplashActivity) // Apply slide left animation
                 finish()
             }, splashTimeOut)
         }

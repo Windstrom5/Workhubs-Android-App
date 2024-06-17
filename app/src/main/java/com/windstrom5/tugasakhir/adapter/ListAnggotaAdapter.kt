@@ -1,5 +1,6 @@
 package com.windstrom5.tugasakhir.adapter
 
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView.OnItemClickListener
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.saadahmedev.popupdialog.PopupDialog
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.activity.ProfileActivity
 import com.windstrom5.tugasakhir.model.Admin
@@ -47,7 +49,7 @@ class ListAnggotaAdapter(
             // Set data to views for Pekerja
             if(currentPekerja.profile!= "null"){
                 Glide.with(binding.profileImageView.context)
-                    .load("http://192.168.1.6:8000/storage/${currentPekerja.profile}")
+                    .load("http://192.168.1.3:8000/storage/${currentPekerja.profile}")
                     .into(binding.profileImageView)
             }else{
                 Glide.with(binding.profileImageView.context)
@@ -79,7 +81,7 @@ class ListAnggotaAdapter(
             // Set data to views for Admin
             if (currentAdmin.profile!= "null") {
                 Glide.with(binding.profileImageView.context)
-                    .load("http://192.168.1.6:8000/storage/${currentAdmin.profile}")
+                    .load("http://192.168.1.3:8000/storage/${currentAdmin.profile}")
                     .into(binding.profileImageView)
             } else {
                 Glide.with(binding.profileImageView.context)

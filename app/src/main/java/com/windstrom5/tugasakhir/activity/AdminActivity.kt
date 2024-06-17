@@ -88,6 +88,8 @@ class AdminActivity : AppCompatActivity() {
                     "Are you sure you want to logout?" +
                             " This action cannot be undone"
                 )
+                .setPositiveButtonText("Yes") // Set custom text for the positive button
+                .setNegativeButtonText("No") // Set custom text for the negative button
                 .build(object : StandardDialogActionListener {
                     override fun onPositiveButtonClicked(dialog: Dialog) {
                         val sharedPreferencesManager = SharedPreferencesManager(this@AdminActivity)
@@ -419,7 +421,6 @@ class AdminActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
         PopupDialog.getInstance(this@AdminActivity)
             .standardDialogBuilder()
             .createIOSDialog()
@@ -428,6 +429,8 @@ class AdminActivity : AppCompatActivity() {
                 "Are you sure you want to logout?" +
                         " This action cannot be undone"
             )
+            .setPositiveButtonText("Yes") // Set custom text for the positive button
+            .setNegativeButtonText("No") // Set custom text for the negative button
             .build(object : StandardDialogActionListener {
                 override fun onPositiveButtonClicked(dialog: Dialog) {
                     val sharedPreferencesManager = SharedPreferencesManager(this@AdminActivity)

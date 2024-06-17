@@ -116,11 +116,10 @@ import javax.mail.internet.MimeMessage
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
         }
-
     }
 
 //    private fun fetchDataFromApi() {
-//        val url = "http://192.168.1.6:8000/api/GetPerusahaan"
+//        val url = "http://192.168.1.3:8000/api/GetPerusahaan"
 //        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
 //            { response ->
 //                val perusahaanArray = response.getJSONArray("perusahaan")
@@ -233,7 +232,7 @@ import javax.mail.internet.MimeMessage
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(email: String, password: String) {
-        val url = "http://192.168.1.6:8000/api/login"
+        val url = "http://192.168.1.3:8000/api/login"
         val checkBoxRememberMe = findViewById<CheckBox>(R.id.checkBoxRememberMe)
         val rememberMeChecked = checkBoxRememberMe.isChecked
         val sharedPreferencesManager = SharedPreferencesManager(this)

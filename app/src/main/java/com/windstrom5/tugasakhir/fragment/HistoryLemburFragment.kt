@@ -2,6 +2,7 @@ package com.windstrom5.tugasakhir.fragment
 
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -46,7 +47,7 @@ class HistoryLemburFragment : Fragment(){
     private var pekerja : Pekerja? = null
     private var role : String? = null
     private var fetchRunnable: Runnable? = null
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private val pollingInterval = 2000L
     private val filteredList = mutableListOf<historyLembur>() // For storing filtered data
     private lateinit var searchEditText: EditText
@@ -84,7 +85,7 @@ class HistoryLemburFragment : Fragment(){
         return view
     }
     private fun fetchDataPekerjaFromApi(namaPerusahaan: String,nama_pekerja: String) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -158,7 +159,7 @@ class HistoryLemburFragment : Fragment(){
     }
 
     private fun fetchDataPerusahaanFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())

@@ -126,7 +126,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.isEnabled = false
                 kegiatanInputLayout.editText?.setText(dinas?.kegiatan)
 
-                val pdfUrl = "http://192.168.1.6:8000/storage/${dinas?.bukti}"
+                val pdfUrl = "http://192.168.1.3:8000/storage/${dinas?.bukti}"
                 val pdfView = view.findViewById<PDFView>(R.id.pdfView)
                 pdfView.visibility = View.VISIBLE
                 val retrievePdfTask = RetrievePDFfromUrl(pdfView)
@@ -181,7 +181,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.editText?.isFocusable = true
                 kegiatanInputLayout.editText?.isFocusableInTouchMode = true
                 kegiatanInputLayout.editText?.setText(dinas?.kegiatan)
-                val pdfUrl = "http://192.168.1.6:8000/storage/${dinas?.bukti}"
+                val pdfUrl = "http://192.168.1.3:8000/storage/${dinas?.bukti}"
                 val pdfView = view.findViewById<PDFView>(R.id.pdfView)
                 pdfView.visibility = View.VISIBLE
                 val retrievePdfTask = RetrievePDFfromUrl(pdfView)
@@ -214,7 +214,7 @@ class PreviewDialogFragment: DialogFragment() {
                 view.findViewById<TextInputLayout>(R.id.masukInputLayout).editText?.setText(lembur?.waktu_masuk.toString())
                 view.findViewById<TextInputLayout>(R.id.pulangInputLayout).editText?.setText(lembur?.waktu_pulang.toString())
                 view.findViewById<TextInputLayout>(R.id.kegiatanEditText).editText?.setText(lembur?.pekerjaan)
-                val attachmentUrl = "http://192.168.1.6:8000/storage/${lembur?.bukti}"
+                val attachmentUrl = "http://192.168.1.3:8000/storage/${lembur?.bukti}"
                 val imageView = view.findViewById<ImageView>(R.id.imageView)
                 imageView.visibility = View.VISIBLE
                 Glide.with(requireContext())
@@ -260,7 +260,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.editText?.isFocusable = true
                 kegiatanInputLayout.editText?.isFocusableInTouchMode = true
                 kegiatanInputLayout.editText?.setText(lembur?.pekerjaan)
-                val url = "http://192.168.1.6:8000/storage/${lembur?.bukti}"
+                val url = "http://192.168.1.3:8000/storage/${lembur?.bukti}"
                 val imageView = view.findViewById<ImageView>(R.id.imageView)
                 imageView.visibility = View.VISIBLE
                 Glide.with(requireContext())
@@ -292,7 +292,7 @@ class PreviewDialogFragment: DialogFragment() {
                 view.findViewById<TextInputLayout>(R.id.tanggalInputLayout).editText?.setText(izin?.tanggal.toString())
                 view.findViewById<TextInputLayout>(R.id.kategoriInputLayout).editText?.setText(izin?.kategori)
                 view.findViewById<TextInputLayout>(R.id.kegiatanInputLayout).editText?.setText(izin?.alasan)
-                val attachmentUrl = "http://192.168.1.6:8000/storage/${izin?.bukti}"
+                val attachmentUrl = "http://192.168.1.3:8000/storage/${izin?.bukti}"
                 val isPdf = attachmentUrl.endsWith(".pdf")
                 if (isPdf) {
                     val pdfView = view.findViewById<PDFView>(R.id.pdfView)
@@ -347,7 +347,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatan.editText?.isFocusable = true
                 kegiatan.editText?.isFocusableInTouchMode = true
 
-                val attachmentUrl = "http://192.168.1.6:8000/storage/${izin?.bukti}"
+                val attachmentUrl = "http://192.168.1.3:8000/storage/${izin?.bukti}"
                 val isPdf = attachmentUrl.endsWith(".pdf")
                 if (isPdf) {
                     // Create an instance of RetrievePDFfromUrl passing the PDFView
@@ -606,7 +606,7 @@ class PreviewDialogFragment: DialogFragment() {
         return holidaysMap
     }
     private fun updateDataDinas(dinasId: Int,TIBerangkat : TextInputLayout,TIPulang : TextInputLayout,acTujuan:AutoCompleteTextView,TIkegiatan:TextInputLayout) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -651,7 +651,7 @@ class PreviewDialogFragment: DialogFragment() {
         dismiss()
     }
     private fun updateDataLembur(lemburId: Int,TiTanggal : TextInputLayout,TIMasuk : TextInputLayout,TiKeluar:TextInputLayout,TIkegiatan:TextInputLayout) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -696,7 +696,7 @@ class PreviewDialogFragment: DialogFragment() {
         dismiss()
     }
     private fun updateDataIzin(izinId: Int,TITanggal:TextInputLayout,acIzin:AutoCompleteTextView,TIAlasan:TextInputLayout) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -906,7 +906,7 @@ class PreviewDialogFragment: DialogFragment() {
             id = dinas?.id!!
         }// Assuming you have an ID associated with the item
         // Call your API to update the status
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
         // Make a network request using Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl(url)

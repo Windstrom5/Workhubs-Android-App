@@ -149,7 +149,7 @@ class EditCompany : AppCompatActivity() {
         }
     }
     private fun updateData(Id: Int) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -284,7 +284,7 @@ class EditCompany : AppCompatActivity() {
                 }
                 if(logo == null){
                     val imageUrl =
-                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}"
+                        "http://192.168.1.3:8000/storage/${perusahaan?.logo}"
                     Glide.with(this)
                         .load(imageUrl)
                         .into(profile)
@@ -328,7 +328,7 @@ class EditCompany : AppCompatActivity() {
                     latitude = it.getDouble("latitude")
                     longitude = it.getDouble("longitude")
                     val imageUrl =
-                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     textNama.setText(it.getString("namaPerusahaan"))
                     textJamMasuk.setText(it.getString("openhour"))
                     textJamKeluar.setText(it.getString("closehour"))

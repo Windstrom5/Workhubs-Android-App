@@ -220,7 +220,7 @@ class LemburAdapter(
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.3:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
                         <p><strong>Date Printed:</strong> ${
                         dateFormatter.format(

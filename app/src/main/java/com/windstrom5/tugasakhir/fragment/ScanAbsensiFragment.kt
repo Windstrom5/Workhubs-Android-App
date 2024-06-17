@@ -57,6 +57,10 @@ import io.github.g00fy2.quickie.ScanCustomCode
 import io.github.g00fy2.quickie.ScanQRCode
 import io.github.g00fy2.quickie.config.BarcodeFormat
 import io.github.g00fy2.quickie.config.ScannerConfig
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.Position
+import nl.dionsegijn.konfetti.core.emitter.Emitter
+import nl.dionsegijn.konfetti.xml.KonfettiView
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
 import java.security.MessageDigest
@@ -65,6 +69,7 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class ScanAbsensiFragment : Fragment() {
 //    private val scanCustomCode = registerForActivityResult(ScanCustomCode(), ::handleResult)
@@ -79,6 +84,7 @@ class ScanAbsensiFragment : Fragment() {
     private var longitude: Double = 0.0
     private var codeScanner: CodeScanner? = null
     private lateinit var binding: FragmentScanAbsensiBinding
+    private lateinit var viewKonfetti: KonfettiView
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -93,6 +99,7 @@ class ScanAbsensiFragment : Fragment() {
         codeScanner = CodeScanner(requireActivity(), scannerView)
         cameraExecutor = Executors.newSingleThreadExecutor()
         logo = view.findViewById(R.id.logoImage)
+        viewKonfetti = view.findViewById(R.id.konfettiView)
         requestQueue = Volley.newRequestQueue(requireContext())
         getBundle()
         val logo2 = perusahaan?.logo
@@ -103,7 +110,7 @@ class ScanAbsensiFragment : Fragment() {
                 .into(logo)
         }else{
             val imageUrl =
-                "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
             Glide.with(this)
                 .load(imageUrl)
@@ -119,9 +126,6 @@ class ScanAbsensiFragment : Fragment() {
         }
         codeScanner?.decodeCallback = DecodeCallback {
             activity?.runOnUiThread {
-                Log.d(TAG, "Result: ${it.text}")
-                Log.d(TAG, "format: ${it.barcodeFormat.name}")
-                Log.d(TAG, "rawbytes: ${it.rawBytes }")
                 getAllSecretKeysFromApi(it.text)
             }
         }
@@ -192,7 +196,7 @@ class ScanAbsensiFragment : Fragment() {
     }
 
     private fun getAllSecretKeysFromApi(qrCode: String) {
-        val apiUrl = "http://192.168.1.6:8000/api/getAllSecretKeys"
+        val apiUrl = "http://192.168.1.3:8000/api/getAllSecretKeys"
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET, apiUrl, null,
             { response ->
@@ -243,7 +247,7 @@ class ScanAbsensiFragment : Fragment() {
 
     // Check and request location permission
     private fun Absen(perusahaan: Perusahaan, pekerja: Pekerja){
-        val url = "http://192.168.1.6:8000/api/Absensi"
+        val url = "http://192.168.1.3:8000/api/Absensi"
         Log.d("testing",url)
         val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
@@ -271,6 +275,16 @@ class ScanAbsensiFragment : Fragment() {
                             startServiceIntent.putExtra("pekerja", pekerja)
                             requireActivity().startService(startServiceIntent)
                             requireActivity().runOnUiThread {
+                                val party = Party(
+                                    speed = 0f,
+                                    maxSpeed = 30f,
+                                    damping = 0.9f,
+                                    spread = 360,
+                                    colors = listOf(0xfce18a, 0xff726d, 0xf4306d, 0xb48def),
+                                    position = Position.Relative(0.5, 0.3),
+                                    emitter = Emitter(duration = 100, TimeUnit.MILLISECONDS).max(100)
+                                )
+                                viewKonfetti.start(party)
                                 MotionToast.createToast(
                                     requireActivity(),
                                     "Absen Startrd",
@@ -292,6 +306,16 @@ class ScanAbsensiFragment : Fragment() {
                             val serviceIntent = Intent(requireContext(), Tracking::class.java)
                             requireContext().stopService(serviceIntent)
                             requireActivity().runOnUiThread {
+                                val party = Party(
+                                    speed = 0f,
+                                    maxSpeed = 30f,
+                                    damping = 0.9f,
+                                    spread = 360,
+                                    colors = listOf(0xfce18a, 0xff726d, 0xf4306d, 0xb48def),
+                                    position = Position.Relative(0.5, 0.3),
+                                    emitter = Emitter(duration = 100, TimeUnit.MILLISECONDS).max(100)
+                                )
+                                viewKonfetti.start(party)
                                 MotionToast.createToast(
                                     requireActivity(),
                                     "Absen Completed",

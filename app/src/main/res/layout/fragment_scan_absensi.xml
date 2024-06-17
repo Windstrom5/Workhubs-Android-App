@@ -5,8 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F9FCFF"
-    tools:context=".feature.ScannerActivity">
-
+    tools:context=".fragment.ScanAbsensiFragment">
+    <nl.dionsegijn.konfetti.xml.KonfettiView
+        android:id="@+id/konfettiView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
     <!--    <com.google.android.material.appbar.MaterialToolbar-->
     <!--        android:id="@+id/toolbar"-->
     <!--        android:layout_width="match_parent"-->

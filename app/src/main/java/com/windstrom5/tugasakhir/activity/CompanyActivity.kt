@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -65,7 +66,7 @@ class CompanyActivity : AppCompatActivity() {
     private lateinit var setting:ImageView
     private var job: Job? = null
     private var fetchRunnable: Runnable? = null
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private val pollingInterval = 2000L // Polling interval in milliseconds
     private lateinit var countpekerja : TextView
     private lateinit var countadmin : TextView
@@ -87,7 +88,7 @@ class CompanyActivity : AppCompatActivity() {
         requestQueue = Volley.newRequestQueue(this)
         countpekerja = binding.countpekerja
         countadmin = binding.countadmin
-//        perusahaan?.let { fetchDataFromApi(it.nama) }
+        perusahaan?.let { fetchDataFromApi(it.nama) }
         swipeRefreshLayout = binding.swipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener {
             perusahaan?.let { fetchDataFromApi(it.nama) }
@@ -188,7 +189,7 @@ class CompanyActivity : AppCompatActivity() {
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.6:8000/api/") // Replace with your base URL
+            .baseUrl("http://192.168.1.3:8000/api/") // Replace with your base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -257,7 +258,7 @@ class CompanyActivity : AppCompatActivity() {
             .show()
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
         Log.d("FetchDataError", "Nama: ${namaPerusahaan}")
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -409,7 +410,7 @@ class CompanyActivity : AppCompatActivity() {
                 }
                 if (perusahaan?.logo != "null") {
                     val imageUrl =
-                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     val profileImageView = binding.circleImageView
                     val text = binding.tvName
                     text.setText(perusahaan?.nama)

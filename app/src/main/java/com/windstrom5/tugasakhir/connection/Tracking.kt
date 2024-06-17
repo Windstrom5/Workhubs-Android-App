@@ -109,7 +109,7 @@ class Tracking : Service() {
     }
 
     private fun sendLocationUpdateHandler(latitude: Double, longitude: Double, perusahaan: Perusahaan, pekerja: Pekerja) {
-        val url = "http://192.168.1.6:8000/api/UpdateLocation"
+        val url = "http://192.168.1.3:8000/api/UpdateLocation"
         val params = JSONObject().apply {
             put("perusahaan", perusahaan.nama)
             put("nama", pekerja.nama)

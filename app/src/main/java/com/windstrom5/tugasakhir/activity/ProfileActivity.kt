@@ -91,19 +91,30 @@ class ProfileActivity : AppCompatActivity() {
                 if(role == "Admin"){
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
-                        val imageUrl =
-                            "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
-                        Glide.with(this@ProfileActivity)
-                            .load(imageUrl)
-                            .into(profile)
+                        if (pekerja?.profile != "null") {
+                            val imageUrl =
+                                "http://192.168.1.3:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            Glide.with(this)
+                                .load(imageUrl)
+                                .into(profile)
+                        }else{
+                            Glide.with(this)
+                                .load(R.drawable.profile)
+                                .into(profile)
+                        }
                         nama.setText(pekerja?.nama)
                         username.setText(pekerja?.nama)
                         email.setText(pekerja?.email)
                         val dateString = pekerja?.tanggal_lahir
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val tanggalLahirDate = dateFormat.parse(dateString.toString())
-                        val formattedDate = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID")).format(tanggalLahirDate)
-                        tanggalLahir.setText(formattedDate)
+                        val inputDateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+                        val outputDateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                        try {
+                            val tanggalLahirDate = inputDateFormat.parse(dateString.toString())
+                            val formattedDate = outputDateFormat.format(tanggalLahirDate)
+                            tanggalLahir.setText(formattedDate)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         promote.visibility=View.VISIBLE
                         delete.visibility=View.VISIBLE
                     }else{
@@ -111,27 +122,58 @@ class ProfileActivity : AppCompatActivity() {
                         nama.setText(admin?.nama)
                         username.setText(admin?.nama)
                         email.setText(admin?.email)
-                        tanggalLahir.setText(admin?.tanggal_lahir.toString())
-                        val imageUrl =
-                            "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
-                        Glide.with(this@ProfileActivity)
-                            .load(imageUrl)
-                            .into(profile)
+                        val dateString = admin?.tanggal_lahir
+                        val inputDateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+                        val outputDateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                        try {
+                            val tanggalLahirDate = inputDateFormat.parse(dateString.toString())
+                            val formattedDate = outputDateFormat.format(tanggalLahirDate)
+                            // Use formattedDate as needed
+                            println(formattedDate) // Output: "06 Juni 2024"
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        if (admin?.profile != "null") {
+                            val imageUrl =
+                                "http://192.168.1.3:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            Glide.with(this)
+                                .load(imageUrl)
+                                .into(profile)
+                        }else{
+                            Glide.with(this)
+                                .load(R.drawable.profile)
+                                .into(profile)
+                        }
                         promote.visibility=View.GONE
                         delete.visibility=View.VISIBLE
                     }
                 }else {
                     if(jenis == "Pekerja"){
                         pekerja = it.getParcelable("user")
-                        val imageUrl =
-                            "http://192.168.1.6:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
-                        Glide.with(this@ProfileActivity)
-                            .load(imageUrl)
-                            .into(profile)
+                        if (pekerja?.profile != "null") {
+                            val imageUrl =
+                                "http://192.168.1.3:8000/storage/${pekerja?.profile}" // Replace with your Laravel image URL
+                            Glide.with(this)
+                                .load(imageUrl)
+                                .into(profile)
+                        }else{
+                            Glide.with(this)
+                                .load(R.drawable.profile)
+                                .into(profile)
+                        }
                         nama.setText(pekerja?.nama)
                         username.setText(pekerja?.nama)
                         email.setText(pekerja?.email)
-                        tanggalLahir.setText(pekerja?.tanggal_lahir.toString())
+                        val dateString = pekerja?.tanggal_lahir
+                        val inputDateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+                        val outputDateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                        try {
+                            val tanggalLahirDate = inputDateFormat.parse(dateString.toString())
+                            val formattedDate = outputDateFormat.format(tanggalLahirDate)
+                            tanggalLahir.setText(formattedDate)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         promote.visibility=View.GONE
                         delete.visibility=View.GONE
                     }else{
@@ -139,12 +181,27 @@ class ProfileActivity : AppCompatActivity() {
                         nama.setText(admin?.nama)
                         username.setText(admin?.nama)
                         email.setText(admin?.email)
-                        tanggalLahir.setText(admin?.tanggal_lahir.toString())
-                        val imageUrl =
-                            "http://192.168.1.6:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
-                        Glide.with(this@ProfileActivity)
-                            .load(imageUrl)
-                            .into(profile)
+                        val dateString = admin?.tanggal_lahir
+                        val inputDateFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+                        val outputDateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                        try {
+                            val tanggalLahirDate = inputDateFormat.parse(dateString.toString())
+                            val formattedDate = outputDateFormat.format(tanggalLahirDate)
+                            tanggalLahir.setText(formattedDate)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        if (admin?.profile != "null") {
+                            val imageUrl =
+                                "http://192.168.1.3:8000/storage/${admin?.profile}" // Replace with your Laravel image URL
+                            Glide.with(this)
+                                .load(imageUrl)
+                                .into(profile)
+                        }else{
+                            Glide.with(this)
+                                .load(R.drawable.profile)
+                                .into(profile)
+                        }
                         promote.visibility=View.GONE
                         delete.visibility=View.GONE
                     }
@@ -155,3 +212,12 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 }
+
+//PopupDialog.getInstance(this@AdminActivity)
+//.statusDialogBuilder()
+//.createSuccessDialog()
+//.setHeading("Well Done")
+//.setDescription("You have successfully completed the task")
+//.setActionButtonText("OK")
+//.build(Dialog::dismiss)
+//.show()

@@ -357,7 +357,7 @@ class AddLemburFragment : Fragment() {
     }
 
     private fun saveDataLembur(pekerja: Pekerja,perusahaan: Perusahaan){
-        val url = "http://192.168.1.6:8000/api/"
+        val url = "http://192.168.1.3:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
