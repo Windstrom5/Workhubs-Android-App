@@ -1,56 +1,66 @@
 package com.windstrom5.tugasakhir.activity
 
+//import com.google.firebase.FirebaseApp
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
-import android.webkit.WebView
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.Button
 import android.widget.CheckBox
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.PopupWindow
-import android.widget.RelativeLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.safetynet.SafetyNet
+import com.google.android.gms.safetynet.SafetyNetClient
+import com.google.android.gms.safetynet.SafetyNetStatusCodes
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputLayout
+import com.saadahmedev.popupdialog.PopupDialog
+import com.windstrom5.tugasakhir.BuildConfig
+import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.databinding.ActivityLoginBinding
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
-import com.google.android.material.textfield.TextInputLayout
-//import com.google.firebase.FirebaseApp
-import com.windstrom5.tugasakhir.R
+import okhttp3.ResponseBody
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit.*
+import retrofit2.converter.gson.GsonConverterFactory
 import www.sanju.motiontoast.MotionToast
 import www.sanju.motiontoast.MotionToastStyle
-import javax.mail.Authenticator
 import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.Properties
-import javax.mail.Message
-import javax.mail.MessagingException
-import javax.mail.Session
-import javax.mail.Transport
-import javax.mail.internet.AddressException
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeMessage
 
-    class LoginActivity : AppCompatActivity() {
+
+class LoginActivity : AppCompatActivity() {
 //    private lateinit var textInputPerusahaan: TextInputLayout
 //    private lateinit var editTextPerusahaan: AutoCompleteTextView
     private lateinit var textInputEmail: TextInputLayout
@@ -60,11 +70,12 @@ import javax.mail.internet.MimeMessage
     private lateinit var popupWindow: PopupWindow
     private lateinit var loading : LinearLayout
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var login : Button
+    private lateinit var login : CircularProgressButton
 //    private lateinit var acperusahaan : AutoCompleteTextView
 //    private val selectedPerusahaanId = null
     private lateinit var register : TextView
     private lateinit var forgotPassword:TextView
+    private lateinit var safetyNetClient: SafetyNetClient
     private val textWatcher = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -76,6 +87,8 @@ import javax.mail.internet.MimeMessage
             updateLoginButtonState()
         }
     }
+    private lateinit var captchaCheckBox: CheckBox
+    private lateinit var captchaProgressBar: ProgressBar
 //    private var perusahaanList: List<Perusahaan> = emptyList()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +100,10 @@ import javax.mail.internet.MimeMessage
 //        editTextEmail = binding.editTextEmail
         textInputPassword = binding.textInputPassword
 //        editTextPassword = binding.editTextPassword
+//        captchaCheckBox = binding.captchaCheckBox
+//        captchaProgressBar = binding.captchaProgressBar
+
+        safetyNetClient = SafetyNet.getClient(this)
         login = binding.cirLoginButton
         forgotPassword = binding.textViewForgotPassword
         register = binding.createPerusahan
@@ -107,8 +124,15 @@ import javax.mail.internet.MimeMessage
             val intent = Intent(this,ForgotActivity::class.java)
             startActivity(intent)
         }
+//        captchaCheckBox.setOnCheckedChangeListener { _, isChecked ->
+//            if (isChecked) {
+//                showCaptchaDialog()
+//            }
+//        }
         login.setOnClickListener{
-            setLoading(true)
+            login.startAnimation()
+            //setLoading(true)
+//            showCaptchaDialog()
             login(textInputEmail.editText?.text.toString(),
                 textInputPassword.editText?.text.toString())
         }
@@ -117,9 +141,62 @@ import javax.mail.internet.MimeMessage
             startActivity(intent)
         }
     }
+    private fun showCaptchaDialog() {
+//        captchaProgressBar.visibility = View.VISIBLE
+        val clientId = BuildConfig.Chapta_Key
+        val clientSecret = BuildConfig.Chapta_Secret
+        safetyNetClient.verifyWithRecaptcha(clientId)
+            .addOnSuccessListener(this) { response ->
+                handleVerificationSuccess(response.tokenResult)
+            }
+            .addOnFailureListener(this) { e ->
+                handleVerificationFailure(e)
+            }
+    }
 
+    private fun handleVerificationSuccess(tokenResult: String?) {
+        // Verify the token with your server-side logic using chapta_secret
+        if (tokenResult != null) {
+            // Send token to your server for verification
+            // Handle server's response accordingly
+            PopupDialog.getInstance(this@LoginActivity)
+                .statusDialogBuilder()
+                .createSuccessDialog()
+                .setHeading("Chapta Success")
+                .setDescription("Processing to Login")
+                .build(Dialog::dismiss)
+                .show();
+            login.revertAnimation()
+            login(textInputEmail.editText?.text.toString(),
+                textInputPassword.editText?.text.toString())
+        }
+    }
+
+    private fun handleVerificationFailure(exception: Exception) {
+        if (exception is ApiException) {
+            val statusCode = exception.statusCode
+            // Handle specific error codes
+            when (statusCode) {
+                SafetyNetStatusCodes.RECAPTCHA_INVALID_SITEKEY -> {
+                    // Handle invalid key error
+                    Log.d("error","Invalid reCAPTCHA API key")
+                }
+                SafetyNetStatusCodes.NETWORK_ERROR -> {
+                    // Handle network error
+                    Log.d("error","Network error. Please check your internet connection.")
+                }
+                else -> {
+                    // Handle other errors
+                    Log.d("error","CAPTCHA verification failed. Error: ${statusCode}")
+                }
+            }
+        } else {
+            // Handle other types of exceptions
+            Log.d("error","CAPTCHA verification failed: ${exception.message}")
+        }
+    }
 //    private fun fetchDataFromApi() {
-//        val url = "http://192.168.1.3:8000/api/GetPerusahaan"
+//        val url = "http://192.168.1.6:8000/api/GetPerusahaan"
 //        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
 //            { response ->
 //                val perusahaanArray = response.getJSONArray("perusahaan")
@@ -166,10 +243,10 @@ import javax.mail.internet.MimeMessage
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             )
-            loading!!.visibility = View.VISIBLE
+            loading.visibility = View.VISIBLE
         }else{
             window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
-            loading!!.visibility = View.INVISIBLE
+            loading.visibility = View.INVISIBLE
         }
     }
 //    private fun setUpAutoCompleteTextView(perusahaanList: List<Perusahaan>) {
@@ -232,9 +309,9 @@ import javax.mail.internet.MimeMessage
         login.isEnabled = isAllFieldsFilled
     }
     private fun login(email: String, password: String) {
-        val url = "http://192.168.1.3:8000/api/login"
-        val checkBoxRememberMe = findViewById<CheckBox>(R.id.checkBoxRememberMe)
-        val rememberMeChecked = checkBoxRememberMe.isChecked
+        val url = "http://192.168.1.6:8000/api/login"
+//        val checkBoxRememberMe = findViewById<CheckBox>(R.id.checkBoxRememberMe)
+//        val rememberMeChecked = checkBoxRememberMe.isChecked
         val sharedPreferencesManager = SharedPreferencesManager(this)
 //        val matchingPerusahaan = perusahaanList.find { it.nama == namaPerusahaan }
 //        Log.d("Perusahaan", perusahaanList.toString())
@@ -287,10 +364,13 @@ import javax.mail.internet.MimeMessage
                                 secretKey
                             )
                             setLoading(false)
-                            if (rememberMeChecked) {
+                            val vectorDrawable = ContextCompat.getDrawable(this@LoginActivity, R.drawable.done_bitmap)
+                            val bitmap = vectorDrawable?.let { vectorToBitmap(it) }
+                            login.doneLoadingAnimation(Color.parseColor("#AAFF00"), bitmap)
+//                            if (rememberMeChecked) {
                                 sharedPreferencesManager.saveAdmin(admin)
                                 sharedPreferencesManager.savePerusahaan(perusahaan)
-                            }
+//                            }
                             val intent = Intent(this, AdminActivity::class.java)
                             val userBundle = Bundle()
                             userBundle.putParcelable("user", admin)
@@ -298,15 +378,9 @@ import javax.mail.internet.MimeMessage
                             intent.putExtra("data", userBundle)
                             startActivity(intent)
                         } else {
-                            val pekerja = Pekerja(
-                                user.getInt("id"),
-                                user.getInt("id_perusahaan"),
-                                user.getString("email"),
-                                user.getString("password"),
-                                user.getString("nama"),
-                                parseDate(user.getString("tanggal_lahir")),
-                                user.getString("profile")
-                            )
+                            val vectorDrawable = ContextCompat.getDrawable(this@LoginActivity, R.drawable.done_bitmap)
+                            val bitmap = vectorDrawable?.let { vectorToBitmap(it) }
+                            login.doneLoadingAnimation(Color.parseColor("#AAFF00"), bitmap)
                             val perusahaan = Perusahaan(
                                 id,
                                 nama,
@@ -318,21 +392,138 @@ import javax.mail.internet.MimeMessage
                                 logo,
                                 secretKey
                             )
+                            val pekerja = Pekerja(
+                                user.getInt("id"),
+                                user.getInt("id_perusahaan"),
+                                user.getString("email"),
+                                user.getString("password"),
+                                user.getString("nama"),
+                                parseDate(user.getString("tanggal_lahir")),
+                                user.getString("profile")
+                            )
+                            val url2 = "http://192.168.1.6:8000/api/"
+                            val retrofit = Builder()
+                                .baseUrl(url2)
+                                .addConverterFactory(GsonConverterFactory.create())
+                                .build()
+                            val apiService = retrofit.create(ApiService::class.java)
+                            val call = apiService.getDataAbsenPekerja(perusahaan.nama,pekerja.nama)
+                            call.enqueue(object : Callback<ResponseBody> {
+                                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                    if (response.isSuccessful) {
+                                        response.body()?.let { responseBody ->
+                                            try {
+                                                val jsonResponse = responseBody.string()
+                                                val jsonArray = JSONArray(jsonResponse)
+                                                val today = java.sql.Date(System.currentTimeMillis())
+                                                if (jsonArray.length() == 0) {
+                                                    // No data in JSON array
+                                                    sharedPreferencesManager.savePekerja(pekerja)
+                                                    sharedPreferencesManager.savePerusahaan(perusahaan)
+                                                    val intent = Intent(this@LoginActivity, UserActivity::class.java)
+                                                    val userBundle = Bundle()
+                                                    userBundle.putParcelable("user", pekerja)
+                                                    userBundle.putParcelable("perusahaan", perusahaan)
+                                                    intent.putExtra("data", userBundle)
+                                                    startActivity(intent)
+                                                } else {
+                                                    for (i in 0 until jsonArray.length()) {
+                                                        val jsonObject = jsonArray.getJSONObject(i)
+                                                        val tanggalString =
+                                                            jsonObject.getString("tanggal")
+                                                        val tanggal =
+                                                            java.sql.Date.valueOf(tanggalString)
+                                                        Log.d("tanggal", tanggalString)
+                                                        Log.d("tanggal", today.toString())
+                                                        if (tanggalString == today.toString()) {
+                                                            if (jsonObject.has("jam_keluar")) {
+                                                                sharedPreferencesManager.savePekerja(
+                                                                    pekerja
+                                                                )
+                                                                sharedPreferencesManager.savePerusahaan(
+                                                                    perusahaan
+                                                                )
+                                                                val intent = Intent(
+                                                                    this@LoginActivity,
+                                                                    UserActivity::class.java
+                                                                )
+                                                                val userBundle = Bundle()
+                                                                userBundle.putParcelable(
+                                                                    "user",
+                                                                    pekerja
+                                                                )
+                                                                userBundle.putParcelable(
+                                                                    "perusahaan",
+                                                                    perusahaan
+                                                                )
+                                                                intent.putExtra("data", userBundle)
+                                                                startActivity(intent)
+                                                            } else {
+                                                                PopupDialog.getInstance(this@LoginActivity)
+                                                                    .statusDialogBuilder()
+                                                                    .createErrorDialog()
+                                                                    .setHeading("Cannot Login")
+                                                                    .setDescription("User is working right now")
+                                                                    .build(Dialog::dismiss)
+                                                                    .show();
+                                                                login.revertAnimation()
+                                                            }
+                                                        } else {
+                                                            Log.d("AMM", "AMM")
+                                                            sharedPreferencesManager.savePekerja(
+                                                                pekerja
+                                                            )
+                                                            sharedPreferencesManager.savePerusahaan(
+                                                                perusahaan
+                                                            )
+                                                            val intent = Intent(
+                                                                this@LoginActivity,
+                                                                UserActivity::class.java
+                                                            )
+                                                            val userBundle = Bundle()
+                                                            userBundle.putParcelable(
+                                                                "user",
+                                                                pekerja
+                                                            )
+                                                            userBundle.putParcelable(
+                                                                "perusahaan",
+                                                                perusahaan
+                                                            )
+                                                            intent.putExtra("data", userBundle)
+                                                            startActivity(intent)
+                                                        }
+                                                    }
+                                                }
+                                            } catch (e: JSONException) {
+                                                Log.e("FetchDataError", "Error parsing JSON: ${e.message}")
+                                            }
+                                        }
+                                    } else {
+                                        // Handle unsuccessful response
+                                        Log.e("FetchDataError", "Failed to fetch data: ${response.code()}")
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    Log.e("FetchDataError", "Failed to fetch data")
+                                }
+                            })
                             setLoading(false)
-                            if (rememberMeChecked) {
-                                sharedPreferencesManager.savePekerja(pekerja)
-                                sharedPreferencesManager.savePerusahaan(perusahaan)
-                            }
-                            val intent = Intent(this, UserActivity::class.java)
-                            val userBundle = Bundle()
-                            userBundle.putParcelable("user", pekerja)
-                            userBundle.putParcelable("perusahaan", perusahaan)
-                            intent.putExtra("data", userBundle)
-                            startActivity(intent)
+//                            if (rememberMeChecked) {
+//                                sharedPreferencesManager.savePekerja(pekerja)
+//                                sharedPreferencesManager.savePerusahaan(perusahaan)
+//                            }
+//                            val intent = Intent(this, UserActivity::class.java)
+//                            val userBundle = Bundle()
+//                            userBundle.putParcelable("user", pekerja)
+//                            userBundle.putParcelable("perusahaan", perusahaan)
+//                            intent.putExtra("data", userBundle)
+//                            startActivity(intent)
                         }
 
                     } catch (e: JSONException) {
                         e.printStackTrace()
+                        Log.d("tanggal", e.toString())
                     }
                 },
                 { error ->
@@ -342,15 +533,26 @@ import javax.mail.internet.MimeMessage
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(this@LoginActivity, R.font.ralewaybold))
+                    login.revertAnimation()
                 }
             )
             Volley.newRequestQueue(this).add(request)
 //          }
-//        Log.d("Perusahaan", matchingPerusahaan.toString())
+//        Log.d("tanggal", "Error2")
         setLoading(false)
     }
     private fun parseDate(dateString: String): Date {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         return dateFormat.parse(dateString) ?: Date()
     }
+    // Function to convert vector drawable to Bitmap
+    private fun vectorToBitmap(vectorDrawable: Drawable): Bitmap {
+        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vectorDrawable.draw(canvas)
+        return bitmap
+    }
+
 }

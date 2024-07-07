@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F9FCFF"
     tools:context=".fragment.ScanAbsensiFragment">
     <nl.dionsegijn.konfetti.xml.KonfettiView
         android:id="@+id/konfettiView"
@@ -84,8 +83,14 @@
                 app:frameThickness="6dp"
                 android:nestedScrollingEnabled="false"
                 app:maskColor="#F9FCFF" />
-
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/lottie"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:visibility="gone"
+                app:lottie_rawRes="@raw/work"/>
             <TextView
+                android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Scanning code..."

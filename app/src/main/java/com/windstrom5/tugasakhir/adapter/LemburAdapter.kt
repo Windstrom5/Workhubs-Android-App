@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.feature.PreviewDialogFragment
 import com.windstrom5.tugasakhir.model.LemburItem
@@ -151,6 +152,7 @@ class LemburAdapter(
                     bundle.putString("layoutType", "lembur_layout") // Add layout type here
                     bundle.putString("category","Respond")
                     previewDialogFragment.arguments = bundle
+                    previewDialogFragment.setStyle(DialogFragment.STYLE_NORMAL, R.style.Dialog_FullWidth)
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
                 "Edit \nData" ->{
@@ -162,6 +164,7 @@ class LemburAdapter(
                     bundle.putString("layoutType", "lembur_layout") // Add layout type here
                     bundle.putString("category","Edit")
                     previewDialogFragment.arguments = bundle
+                    previewDialogFragment.setStyle(DialogFragment.STYLE_NORMAL, R.style.Dialog_FullWidth)
                     previewDialogFragment.show(fragmentManager, "preview_dialog")
                 }
                 // Handle other button actions if needed
@@ -220,7 +223,7 @@ class LemburAdapter(
                     <header>
                         <h1>Receipt for Pekerja</h1>
                     </header>
-                    <img src="http://192.168.1.3:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
+                    <img src="http://192.168.1.6:8000/storage/${perusahaan.logo}" alt="Perusahaan Logo" class="logo">
                     <div class="receipt-details">\
                         <p><strong>Date Printed:</strong> ${
                         dateFormatter.format(

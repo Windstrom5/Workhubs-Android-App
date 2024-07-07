@@ -189,7 +189,7 @@ class CompanyActivity : AppCompatActivity() {
     }
     private fun deleteCompany(idPerusahaan: Int, callback: (Boolean) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.3:8000/api/") // Replace with your base URL
+            .baseUrl("http://192.168.1.6:8000/api/") // Replace with your base URL
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -258,7 +258,7 @@ class CompanyActivity : AppCompatActivity() {
             .show()
     }
     private fun fetchDataFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         Log.d("FetchDataError", "Nama: ${namaPerusahaan}")
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -410,7 +410,7 @@ class CompanyActivity : AppCompatActivity() {
                 }
                 if (perusahaan?.logo != "null") {
                     val imageUrl =
-                        "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                        "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
                     val profileImageView = binding.circleImageView
                     val text = binding.tvName
                     text.setText(perusahaan?.nama)

@@ -1,15 +1,13 @@
 package com.windstrom5.tugasakhir.activity
 
+import android.app.Dialog
 import android.content.Intent
-import org.apache.commons.text.similarity.LevenshteinDistance
 import android.content.pm.PackageManager
-import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -24,9 +22,13 @@ import com.android.volley.toolbox.Volley
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.saadahmedev.popupdialog.PopupDialog
+import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
+import com.windstrom5.tugasakhir.connection.Tracking
 import com.windstrom5.tugasakhir.databinding.ActivityUserBinding
+import com.windstrom5.tugasakhir.model.Absen
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import org.json.JSONArray
@@ -36,6 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+
 class UserActivity : AppCompatActivity() {
     private lateinit var binding: ActivityUserBinding
     private lateinit var tv: TextView
@@ -43,6 +46,7 @@ class UserActivity : AppCompatActivity() {
     private var perusahaan: Perusahaan? = null
     private lateinit var tvnamaPerusahaan: TextView
     private lateinit var absen: CardView
+    private lateinit var trackingIntent: Intent
     private lateinit var lembur: CardView
     private lateinit var dinas: CardView
     private val LOCATION_PERMISSION_REQUEST_CODE = 123
@@ -50,6 +54,7 @@ class UserActivity : AppCompatActivity() {
     private lateinit var company: CardView
     private lateinit var cs: CardView
     private lateinit var back: ImageView
+    private lateinit var sharedPreferencesManager:SharedPreferencesManager
     private var pekerja: Pekerja? = null
     private lateinit var imageView: ImageView
     private lateinit var day: TextView
@@ -64,6 +69,8 @@ class UserActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityUserBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        sharedPreferencesManager = SharedPreferencesManager(this)
+        trackingIntent = Intent(this@UserActivity, Tracking::class.java)
         getBundle()
         imageView = binding.weatherIcon
         day = binding.dayText
@@ -79,18 +86,38 @@ class UserActivity : AppCompatActivity() {
         izin = binding.IzinCard
         back = binding.backB
         back.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setMessage("Are you sure you want to Log Out?")
-                .setPositiveButton("Yes") { _, _ ->
-                    super.onBackPressed()
-                    val sharedPreferencesManager = SharedPreferencesManager(this)
-                    sharedPreferencesManager.clearUserData()
-                    startActivity(Intent(this, LoginActivity::class.java))
-                }
-                .setNegativeButton("No") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .show()
+            val savedPresensi: Absen? = sharedPreferencesManager.getPresensi()
+            if (savedPresensi != null){
+                PopupDialog.getInstance(this@UserActivity)
+                    .statusDialogBuilder()
+                    .createErrorDialog()
+                    .setHeading("Cannot Logout")
+                    .setDescription("You Still Have To Work")
+                    .build(Dialog::dismiss)
+                    .show();
+            }else{
+                PopupDialog.getInstance(this@UserActivity)
+                    .standardDialogBuilder()
+                    .createIOSDialog()
+                    .setHeading("Logout")
+                    .setDescription(
+                        "Are you sure you want to logout?" +
+                                " This action cannot be undone"
+                    )
+                    .build(object : StandardDialogActionListener {
+                        override fun onPositiveButtonClicked(dialog: Dialog) {
+                            dialog.dismiss()
+                            val sharedPreferencesManager = SharedPreferencesManager(this@UserActivity)
+                            sharedPreferencesManager.clearUserData()
+                            startActivity(Intent(this@UserActivity, LoginActivity::class.java))
+                        }
+
+                        override fun onNegativeButtonClicked(dialog: Dialog) {
+                            dialog.dismiss()
+                        }
+                    })
+                    .show()
+            }
         }
         company = binding.CompanyCard
         cs = binding.CustomerServiceCard
@@ -206,9 +233,9 @@ class UserActivity : AppCompatActivity() {
             val propinsi = wilayahObject.getString("propinsi")
             // Calculate similarity scores
             val kota = wilayahObject.getString("kota")
-            val preprocessedKota = kota.replace("Kab. ", "").replace("Kota ", "")
+            val preprocessedKab = kota.replace("Kab. ", "").replace("Kota ", "")
             val kecamatanMatchScore = similarityScore(kecamatan, wilayahObject.getString("kecamatan"))
-            val kabupatenKotaMatchScore = similarityScore(preprocessedKabupatenKota, preprocessedKota)
+            val kabupatenKotaMatchScore = similarityScore(preprocessedKabupatenKota, preprocessedKab)
             val provinceMatchScore = similarityScore(province, propinsi)
 
             // Check if any score exceeds the threshold
@@ -410,18 +437,38 @@ class UserActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        AlertDialog.Builder(this)
-            .setMessage("Are you sure you want to Log Out?")
-            .setPositiveButton("Yes") { _, _ ->
-                super.onBackPressed()
-                val sharedPreferencesManager = SharedPreferencesManager(this)
-                sharedPreferencesManager.clearUserData()
-                startActivity(Intent(this, LoginActivity::class.java))
-            }
-            .setNegativeButton("No") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        val savedPresensi: Absen? = sharedPreferencesManager.getPresensi()
+        if (savedPresensi != null){
+            PopupDialog.getInstance(this@UserActivity)
+                .statusDialogBuilder()
+                .createErrorDialog()
+                .setHeading("Cannot Logout")
+                .setDescription("You Still Have To Work")
+                .build(Dialog::dismiss)
+                .show();
+        }else{
+            PopupDialog.getInstance(this@UserActivity)
+                .standardDialogBuilder()
+                .createIOSDialog()
+                .setHeading("Logout")
+                .setDescription(
+                    "Are you sure you want to logout?" +
+                            " This action cannot be undone"
+                )
+                .build(object : StandardDialogActionListener {
+                    override fun onPositiveButtonClicked(dialog: Dialog) {
+                        dialog.dismiss()
+                        val sharedPreferencesManager = SharedPreferencesManager(this@UserActivity)
+                        sharedPreferencesManager.clearUserData()
+                        startActivity(Intent(this@UserActivity, LoginActivity::class.java))
+                    }
+
+                    override fun onNegativeButtonClicked(dialog: Dialog) {
+                        dialog.dismiss()
+                    }
+                })
+                .show()
+        }
     }
 
     private fun handleCardTouch(cardView: CardView, event: MotionEvent, activityName: String): Boolean {
@@ -477,9 +524,21 @@ class UserActivity : AppCompatActivity() {
             bundle?.let {
                 perusahaan = it.getParcelable("perusahaan")
                 pekerja = it.getParcelable("user")
+                val presensi = sharedPreferencesManager.getPresensi()
+                if(presensi != null){
+                    val startServiceIntent = Intent(this@UserActivity, Tracking::class.java)
+                    startServiceIntent.putExtra("perusahaan", perusahaan)
+                    startServiceIntent.putExtra("pekerja", pekerja)
+                    startTrackingService()
+                }
             }
         } else {
             Log.d("Error", "Bundle Not Found")
         }
+    }
+    private fun startTrackingService() {
+        trackingIntent.putExtra("perusahaan", perusahaan)
+        trackingIntent.putExtra("pekerja", pekerja)
+        ContextCompat.startForegroundService(this@UserActivity, trackingIntent)
     }
 }

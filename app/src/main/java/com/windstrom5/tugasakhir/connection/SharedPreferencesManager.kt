@@ -4,37 +4,41 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.windstrom5.tugasakhir.model.Admin
 import com.google.gson.Gson
-import com.windstrom5.tugasakhir.model.login_session
+import com.windstrom5.tugasakhir.model.Absen
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 
 class SharedPreferencesManager(context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
 
-    fun saveSession(login_session: login_session) {
+    fun savePresensi(absen : Absen) {
         val editor = sharedPreferences.edit()
         val gson = Gson()
-        val loginJson = gson.toJson(login_session)
-        editor.putString("login", loginJson)
+        val absenJson = gson.toJson(Absen)
+        editor.putString("presensi", absenJson)
         editor.apply()
     }
 
-    fun getSession(): login_session? {
+    fun getPresensi(): Absen? {
         val gson = Gson()
-        val loginJson = sharedPreferences.getString("login", null)
-        return if (loginJson != null) {
-            gson.fromJson(loginJson, login_session::class.java)
+        val absenJson = sharedPreferences.getString("presensi", null)
+        return if (absenJson != null) {
+            gson.fromJson(absenJson, Absen::class.java)
         } else {
             null
         }
     }
-
+    fun removePresensi() {
+        val editor = sharedPreferences.edit()
+        editor.remove("presensi")
+        editor.apply()
+    }
     fun clearUserData() {
         val editor = sharedPreferences.edit()
         editor.remove("pekerja")
         editor.remove("admin")
         editor.remove("perusahaan")
-        editor.remove("login")
+        editor.remove("presensi")
         editor.apply()
     }
 

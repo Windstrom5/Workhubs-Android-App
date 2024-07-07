@@ -121,13 +121,13 @@
                         android:layout_marginTop="16dp">
 
                         <!-- Remember Me CheckBox -->
-                        <CheckBox
-                            android:id="@+id/checkBoxRememberMe"
-                            android:layout_width="wrap_content"
-                            android:layout_height="16dp"
-                            android:text="Remember Me"
-                            android:textColor="@color/primaryTextColor"
-                            android:textSize="@dimen/newsMoreTextSize" />
+<!--                        <CheckBox-->
+<!--                            android:id="@+id/checkBoxRememberMe"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="16dp"-->
+<!--                            android:text="Remember Me"-->
+<!--                            android:textColor="@color/primaryTextColor"-->
+<!--                            android:textSize="@dimen/newsMoreTextSize" />-->
 
                         <!-- Forgot Password Text -->
                         <View
@@ -147,11 +147,36 @@
                             android:textSize="@dimen/newsMoreTextSize" />
 
                     </LinearLayout>
-<!--                    <WebView-->
-<!--                        android:id="@+id/recaptchaWebView"-->
+<!--                    <androidx.cardview.widget.CardView-->
 <!--                        android:layout_width="wrap_content"-->
-<!--                        android:layout_height="wrap_content" />-->
-                    <Button
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_gravity="center"-->
+<!--                        android:layout_marginTop="16dp"-->
+<!--                        app:cardCornerRadius="8dp"-->
+<!--                        app:cardElevation="4dp">-->
+
+<!--                        <LinearLayout-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:orientation="horizontal"-->
+<!--                            android:padding="16dp"-->
+<!--                            android:gravity="center_vertical">-->
+
+<!--                            <CheckBox-->
+<!--                                android:id="@+id/captchaCheckBox"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:text="I'm not a robot" />-->
+
+<!--                            <ProgressBar-->
+<!--                                android:id="@+id/captchaProgressBar"-->
+<!--                                android:layout_width="24dp"-->
+<!--                                android:layout_height="24dp"-->
+<!--                                android:layout_marginStart="8dp"-->
+<!--                                android:visibility="gone" />-->
+<!--                        </LinearLayout>-->
+<!--                    </androidx.cardview.widget.CardView>-->
+                    <br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
                         android:id="@+id/cirLoginButton"
                         style="@style/loginButton"
                         android:layout_gravity="center_horizontal"

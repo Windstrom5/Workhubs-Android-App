@@ -49,7 +49,7 @@ class ListAnggotaAdapter(
             // Set data to views for Pekerja
             if(currentPekerja.profile!= "null"){
                 Glide.with(binding.profileImageView.context)
-                    .load("http://192.168.1.3:8000/storage/${currentPekerja.profile}")
+                    .load("http://192.168.1.6:8000/storage/${currentPekerja.profile}")
                     .into(binding.profileImageView)
             }else{
                 Glide.with(binding.profileImageView.context)
@@ -81,7 +81,7 @@ class ListAnggotaAdapter(
             // Set data to views for Admin
             if (currentAdmin.profile!= "null") {
                 Glide.with(binding.profileImageView.context)
-                    .load("http://192.168.1.3:8000/storage/${currentAdmin.profile}")
+                    .load("http://192.168.1.6:8000/storage/${currentAdmin.profile}")
                     .into(binding.profileImageView)
             } else {
                 Glide.with(binding.profileImageView.context)

@@ -1,8 +1,13 @@
 package com.windstrom5.tugasakhir.fragment
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -20,11 +25,14 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
 import com.bumptech.glide.Glide
 import com.github.barteksc.pdfviewer.PDFView
 import com.google.android.material.textfield.TextInputLayout
+import com.saadahmedev.popupdialog.PopupDialog
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiResponse
@@ -59,7 +67,7 @@ class AddIzinFragment : Fragment() {
     private lateinit var TIAlasan: TextInputLayout
     private lateinit var uploadfileButton: Button
     private lateinit var selectedFileName: TextView
-    private lateinit var save: Button
+    private lateinit var save : CircularProgressButton
     private var perusahaan : Perusahaan? = null
     private lateinit var imageView: ImageView
     private lateinit var pdfView: PDFView
@@ -95,15 +103,53 @@ class AddIzinFragment : Fragment() {
         TITanggal.setEndIconOnClickListener{
             TITanggal.editText?.let { it1 -> showDatePickerDialog(it1) }
         }
-        TINama.editText?.addTextChangedListener(watcher)
-        TITanggal.editText?.addTextChangedListener(watcher)
-        acIzin.addTextChangedListener(watcher)
-        TIAlasan.editText?.addTextChangedListener(watcher)
+//        TINama.editText?.addTextChangedListener(watcher)
+//        TITanggal.editText?.addTextChangedListener(watcher)
+//        acIzin.addTextChangedListener(watcher)
+//        TIAlasan.editText?.addTextChangedListener(watcher)
         save.setOnClickListener {
-            setLoading(true)
-            pekerja?.let { it1 -> perusahaan?.let { it2 -> saveDataIzin(it1, it2) } }
+            save.startAnimation()
+            if(isAllFieldsFilled()){
+                perusahaan?.let { it1 -> pekerja?.let { it2 -> saveDataIzin( it2, it1) } }
+            }else{
+                save.revertAnimation()
+            }
         }
     }
+
+    private fun isAllFieldsFilled(): Boolean {
+        val missingFields = mutableListOf<String>()
+
+        if (TINama.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Nama")
+        }
+        if (TITanggal.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Tanggal Izin")
+        }
+        if (acIzin.text.isNullOrEmpty()) {
+            missingFields.add("Tanggal Berangkat")
+        }
+        if (TIAlasan.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Alasan Izin")
+        }
+        if (selectedFileName.text == "No file selected") {
+            missingFields.add("Bukti Izin")
+        }
+
+        if (missingFields.isNotEmpty()) {
+            val errorMessage = "The following fields are empty: ${missingFields.joinToString(", ")}"
+            PopupDialog.getInstance(requireContext())
+                .statusDialogBuilder()
+                .createErrorDialog()
+                .setHeading("Cannot Save")
+                .setDescription(errorMessage)
+                .build(Dialog::dismiss)
+                .show()
+            return false
+        }
+        return true
+    }
+
     private fun setLoading(isLoading: Boolean) {
         val loadingLayout = activity?.findViewById<LinearLayout>(R.id.layout_loading)
         if (isLoading) {
@@ -178,8 +224,16 @@ class AddIzinFragment : Fragment() {
 
         return holidaysMap
     }
+    private fun vectorToBitmap(vectorDrawable: Drawable): Bitmap {
+        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vectorDrawable.draw(canvas)
+        return bitmap
+    }
     private fun saveDataIzin(pekerja: Pekerja,perusahaan: Perusahaan){
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -199,6 +253,9 @@ class AddIzinFragment : Fragment() {
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
+                    val vectorDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.done_bitmap)
+                    val bitmap = vectorDrawable?.let { vectorToBitmap(it) }
+                    save.doneLoadingAnimation(Color.parseColor("#AAFF00"), bitmap)
                     val apiResponse = response.body()
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
                     MotionToast.createToast(requireActivity(), "Add Izin Success",
@@ -208,11 +265,13 @@ class AddIzinFragment : Fragment() {
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
                 } else {
+                    save.revertAnimation()
                     Log.e("ApiResponse", "Error: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                save.revertAnimation()
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })
@@ -221,27 +280,20 @@ class AddIzinFragment : Fragment() {
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)
     }
-    private val watcher = object : TextWatcher {
-        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
-            // Not needed for this example
-        }
-
-        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
-            // Not needed for this example
-        }
-
-        override fun afterTextChanged(editable: Editable?) {
-            // Update the button state whenever a field is changed
-            save.isEnabled = isAllFieldsFilled()
-        }
-    }
-    private fun isAllFieldsFilled(): Boolean {
-        return TINama.editText?.text?.isNotEmpty() ?: false &&
-                TITanggal.editText?.text?.isNotEmpty()?: false  &&
-                acIzin.text.isNotEmpty() &&
-                TIAlasan.editText?.text?.isNotEmpty()?: false &&
-                selectedFileName.text != "No file selected"
-    }
+//    private val watcher = object : TextWatcher {
+//        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun afterTextChanged(editable: Editable?) {
+//            // Update the button state whenever a field is changed
+//            save.isEnabled = isAllFieldsFilled()
+//        }
+//    }
 
     private fun pickPdfFile() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -273,7 +325,7 @@ class AddIzinFragment : Fragment() {
                                     }
                                 }
                                 selectedFileName.text = displayName
-                                selectedFileName.addTextChangedListener(watcher)
+//                                selectedFileName.addTextChangedListener(watcher)
                                 selectedFile = file
                             } catch (e: IOException) {
                                 Log.e("MyFragment", "Failed to copy file: ${e.message}")
@@ -296,7 +348,7 @@ class AddIzinFragment : Fragment() {
                                     }
                                 }
                                 selectedFileName.text = displayName
-                                selectedFileName.addTextChangedListener(watcher)
+//                                selectedFileName.addTextChangedListener(watcher)
                                 selectedFile = file
                             } catch (e: IOException) {
                                 Log.e("MyFragment", "Failed to copy file: ${e.message}")

@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
+import com.windstrom5.tugasakhir.model.Absen
 import com.windstrom5.tugasakhir.model.Admin
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
@@ -67,7 +68,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
         private fun fetchDataFromApi() {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -247,8 +248,9 @@ class SplashActivity : AppCompatActivity() {
         val savedAdmin: Admin? = sharedPreferencesManager.getAdmin()
         val savedPekerja: Pekerja? = sharedPreferencesManager.getPekerja()
         val savedPerusahaan: Perusahaan? = sharedPreferencesManager.getPerusahaan()
+        val presensi: Absen? = sharedPreferencesManager.getPresensi()
         if (savedAdmin != null || savedPekerja != null) {
-            redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja)
+            redirectToActivity(savedPerusahaan,savedAdmin,savedPekerja,presensi)
         } else {
             Handler(Looper.getMainLooper()).postDelayed({
                 val intent = Intent(this@SplashActivity, LoginActivity::class.java)
@@ -257,7 +259,7 @@ class SplashActivity : AppCompatActivity() {
             }, splashTimeOut)
         }
     }
-    private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?) {
+    private fun redirectToActivity(perusahaan: Perusahaan?, admin: Admin?, pekerja: Pekerja?, presensi:Absen?) {
         val logoImageView = findViewById<ImageView>(R.id.logoImageView)
         val logo = perusahaan?.logo
         if (logo == "null") {
@@ -267,7 +269,7 @@ class SplashActivity : AppCompatActivity() {
         }else{
             Log.d("CompanyActivity", "Logo is blank")
             val imageUrl =
-                "http://192.168.1.3:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
+                "http://192.168.1.6:8000/storage/${perusahaan?.logo}" // Replace with your Laravel image URL
 
             Glide.with(this)
                 .load(imageUrl) // Assuming savedPerusahaan has a 'logo' field containing the URL

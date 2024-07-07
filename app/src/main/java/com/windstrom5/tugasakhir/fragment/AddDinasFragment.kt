@@ -2,10 +2,15 @@ package com.windstrom5.tugasakhir.fragment
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Dialog
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -24,11 +29,14 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
+import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.saadahmedev.popupdialog.PopupDialog
 import com.windstrom5.tugasakhir.R
 import com.windstrom5.tugasakhir.activity.RegisterAdminActivity
 import com.windstrom5.tugasakhir.connection.ApiResponse
@@ -69,7 +77,7 @@ class AddDinasFragment : Fragment() {
     private val PDF_REQUEST_CODE = 123
     private lateinit var pdfView: WebView
     private lateinit var selectedFile: File
-    private lateinit var save : Button
+    private lateinit var save : CircularProgressButton
     private lateinit var textviewtujuan : AutoCompleteTextView
     private lateinit var tilberangkat: TextInputLayout
     private lateinit var tilpulang: TextInputLayout
@@ -77,20 +85,20 @@ class AddDinasFragment : Fragment() {
     private lateinit var selectedFileName: TextView
     private var perusahaan : Perusahaan? = null
     private var pekerja : Pekerja? = null
-    private val watcher = object : TextWatcher {
-        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
-            // Not needed for this example
-        }
-
-        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
-            // Not needed for this example
-        }
-
-        override fun afterTextChanged(editable: Editable?) {
-            // Update the button state whenever a field is changed
-            save.isEnabled = isAllFieldsFilled()
-        }
-    }
+//    private val watcher = object : TextWatcher {
+//        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun afterTextChanged(editable: Editable?) {
+//            // Update the button state whenever a field is changed
+//            save.isEnabled = isAllFieldsFilled()
+//        }
+//    }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -127,14 +135,14 @@ class AddDinasFragment : Fragment() {
         uploadButton.setOnClickListener {
             pickPdfFile()
         }
-        nama.editText?.addTextChangedListener(watcher)
-        textviewtujuan.addTextChangedListener(watcher)
-        tilberangkat.editText?.addTextChangedListener(watcher)
-        tilpulang.editText?.addTextChangedListener(watcher)
-        keterangan.editText?.addTextChangedListener(watcher)
         save.setOnClickListener {
-            setLoading(true)
-            perusahaan?.let { it1 -> pekerja?.let { it2 -> saveDataDinas(it2, it1) } }
+            Log.d("clicked","click")
+            save.startAnimation()
+            if(isAllFieldsFilled()){
+                perusahaan?.let { it1 -> pekerja?.let { it2 -> saveDataDinas(it2, it1) } }
+            }else{
+                save.revertAnimation()
+            }
         }
     }
     private fun setLoading(isLoading: Boolean) {
@@ -146,7 +154,7 @@ class AddDinasFragment : Fragment() {
         }
     }
     private fun saveDataDinas(pekerja: Pekerja,perusahaan: Perusahaan){
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -168,6 +176,9 @@ class AddDinasFragment : Fragment() {
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
+                    val vectorDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.done_bitmap)
+                    val bitmap = vectorDrawable?.let { vectorToBitmap(it) }
+                    save.doneLoadingAnimation(Color.parseColor("#AAFF00"), bitmap)
                     val apiResponse = response.body()
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
                     MotionToast.createToast(requireActivity(), "Add Dinas Success",
@@ -177,15 +188,25 @@ class AddDinasFragment : Fragment() {
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
                 } else {
+                    save.revertAnimation()
                     Log.e("ApiResponse", "Error: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                save.revertAnimation()
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })
         setLoading(false)
+    }
+    private fun vectorToBitmap(vectorDrawable: Drawable): Bitmap {
+        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vectorDrawable.draw(canvas)
+        return bitmap
     }
     private fun createPartFromString(value: String): RequestBody {
         return RequestBody.create(MediaType.parse("text/plain"), value)
@@ -205,13 +226,41 @@ class AddDinasFragment : Fragment() {
 
     // Check if all fields are filled
     private fun isAllFieldsFilled(): Boolean {
-        return nama.editText?.text?.isNotEmpty() ?: false &&
-                textviewtujuan.text.isNotEmpty() &&
-                tilberangkat.editText?.text?.isNotEmpty() ?: false &&
-                tilpulang.editText?.text?.isNotEmpty()?: false &&
-                keterangan.editText?.text?.isNotEmpty()?: false &&
-                selectedFileName.text != "No file selected"
+        val missingFields = mutableListOf<String>()
+
+        if (nama.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Nama")
+        }
+        if (textviewtujuan.text.isEmpty()) {
+            missingFields.add("Tujuan Dinas")
+        }
+        if (tilberangkat.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Tanggal Berangkat")
+        }
+        if (tilpulang.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Tanggal Pulang")
+        }
+        if (keterangan.editText?.text.isNullOrEmpty()) {
+            missingFields.add("Keterangan Dinas")
+        }
+        if (selectedFileName.text == "No file selected") {
+            missingFields.add("Bukti Dinas")
+        }
+
+        if (missingFields.isNotEmpty()) {
+            val errorMessage = "The following fields are empty: ${missingFields.joinToString(", ")}"
+            PopupDialog.getInstance(requireContext())
+                .statusDialogBuilder()
+                .createErrorDialog()
+                .setHeading("Cannot Save")
+                .setDescription(errorMessage)
+                .build(Dialog::dismiss)
+                .show()
+            return false
+        }
+        return true
     }
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (requestCode == READ_WRITE_PERMISSION_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
@@ -244,7 +293,7 @@ class AddDinasFragment : Fragment() {
                             }
                         }
                         selectedFileName.text = displayName
-                        selectedFileName.addTextChangedListener(watcher)
+//                        selectedFileName.addTextChangedListener(watcher)
                         selectedFile = file
                         Log.d("MyFragment", "Selected File: $selectedFile")
                     } catch (e: IOException) {

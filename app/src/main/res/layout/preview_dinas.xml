@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
+    app:cardCornerRadius="20dp"
+    android:layout_margin="20dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="wrap_content"
-    android:foregroundGravity="center"
-    android:background="@android:color/transparent">
+    android:layout_height="match_parent"
+    android:foregroundGravity="center">
+
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
+
         <TextView
-            android:layout_marginTop="16dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
             android:text="Dinas Preview"
             android:textSize="20sp"
-            android:textStyle="bold"/>
-        <ScrollView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:textStyle="bold" />
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="10dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -31,9 +35,11 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/bebasneue_reguler"
                     android:text="Nama Pekerja"
                     android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/namaInputLayout"
                     android:layout_width="match_parent"
@@ -41,23 +47,26 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/namaEditText"
+                        style="@style/modifiedEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        style="@style/modifiedEditText"
-                        android:hint="Nama Pekerja"
                         android:focusable="false"
+                        android:enabled="false"
                         android:focusableInTouchMode="false"
+                        android:fontFamily="@font/font1"
+                        android:hint="Nama Pekerja"
                         android:inputType="none"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
                 <!-- Title for Tanggal -->
                 <TextView
-                    android:layout_marginTop="16dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/bebasneue_reguler"
                     android:text="Tanggal Berangkat"
                     android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
                 <!-- TextInputLayout for Tanggal -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -67,22 +76,26 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/berangkatEditText"
+                        style="@style/modifiedEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        style="@style/modifiedEditText"
-                        android:hint="Tanggal Berangkat"
                         android:focusable="false"
                         android:focusableInTouchMode="false"
+                        android:enabled="false"
+                        android:fontFamily="@font/font1"
+                        android:hint="Tanggal Berangkat"
                         android:inputType="none"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
+
                 <TextView
-                    android:layout_marginTop="16dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/bebasneue_reguler"
                     android:text="Tanggal Pulang"
                     android:textSize="18sp"
-                    android:textStyle="bold"/>
+                    android:textStyle="bold" />
 
                 <!-- TextInputLayout for Tanggal -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -92,47 +105,71 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/pulangEditText"
+                        style="@style/modifiedEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Tanggal Pulang"
-                        style="@style/modifiedEditText"
                         android:focusable="false"
                         android:focusableInTouchMode="false"
+                        android:fontFamily="@font/font1"
+                        android:hint="Tanggal Pulang"
                         android:inputType="none"
-                        android:maxLines="1"/>
+                        android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
                 <!-- TextInputLayout for Tujuan -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/bebasneue_reguler"
                     android:text="Tujuan"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="16dp"/>
+                    android:textStyle="bold" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tujuanInputLayout"
-                    android:layout_height="match_parent"
                     android:layout_width="match_parent"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
-                    <AutoCompleteTextView
-                        android:id="@+id/actujuan"
-                        android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tujuanEditText"
+                        style="@style/modifiedEditText"
                         android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:focusableInTouchMode="false"
+                        android:fontFamily="@font/font1"
+                        android:hint="Tujuan"
                         android:inputType="none"
-                        android:hint="Pilih Tujuan Dinas"
-                        android:textSize="15dp"
-                        android:background="@color/primaryTextColor"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tujuanInputLayout2"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/actujuan"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/primaryTextColor"
+                        android:fontFamily="@font/font1"
+                        android:hint="Pilih Tujuan Dinas"
+                        android:inputType="none"
+                        android:maxLines="1"
+                        android:textSize="15dp" />
+                </com.google.android.material.textfield.TextInputLayout>
                 <!-- Title for Kegiatan -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="@font/bebasneue_reguler"
                     android:text="Kegiatan"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="16dp"/>
+                    android:textStyle="bold" />
 
                 <!-- TextInputLayout for Kegiatan -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -142,114 +179,147 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/kegiatanEditText"
+                        style="@style/modifiedEditText"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:hint="Kegiatan"
                         android:focusable="false"
-                        style="@style/modifiedEditText"
                         android:focusableInTouchMode="false"
+                        android:fontFamily="@font/font1"
+                        android:hint="Kegiatan"
                         android:inputType="none"
-                        android:maxLines="3"/>
+                        android:maxLines="3" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Title for Bukti -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="Bukti"
                     android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="16dp"/>
+                    android:textStyle="bold" />
+
                 <androidx.cardview.widget.CardView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardElevation="2dp"
+                    android:backgroundTint="@color/primaryTextColor"
                     app:cardCornerRadius="8dp"
-                    app:cardUseCompatPadding="true"
-                    android:backgroundTint="@color/primaryTextColor">
+                    app:cardElevation="2dp"
+                    app:cardUseCompatPadding="true">
                     <!-- Function description -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="16dp">
+
                         <FrameLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content">
+
                             <com.github.barteksc.pdfviewer.PDFView
                                 android:id="@+id/pdfView"
                                 android:layout_width="900px"
                                 android:layout_height="900px"
                                 android:visibility="gone" />
                         </FrameLayout>
+
                         <TextView
                             android:id="@+id/text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="10dp"
-                            android:textColor="@color/whiteTextColor"
-                            android:text="Accepted file types: pdf" />
+                            android:layout_gravity="center"
+                            android:fontFamily="@font/righteous_regular"
+                            android:text="Accepted file types: pdf"
+                            android:textColor="@color/whiteTextColor" />
 
                         <!-- File upload content -->
                         <LinearLayout
                             android:id="@+id/layout"
-                            android:layout_marginTop="10dp"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:layout_marginTop="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
                             <!-- Button to trigger file upload -->
                             <Button
                                 android:id="@+id/changeFile"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Change" />
+
                             <TextView
-                                android:layout_marginStart="10dp"
                                 android:layout_width="wrap_content"
-                                android:textColor="@color/whiteTextColor"
                                 android:layout_height="wrap_content"
-                                android:text="File: " />
+                                android:layout_marginStart="10dp"
+                                android:fontFamily="@font/robotoslab"
+                                android:text="File: "
+                                android:textColor="@color/whiteTextColor" />
 
                             <TextView
                                 android:id="@+id/selectedFileName"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/whiteTextColor"
                                 android:layout_weight="1"
+                                android:fontFamily="@font/robotoslab"
+                                android:maxLines="1"
                                 android:text="No file selected"
-                                android:maxLines="1" />
-
-
-
+                                android:textColor="@color/whiteTextColor" />
                         </LinearLayout>
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
                     <Button
                         android:id="@+id/acceptButton"
                         android:layout_width="0dp"
-                        android:backgroundTint="@color/green"
-                        android:layout_weight="1"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:backgroundTint="@color/green"
+                        android:text="Accept"
                         android:textColor="@color/blackTextColor"
-                        android:textStyle="bold"
-                        android:text="Accept"/>
+                        android:textStyle="bold" />
+
                     <Button
                         android:id="@+id/rejectButton"
                         android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:backgroundTint="#ff0000"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/blackTextColor"
-                        android:textStyle="bold"
                         android:text="Reject"
-                        android:layout_marginStart="8dp"/>
+                        android:textColor="@color/blackTextColor"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/option"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_margin="12dp"
+                        android:text="OR"
+                        android:textAlignment="center"
+                        android:textSize="15sp" />
+
+                    <br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
+                        android:id="@+id/deleteButton"
+                        android:layout_width="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_height="wrap_content"
+                        android:text="Delete This Dinas Data" />
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>

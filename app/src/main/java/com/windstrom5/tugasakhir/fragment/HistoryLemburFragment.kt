@@ -85,7 +85,7 @@ class HistoryLemburFragment : Fragment(){
         return view
     }
     private fun fetchDataPekerjaFromApi(namaPerusahaan: String,nama_pekerja: String) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -159,7 +159,7 @@ class HistoryLemburFragment : Fragment(){
     }
 
     private fun fetchDataPerusahaanFromApi(namaPerusahaan: String) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())

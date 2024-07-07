@@ -1,6 +1,7 @@
 package com.windstrom5.tugasakhir.feature
 
 import android.app.Activity
+import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
@@ -29,15 +30,22 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
+import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
 import com.bumptech.glide.Glide
 import com.github.barteksc.pdfviewer.PDFView
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import com.google.android.material.textfield.TextInputLayout
+import com.itextpdf.kernel.geom.Line
+import com.saadahmedev.popupdialog.PopupDialog
+import com.saadahmedev.popupdialog.listener.StandardDialogActionListener
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
+import com.windstrom5.tugasakhir.BuildConfig
 import com.windstrom5.tugasakhir.R
+import com.windstrom5.tugasakhir.activity.LoginActivity
 import com.windstrom5.tugasakhir.connection.ApiResponse
 import com.windstrom5.tugasakhir.connection.ApiService
 import com.windstrom5.tugasakhir.connection.RetrievePDFfromUrl
+import com.windstrom5.tugasakhir.connection.SharedPreferencesManager
 import com.windstrom5.tugasakhir.model.Dinas
 import com.windstrom5.tugasakhir.model.DinasItem
 import com.windstrom5.tugasakhir.model.Izin
@@ -104,21 +112,24 @@ class PreviewDialogFragment: DialogFragment() {
         lembur = arguments?.getParcelable("lembur")
         izin = arguments?.getParcelable("izin")
         category = arguments?.getString("category")
+        val encryption = BuildConfig.openssl_key
         if (dinas != null) {
             if(category == "Respond"){
                 val namaInputLayout = view.findViewById<TextInputLayout>(R.id.namaInputLayout)
                 namaInputLayout.isEnabled = false
                 namaInputLayout.editText?.setText(dinas?.nama_pekerja)
                 val dateFormatter = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-
+                val option = view.findViewById<LinearLayout>(R.id.option)
+                option.visibility= View.GONE
                 val tanggalBerangkatFormatted = dateFormatter.format(dinas?.tanggal_berangkat)
                 val tanggalPulangFormatted = dateFormatter.format(dinas?.tanggal_pulang)
                 val berangkatInputLayout = view.findViewById<TextInputLayout>(R.id.berangkatInputLayout)
                 berangkatInputLayout.editText?.setText(tanggalBerangkatFormatted)
                 val pulangInputLayout = view.findViewById<TextInputLayout>(R.id.pulangInputLayout)
                 pulangInputLayout.editText?.setText(tanggalPulangFormatted)
-
+                view.findViewById<TextInputLayout>(R.id.tujuanInputLayout2).visibility = View.GONE
                 val tujuanInputLayout = view.findViewById<TextInputLayout>(R.id.tujuanInputLayout)
+                tujuanInputLayout.visibility = View.VISIBLE
                 tujuanInputLayout.isEnabled = false
                 tujuanInputLayout.editText?.setText(dinas?.tujuan)
 
@@ -126,7 +137,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.isEnabled = false
                 kegiatanInputLayout.editText?.setText(dinas?.kegiatan)
 
-                val pdfUrl = "http://192.168.1.3:8000/storage/${dinas?.bukti}"
+                val pdfUrl = "http://192.168.1.6:8000/storage/${dinas?.bukti}"
                 val pdfView = view.findViewById<PDFView>(R.id.pdfView)
                 pdfView.visibility = View.VISIBLE
                 val retrievePdfTask = RetrievePDFfromUrl(pdfView)
@@ -154,6 +165,29 @@ class PreviewDialogFragment: DialogFragment() {
                 berangkatInputLayout.endIconMode = TextInputLayout.END_ICON_CUSTOM
                 berangkatInputLayout.endIconDrawable = endIconDrawable
                 pulangInputLayout.endIconMode = TextInputLayout.END_ICON_CUSTOM
+                val option = view.findViewById<LinearLayout>(R.id.option)
+                option.visibility= View.VISIBLE
+                val delete = view.findViewById<CircularProgressButton>(R.id.deleteButton)
+                delete.setOnClickListener{
+                    PopupDialog.getInstance(requireContext())
+                        .standardDialogBuilder()
+                        .createIOSDialog()
+                        .setHeading("Delete Data")
+                        .setDescription(
+                            "Are you sure you want to delete this data?" +
+                                    " This action cannot be undone"
+                        )
+                        .build(object : StandardDialogActionListener {
+                            override fun onPositiveButtonClicked(dialog: Dialog) {
+                                dialog.dismiss()
+                            }
+
+                            override fun onNegativeButtonClicked(dialog: Dialog) {
+                                dialog.dismiss()
+                            }
+                        })
+                        .show()
+                }
                 pulangInputLayout.endIconDrawable = endIconDrawable
                 berangkatInputLayout.setEndIconOnClickListener{
                     berangkatInputLayout.editText?.let { it1 -> showDatePickerDialog(it1) }
@@ -161,6 +195,7 @@ class PreviewDialogFragment: DialogFragment() {
                 pulangInputLayout.setEndIconOnClickListener{
                     berangkatInputLayout.editText?.let { it1 -> showDatePickerDialog(it1) }
                 }
+                view.findViewById<TextInputLayout>(R.id.tujuanInputLayout).visibility = View.GONE
                 val kotaDataList = readAndParseKotaJson()
                 val provinsiDataList = readAndParseProvinsiJson()
                 val combinedDataList = combineAndFormatData(kotaDataList, provinsiDataList)
@@ -171,6 +206,8 @@ class PreviewDialogFragment: DialogFragment() {
                 )
                 val tujuan = dinas?.tujuan
                 val tujuanInput = view.findViewById<AutoCompleteTextView>(R.id.actujuan)
+                val tujuanLayout = view.findViewById<TextInputLayout>(R.id.tujuanInputLayout2)
+                tujuanLayout.visibility = View.VISIBLE
                 tujuanInput.setAdapter(adapter)
                 if (combinedDataList.contains(tujuan)) {
                     val position = combinedDataList.indexOf(tujuan)
@@ -181,7 +218,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.editText?.isFocusable = true
                 kegiatanInputLayout.editText?.isFocusableInTouchMode = true
                 kegiatanInputLayout.editText?.setText(dinas?.kegiatan)
-                val pdfUrl = "http://192.168.1.3:8000/storage/${dinas?.bukti}"
+                val pdfUrl = "http://192.168.1.6:8000/storage/${dinas?.bukti}"
                 val pdfView = view.findViewById<PDFView>(R.id.pdfView)
                 pdfView.visibility = View.VISIBLE
                 val retrievePdfTask = RetrievePDFfromUrl(pdfView)
@@ -214,7 +251,7 @@ class PreviewDialogFragment: DialogFragment() {
                 view.findViewById<TextInputLayout>(R.id.masukInputLayout).editText?.setText(lembur?.waktu_masuk.toString())
                 view.findViewById<TextInputLayout>(R.id.pulangInputLayout).editText?.setText(lembur?.waktu_pulang.toString())
                 view.findViewById<TextInputLayout>(R.id.kegiatanEditText).editText?.setText(lembur?.pekerjaan)
-                val attachmentUrl = "http://192.168.1.3:8000/storage/${lembur?.bukti}"
+                val attachmentUrl = "http://192.168.1.6:8000/storage/${lembur?.bukti}"
                 val imageView = view.findViewById<ImageView>(R.id.imageView)
                 imageView.visibility = View.VISIBLE
                 Glide.with(requireContext())
@@ -241,7 +278,7 @@ class PreviewDialogFragment: DialogFragment() {
                 tanggal.endIconDrawable = endIconDrawable
                 val TiMasuk = view.findViewById<TextInputLayout>(R.id.masukInputLayout)
                 val TiPulang = view.findViewById<TextInputLayout>(R.id.keluarInputLayout)
-                val endIconDrawable2: Drawable? = ContextCompat.getDrawable(requireContext(), com.google.android.material.R.drawable.ic_clock_black_24dp)
+                val endIconDrawable2: Drawable? = ContextCompat.getDrawable(requireContext(), R.drawable.baseline_access_time_24)
                 TiMasuk.endIconMode = TextInputLayout.END_ICON_CUSTOM
                 TiPulang.endIconMode = TextInputLayout.END_ICON_CUSTOM
                 TiMasuk.endIconDrawable = endIconDrawable2
@@ -260,7 +297,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatanInputLayout.editText?.isFocusable = true
                 kegiatanInputLayout.editText?.isFocusableInTouchMode = true
                 kegiatanInputLayout.editText?.setText(lembur?.pekerjaan)
-                val url = "http://192.168.1.3:8000/storage/${lembur?.bukti}"
+                val url = "http://192.168.1.6:8000/storage/${lembur?.bukti}"
                 val imageView = view.findViewById<ImageView>(R.id.imageView)
                 imageView.visibility = View.VISIBLE
                 Glide.with(requireContext())
@@ -292,7 +329,7 @@ class PreviewDialogFragment: DialogFragment() {
                 view.findViewById<TextInputLayout>(R.id.tanggalInputLayout).editText?.setText(izin?.tanggal.toString())
                 view.findViewById<TextInputLayout>(R.id.kategoriInputLayout).editText?.setText(izin?.kategori)
                 view.findViewById<TextInputLayout>(R.id.kegiatanInputLayout).editText?.setText(izin?.alasan)
-                val attachmentUrl = "http://192.168.1.3:8000/storage/${izin?.bukti}"
+                val attachmentUrl = "http://192.168.1.6:8000/storage/${izin?.bukti}"
                 val isPdf = attachmentUrl.endsWith(".pdf")
                 if (isPdf) {
                     val pdfView = view.findViewById<PDFView>(R.id.pdfView)
@@ -347,7 +384,7 @@ class PreviewDialogFragment: DialogFragment() {
                 kegiatan.editText?.isFocusable = true
                 kegiatan.editText?.isFocusableInTouchMode = true
 
-                val attachmentUrl = "http://192.168.1.3:8000/storage/${izin?.bukti}"
+                val attachmentUrl = "http://192.168.1.6:8000/storage/${izin?.bukti}"
                 val isPdf = attachmentUrl.endsWith(".pdf")
                 if (isPdf) {
                     // Create an instance of RetrievePDFfromUrl passing the PDFView
@@ -606,7 +643,7 @@ class PreviewDialogFragment: DialogFragment() {
         return holidaysMap
     }
     private fun updateDataDinas(dinasId: Int,TIBerangkat : TextInputLayout,TIPulang : TextInputLayout,acTujuan:AutoCompleteTextView,TIkegiatan:TextInputLayout) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -651,7 +688,7 @@ class PreviewDialogFragment: DialogFragment() {
         dismiss()
     }
     private fun updateDataLembur(lemburId: Int,TiTanggal : TextInputLayout,TIMasuk : TextInputLayout,TiKeluar:TextInputLayout,TIkegiatan:TextInputLayout) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -696,7 +733,7 @@ class PreviewDialogFragment: DialogFragment() {
         dismiss()
     }
     private fun updateDataIzin(izinId: Int,TITanggal:TextInputLayout,acIzin:AutoCompleteTextView,TIAlasan:TextInputLayout) {
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -906,7 +943,7 @@ class PreviewDialogFragment: DialogFragment() {
             id = dinas?.id!!
         }// Assuming you have an ID associated with the item
         // Call your API to update the status
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
         // Make a network request using Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl(url)

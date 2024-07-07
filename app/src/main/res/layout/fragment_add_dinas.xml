@@ -56,6 +56,7 @@
                                 android:layout_width="match_parent"
                                 android:background="#E5E4E2"
                                 android:layout_height="match_parent"
+                                android:fontFamily="@font/bebasneue_reguler"
                                 android:textSize="15dp"
                                 android:hint="Nama" />
                         </com.google.android.material.textfield.TextInputLayout>
@@ -77,6 +78,7 @@
                                     android:background="#E5E4E2"
                                     android:textSize="15dp"
                                     android:layout_height="match_parent"
+                                    android:fontFamily="@font/bebasneue_reguler"
                                     android:hint="Pilih Tujuan" />
                             </com.google.android.material.textfield.TextInputLayout>
                             <com.google.android.material.textfield.TextInputLayout
@@ -91,6 +93,7 @@
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
+                                    android:fontFamily="@font/bebasneue_reguler"
                                     android:focusable="false"
                                     android:enabled="false"/>
 
@@ -107,6 +110,7 @@
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
+                                    android:fontFamily="@font/bebasneue_reguler"
                                     android:focusable="false"
                                     android:enabled="false"/>
 
@@ -122,6 +126,7 @@
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
+                                    android:fontFamily="@font/bebasneue_reguler"
                                     android:inputType="textMultiLine"/>
 
                             </com.google.android.material.textfield.TextInputLayout>
@@ -152,6 +157,7 @@
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:layout_marginTop="10dp"
+                                        android:fontFamily="@font/purplepurse_regular"
                                         android:text="Accepted file types: pdf" />
 
                                     <!-- File upload content -->
@@ -167,12 +173,14 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:text="Upload"
+                                            android:fontFamily="@font/righteous_regular"
                                             android:gravity="center" />
 
                                         <TextView
                                             android:layout_marginStart="10dp"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
+                                            android:fontFamily="@font/robotoslab"
                                             android:text="File: " />
 
                                         <TextView
@@ -180,6 +188,7 @@
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
                                             android:layout_weight="1"
+                                            android:fontFamily="@font/robotoslab"
                                             android:text="No file selected"
                                             android:maxLines="1" />
 
@@ -194,33 +203,22 @@
                                 </LinearLayout>
 
                             </androidx.cardview.widget.CardView>
-                            <Button
+                            <br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
                                 android:id="@+id/submitButton"
                                 android:layout_width="match_parent"
-                                style="@style/loginButton"
+                                android:background="@drawable/bg_blue_10"
+                                android:textColor="@color/whiteTextColor"
+                                android:textStyle="bold"
                                 android:layout_height="match_parent"
                                 android:layout_marginTop="15dp"
+                                android:layout_marginBottom="20dp"
                                 android:layout_marginStart="100dp"
                                 android:layout_marginEnd="100dp"
                                 android:gravity="center"
-                                android:enabled="false"
                                 android:text="Submit" />
                         </LinearLayout>
                     </LinearLayout>
                 </ScrollView>
-                <!-- Submit button -->
-                <Button
-                    android:id="@+id/cirsaveButton"
-                    style="@style/loginButton"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="@dimen/loginViewsMargin"
-                    android:text="ADD NOW"
-                    android:textAlignment="center"
-                    app:initialCornerAngle="27dp"
-                    android:layout_margin="13dp"
-                    app:spinning_bar_color="#FFF"
-                    app:spinning_bar_padding="6dp"
-                    app:spinning_bar_width="4dp" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

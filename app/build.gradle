@@ -20,7 +20,7 @@ android {
     }
     defaultConfig {
         applicationId "com.windstrom5.tugasakhir"
-        minSdk 24
+        minSdk 26
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -28,7 +28,10 @@ android {
         def client_id = project.hasProperty("CLIENT_ID") ? project.property("CLIENT_ID") : ""
         def CLIENT_SECRET = project.hasProperty("CLIENT_SECRET") ? project.property("CLIENT_SECRET") : ""
         def Redirects = project.hasProperty("Redirects") ? project.property("Redirects") : ""
+        def Chapta_Key = project.hasProperty("chapta_key") ? project.property("chapta_key") : ""
+        def Chapta_Secret = project.hasProperty("chapta_secret") ? project.property("chapta_secret") : ""
         def Email = project.hasProperty("Email") ? project.property("Email") : ""
+        def openssl = project.hasProperty("openssl_key") ? project.property("openssl_key") : ""
         def Email_Password = project.hasProperty("Email_Password") ? project.property("Email_Password") : ""
         // Add buildConfigField definitions within the block
         buildConfigField "String", "Discord_Client_Id", "\"${client_id}\""
@@ -36,6 +39,9 @@ android {
         buildConfigField "String", "Email", "\"${Email}\""
         buildConfigField "String", "Email_Password", "\"${Email_Password}\""
         buildConfigField "String", "Discord_Client_Redirects", "\"${Redirects}\""
+        buildConfigField "String", "Chapta_Key", "\"${Chapta_Key}\""
+        buildConfigField "String", "openssl_key", "\"${openssl}\""
+        buildConfigField "String", "Chapta_Secret", "\"${Chapta_Secret}\""
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -162,4 +168,6 @@ dependencies {
     implementation 'nl.dionsegijn:konfetti-compose:2.0.4'
     implementation 'nl.dionsegijn:konfetti-xml:2.0.4'
     implementation 'com.github.AtifSayings:Animatoo:1.0.1'
+    implementation 'eo.view:signalstrength:2.0.0'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.69'
 }

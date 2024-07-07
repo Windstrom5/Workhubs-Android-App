@@ -1,6 +1,7 @@
 package com.windstrom5.tugasakhir.fragment
 
 import android.app.Activity
+import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
@@ -20,6 +21,10 @@ import com.windstrom5.tugasakhir.model.Perusahaan
 import java.util.Calendar
 import java.util.Locale
 import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.provider.MediaStore
 import android.text.Editable
@@ -29,9 +34,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isEmpty
+import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton
 import com.bumptech.glide.Glide
+import com.saadahmedev.popupdialog.PopupDialog
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import com.windstrom5.tugasakhir.activity.RegisterActivity
 import com.windstrom5.tugasakhir.connection.ApiResponse
@@ -62,7 +70,7 @@ class AddLemburFragment : Fragment() {
     private lateinit var selectedFileName: TextView
     private lateinit var changeFileButton: Button
     private lateinit var imageView: ImageView
-    private lateinit var save: Button
+    private lateinit var save : CircularProgressButton
     private var perusahaan : Perusahaan? = null
     private var pekerja : Pekerja? = null
     private lateinit var selectedFile: File
@@ -84,7 +92,7 @@ class AddLemburFragment : Fragment() {
         imageView = view.findViewById(R.id.imageView)
         selectedFileName = view.findViewById(R.id.selectedFileName)
         changeFileButton = view.findViewById(R.id.changeFile)
-        save = view.findViewById(R.id.cirsaveButton)
+        save = view.findViewById(R.id.submitButton)
         TIMasuk.setEndIconOnClickListener{
             perusahaan?.let { it1 -> showTimePickerDialog(TIMasuk, it1) }
         }
@@ -101,18 +109,18 @@ class AddLemburFragment : Fragment() {
                 perusahaan?.let { it1 -> showTimePickerDialog(TIPulang, it1) }
             }
         }
-        TINama.editText?.addTextChangedListener(watcher)
-        TITanggal.editText?.addTextChangedListener(watcher)
-        TIMasuk.editText?.addTextChangedListener(watcher)
-        TIPulang.editText?.addTextChangedListener(watcher)
-        TIPekerjaan.editText?.addTextChangedListener(watcher)
+//        TINama.editText?.addTextChangedListener(watcher)
+//        TITanggal.editText?.addTextChangedListener(watcher)
+//        TIMasuk.editText?.addTextChangedListener(watcher)
+//        TIPulang.editText?.addTextChangedListener(watcher)
+//        TIPekerjaan.editText?.addTextChangedListener(watcher)
         uploadfileButton.setOnClickListener {
             pickImageFromGallery()
         }
 
         // Set onClickListener for the save button
         save.setOnClickListener {
-            setLoading(true)
+            save.startAnimation()
             pekerja?.let { it1 -> perusahaan?.let { it2 -> saveDataLembur(it1, it2) } }
         }
 
@@ -127,27 +135,51 @@ class AddLemburFragment : Fragment() {
             loadingLayout?.visibility = View.INVISIBLE
         }
     }
-    private val watcher = object : TextWatcher {
-        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
-            // Not needed for this example
-        }
-
-        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
-            // Not needed for this example
-        }
-
-        override fun afterTextChanged(editable: Editable?) {
-            // Update the button state whenever a field is changed
-            save.isEnabled = isAllFieldsFilled()
-        }
-    }
+//    private val watcher = object : TextWatcher {
+//        override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+//            // Not needed for this example
+//        }
+//
+//        override fun afterTextChanged(editable: Editable?) {
+//            // Update the button state whenever a field is changed
+//            save.isEnabled = isAllFieldsFilled()
+//        }
+//    }
     private fun isAllFieldsFilled(): Boolean {
-        return TINama.editText?.text?.isNotEmpty() ?: false &&
-                TITanggal.editText?.text?.isNotEmpty()?: false  &&
-                TIMasuk.editText?.text?.isNotEmpty() ?: false &&
-                TIPulang.editText?.text?.isNotEmpty()?: false &&
-                TIPekerjaan.editText?.text?.isNotEmpty()?: false &&
-                selectedFileName.text != "No file selected"
+    val missingFields = mutableListOf<String>()
+
+    if (TINama.editText?.text.isNullOrEmpty()) {
+        missingFields.add("Nama")
+    }
+    if (TITanggal.editText?.text.isNullOrEmpty()) {
+        missingFields.add("Tanggal Lembur")
+    }
+    if (TIMasuk.editText?.text.isNullOrEmpty()) {
+        missingFields.add("Jam Masuk")
+    }
+    if (TIPulang.editText?.text.isNullOrEmpty()) {
+        missingFields.add("Jam Pulang")
+    }
+    if (selectedFileName.text == "No file selected") {
+        missingFields.add("Bukti Lembur")
+    }
+
+    if (missingFields.isNotEmpty()) {
+        val errorMessage = "The following fields are empty: ${missingFields.joinToString(", ")}"
+        PopupDialog.getInstance(requireContext())
+            .statusDialogBuilder()
+            .createErrorDialog()
+            .setHeading("Cannot Save")
+            .setDescription(errorMessage)
+            .build(Dialog::dismiss)
+            .show()
+        return false
+    }
+    return true
     }
     private fun showDatePickerDialog(editText: EditText) {
         // Load holidays from JSON
@@ -229,7 +261,7 @@ class AddLemburFragment : Fragment() {
                 if (realPath != null) {
                     selectedFileName.text = File(realPath).name
                     selectedFile = File(realPath)
-                    selectedFileName.addTextChangedListener(watcher)
+//                    selectedFileName.addTextChangedListener(watcher)
                     imageView.visibility = View.VISIBLE
                     Glide.with(this)
                         .load(imageUri)
@@ -355,9 +387,16 @@ class AddLemburFragment : Fragment() {
             Log.d("Error","Bundle Not Found")
         }
     }
-
+    private fun vectorToBitmap(vectorDrawable: Drawable): Bitmap {
+        val bitmap = Bitmap.createBitmap(vectorDrawable.intrinsicWidth,
+            vectorDrawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+        vectorDrawable.draw(canvas)
+        return bitmap
+    }
     private fun saveDataLembur(pekerja: Pekerja,perusahaan: Perusahaan){
-        val url = "http://192.168.1.3:8000/api/"
+        val url = "http://192.168.1.6:8000/api/"
 
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
@@ -379,20 +418,25 @@ class AddLemburFragment : Fragment() {
         call.enqueue(object : Callback<ApiResponse> {
             override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                 if (response.isSuccessful) {
+                    val vectorDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.done_bitmap)
+                    val bitmap = vectorDrawable?.let { vectorToBitmap(it) }
+                    save.doneLoadingAnimation(Color.parseColor("#AAFF00"), bitmap)
                     val apiResponse = response.body()
                     Log.d("ApiResponse", "Status: ${apiResponse?.status}, Message: ${apiResponse?.message}")
-                    MotionToast.createToast(requireActivity(), "Add Dinas Success",
-                        "Data Dinas Berhasil Ditambahkan",
+                    MotionToast.createToast(requireActivity(), "Add Lembur Success",
+                        "Data Lembur Berhasil Ditambahkan",
                         MotionToastStyle.SUCCESS,
                         MotionToast.GRAVITY_BOTTOM,
                         MotionToast.LONG_DURATION,
                         ResourcesCompat.getFont(requireContext(), R.font.ralewaybold))
                 } else {
+                    save.revertAnimation()
                     Log.e("ApiResponse", "Error: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                save.revertAnimation()
                 Log.e("ApiResponse", "Request failed: ${t.message}")
             }
         })

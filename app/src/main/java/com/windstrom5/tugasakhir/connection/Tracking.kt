@@ -7,10 +7,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -24,9 +26,15 @@ import com.windstrom5.tugasakhir.activity.AbsensiActivity
 import com.windstrom5.tugasakhir.model.Pekerja
 import com.windstrom5.tugasakhir.model.Perusahaan
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class Tracking : Service() {
     private lateinit var locationManager: LocationManager
+    private lateinit var handler: Handler
+    private lateinit var perusahaan: Perusahaan
+    private lateinit var pekerja: Pekerja
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             val latitude = location.latitude
@@ -34,13 +42,19 @@ class Tracking : Service() {
             Log.d("latitude2", latitude.toString())
             sendLocationUpdateHandler(latitude, longitude, perusahaan, pekerja)
         }
+
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            // Handle location provider status changes if needed
+        }
+
+        override fun onProviderEnabled(provider: String) {
+            // Handle location provider enabled if needed
+        }
+
+        override fun onProviderDisabled(provider: String) {
+            // Handle location provider disabled if needed
+        }
     }
-
-    private lateinit var handler: Handler
-    private lateinit var locationUpdateRunnable: Runnable
-    private lateinit var perusahaan: Perusahaan
-    private lateinit var pekerja: Pekerja
-
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
@@ -49,7 +63,6 @@ class Tracking : Service() {
         perusahaan = intent?.getParcelableExtra("perusahaan")!!
         pekerja = intent.getParcelableExtra("pekerja")!!
 
-        startLocationUpdates()
         startForegroundService()
 
         return START_STICKY
@@ -60,10 +73,34 @@ class Tracking : Service() {
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         handler = Handler(Looper.getMainLooper())
-        locationUpdateRunnable = Runnable { startLocationUpdates() }
+        handler.post(locationUpdateRunnable)
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
+    private val locationUpdateRunnable = object : Runnable {
+        override fun run() {
+            fetchLocation()
+            handler.postDelayed(this, LOCATION_UPDATE_INTERVAL)
+        }
+    }
+
+    private fun fetchLocation() {
+        try {
+            val location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            if (location != null) {
+                val latitude = location.latitude
+                val longitude = location.longitude
+                Log.d("fetchLocation", latitude.toString())
+                sendLocationUpdateHandler(latitude, longitude, perusahaan, pekerja)
+            } else {
+                Log.d("fetchLocation", "Last known location not found, requesting location updates...")
+                // Request location updates explicitly
+                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, Looper.getMainLooper())
+            }
+        } catch (ex: SecurityException) {
+            Log.e(TAG, "Location permission not granted")
+        }
+    }
+
     private fun startForegroundService() {
         createNotificationChannel()
 
@@ -72,7 +109,7 @@ class Tracking : Service() {
             PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Your App is running")
+            .setContentTitle("WorkHubs Is Running")
             .setContentText("Tracking location in the background")
             .setSmallIcon(R.mipmap.ic_logo)
             .setContentIntent(pendingIntent)
@@ -85,36 +122,30 @@ class Tracking : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Your App Notification Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val notificationManager = getSystemService(NotificationManager::class.java)
+                "Location Update Service",
+                NotificationManager.IMPORTANCE_HIGH // Set importance to high
+            ).apply {
+                description = "Channel for location update service"
+                enableLights(true)
+                lightColor = Color.BLUE
+                enableVibration(true)
+            }
+            val notificationManager: NotificationManager =
+                getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
     }
 
-    private fun startLocationUpdates() {
-        try {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                LOCATION_UPDATE_INTERVAL,
-                LOCATION_UPDATE_DISTANCE,
-                locationListener
-            )
-
-            handler.postDelayed(locationUpdateRunnable, LOCATION_UPDATE_INTERVAL)
-        } catch (ex: SecurityException) {
-            Log.e(TAG, "Location permission not granted")
-        }
-    }
-
     private fun sendLocationUpdateHandler(latitude: Double, longitude: Double, perusahaan: Perusahaan, pekerja: Pekerja) {
-        val url = "http://192.168.1.3:8000/api/UpdateLocation"
+        val url = "http://192.168.1.6:8000/api/Presensi/UpdateLocation"
+        val timestampFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.getDefault())
+        val currentTimestamp = timestampFormat.format(Date())
         val params = JSONObject().apply {
             put("perusahaan", perusahaan.nama)
             put("nama", pekerja.nama)
             put("latitude", latitude)
             put("longitude", longitude)
+            put("timestamp", currentTimestamp)
         }
 
         val request = JsonObjectRequest(Request.Method.PUT, url, params,
@@ -141,18 +172,17 @@ class Tracking : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        locationManager.removeUpdates(locationListener)
-        handler.removeCallbacks(locationUpdateRunnable)
+        handler.removeCallbacksAndMessages(null) // Remove all callbacks and messages
     }
 
     companion object {
         private const val TAG = "BackgroundService"
         private const val LOCATION_UPDATE_INTERVAL: Long = 10000 // 10 seconds
-        private const val LOCATION_UPDATE_DISTANCE: Float = 10f // 10 meters
         private const val NOTIFICATION_ID = 12345 // Use any unique ID for your notification
         private const val CHANNEL_ID = "LocationUpdateServiceChannel"
     }
 }
+
 
 
 //    private lateinit var locationManager: LocationManager

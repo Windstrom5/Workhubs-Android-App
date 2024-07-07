@@ -85,7 +85,7 @@ class ShowQRCodeFragment : Fragment() {
             } else {
                 Glide.with(this)
                     .asBitmap()
-                    .load("http://192.168.1.3:8000/storage/$logo2")
+                    .load("http://192.168.1.6:8000/storage/$logo2")
                     .into(object : CustomTarget<Bitmap>() {
                         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                             addLogoAsWatermark(qrCodeBitmap, resource, 100)
@@ -126,9 +126,7 @@ class ShowQRCodeFragment : Fragment() {
             Toast.makeText(requireContext(), "Failed to save QR code", Toast.LENGTH_SHORT).show()
         }
     }
-
-
-
+    
     private fun generateQRCode(content: String, width: Int, height: Int): Bitmap {
         val hints: MutableMap<EncodeHintType, Any> = HashMap()
         hints[EncodeHintType.MARGIN] = 0

@@ -32,7 +32,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("DaftarAdmin")
+    @POST("Perusahaan/DaftarAdmin")
     fun uploadAdmin(
         @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("email") email: RequestBody,
@@ -43,7 +43,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("DaftarPekerja")
+    @POST("Perusahaan/DaftarPekerja")
     fun uploadPekerja(
         @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("email") email: RequestBody,
@@ -54,7 +54,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("AddLembur")
+    @POST("Lembur/AddLembur")
     fun uploadLembur(
         @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("nama") nama: RequestBody,
@@ -66,7 +66,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("AddDinas")
+    @POST("Dinas/AddDinas")
     fun uploadDinas(
         @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("nama") nama: RequestBody,
@@ -78,7 +78,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("AddIzin")
+    @POST("Izin/AddIzin")
     fun uploadIzin(
         @Part("nama_perusahaan") nama_perusahaan: RequestBody,
         @Part("nama") nama: RequestBody,
@@ -88,74 +88,74 @@ interface ApiService {
         @Part bukti: MultipartBody.Part
     ): Call<ApiResponse>
 
-    @GET("getLocation/{nama_perusahaan}")
+    @GET("Presensi/getLocation/{nama_perusahaan}")
     fun getLocationPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
 
-    @GET("getAnggota/{nama_perusahaan}")
+    @GET("Perusahaan/getAnggota/{nama_perusahaan}")
     fun getDataPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
 
-    @GET("getDataLemburPerusahaan/{nama_perusahaan}")
+    @GET("Lembur/getDataLemburPerusahaan/{nama_perusahaan}")
     fun getDataLemburPerusahaan(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
-    @GET("getDataLemburPekerja/{nama_perusahaan}/{nama_pekerja}")
+    @GET("Lembur/getDataLemburPekerja/{nama_perusahaan}/{nama_pekerja}")
     fun getDataLemburPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String,
         @Path("nama_pekerja") nama_pekerja: String
     ): Call<ResponseBody>
-    @GET("getDataDinasPerusahaan/{nama_perusahaan}")
+    @GET("Dinas/getDataDinasPerusahaan/{nama_perusahaan}")
     fun getDataDinasPerusahaan(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
-    @GET("getDataAbsenPekerja/{nama_perusahaan}/{nama_pekerja}")
+    @GET("Dinas/getDataAbsenPekerja/{nama_perusahaan}/{nama_pekerja}")
     fun getDataAbsenPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String,
         @Path("nama_pekerja") nama_pekerja: String
     ): Call<ResponseBody>
-    @GET("getDataAbsenPerusahaan/{nama_perusahaan}")
+    @GET("Presensi/getDataAbsenPerusahaan/{nama_perusahaan}")
     fun getDataAbsenPerusahaan(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
-    @GET("getDataDinasPekerja/{nama_perusahaan}/{nama_pekerja}")
+    @GET("Dinas/getDataDinasPekerja/{nama_perusahaan}/{nama_pekerja}")
     fun getDataDinasPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String,
         @Path("nama_pekerja") nama_pekerja: String
     ): Call<ResponseBody>
 
-    @GET("getDataIzinPerusahaan/{nama_perusahaan}")
+    @GET("Izin/getDataIzinPerusahaan/{nama_perusahaan}")
     fun getDataIzinPerusahaan(
         @Path("nama_perusahaan") nama_perusahaan: String
     ): Call<ResponseBody>
 
-    @GET("getDataIzinPekerja/{nama_perusahaan}/{nama_pekerja}")
+    @GET("Izin/getDataIzinPekerja/{nama_perusahaan}/{nama_pekerja}")
     fun getDataIzinPekerja(
         @Path("nama_perusahaan") nama_perusahaan: String,
         @Path("nama_pekerja") nama_pekerja: String
     ): Call<ResponseBody>
 
-    @POST("UpdateStatusIzin?_method=PUT")
+    @POST("Izin/UpdateStatusIzin?_method=PUT")
     fun updatestatusIzin(
         @Query("id") id: Int,
         @Query("status") status: String
     ): Call<ApiResponse>
 
-    @POST("UpdateStatusDinas?_method=PUT")
+    @POST("Dinas/UpdateStatusDinas?_method=PUT")
     fun updatestatusDinas(
         @Query("id") id: Int,
         @Query("status") status: String
     ): Call<ApiResponse>
 
-    @PUT("UpdateStatusLembur")
+    @PUT("Lembur/UpdateStatusLembur")
     fun updatestatusLembur(
         @Query("id") id: Int,
         @Query("status") status: String
     ): Call<ApiResponse>
     @Multipart
-    @POST("UpdateDataIzin/{izinId}?_method=PUT")
+    @POST("Izin/UpdateDataIzin/{izinId}?_method=PUT")
     fun updateIzin(
         @Path("izinId") izinId: Int,
         @Part("tanggal") tanggal: RequestBody,
@@ -164,7 +164,7 @@ interface ApiService {
         @Part bukti: MultipartBody.Part
     ): Call<ApiResponse>
     @Multipart
-    @POST("UpdateDataLembur/{dinasId}?_method=PUT")
+    @POST("Lembur/UpdateDataLembur/{dinasId}?_method=PUT")
     fun updateLembur(
         @Path("lemburId") lemburId: Int,
         @Part("tanggal") tanggal: RequestBody,
@@ -174,7 +174,7 @@ interface ApiService {
         @Part bukti: MultipartBody.Part
     ): Call<ApiResponse>
     @Multipart
-    @POST("UpdateDataDinas/{dinasId}?_method=PUT")
+    @POST("Dinas/UpdateDataDinas/{dinasId}?_method=PUT")
     fun updateDinas(
         @Path("dinasId") dinasId: Int,
         @Part("berangkat") berangkat: RequestBody,
@@ -184,7 +184,7 @@ interface ApiService {
         @Part bukti: MultipartBody.Part
     ): Call<ApiResponse>
     @Multipart
-    @POST("UpdateDataUser/{id}?_method=PUT")
+    @POST("Perusahaan/UpdateDataUser/{id}?_method=PUT")
     fun updatePekerja(
         @Part("id") id: Int,
         @Part("email") email: RequestBody,
@@ -194,7 +194,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("UpdateDataUser/{id}?_method=PUT")
+    @POST("Perusahaan/UpdateDataUser/{id}?_method=PUT")
     fun updatePekerjaNoFile(
         @Part("id") id: Int,
         @Part("email") email: RequestBody,
@@ -203,7 +203,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("UpdateDataAdmin/{id}?_method=PUT")
+    @POST("Perusahaan/UpdateDataAdmin/{id}?_method=PUT")
     fun updateAdmin(
         @Part("id") id: Int,
         @Part("email") email: RequestBody,
@@ -213,7 +213,7 @@ interface ApiService {
     ): Call<ApiResponse>
 
     @Multipart
-    @POST("UpdateDataAdmin/{id}?_method=PUT")
+    @POST("Perusahaan/UpdateDataAdmin/{id}?_method=PUT")
     fun updateAdminNoFile(
         @Part("id") id: Int,
         @Part("email") email: RequestBody,
@@ -226,7 +226,7 @@ interface ApiService {
     @GET("GetPerusahaan")
     fun getPerusahaan():Call<ResponseBody>
 
-    @GET("perusahaan/{nama_perusahaan}")
+    @GET("Perusahaan/{nama_perusahaan}")
     fun getPerusahaan(@Path("nama_perusahaan") namaPerusahaan: String): Call<Perusahaan>
 
     @GET("checkEmail/{email}")
@@ -238,7 +238,7 @@ interface ApiService {
         @Path("email") email: String,
     ): Call<ApiResponse>
 
-    @POST("EditPerusahaan/{perusahaanId}?_method=PUT")
+    @POST("Perusahaan/EditPerusahaan/{perusahaanId}?_method=PUT")
     fun updatePerusahaan(
         @Path("id") id: Int,
         @Part("nama") nama: RequestBody,
@@ -249,7 +249,7 @@ interface ApiService {
         @Part logo: MultipartBody.Part
     ): Call<ApiResponse>
 
-    @POST("EditPerusahaan/{perusahaanId}?_method=PUT")
+    @POST("Perusahaan/EditPerusahaan/{perusahaanId}?_method=PUT")
     fun updatePerusahaanNoFile(
         @Path("id") id: Int,
         @Part("nama") nama: RequestBody,
